@@ -1,7 +1,7 @@
 # humio2grafana
 grafana integration for humio
 
-# installing plugin
+# installing the plugin
 - clone the repo
 - copy dist folder (or the whole repo) to /var/lib/grafana/data/plugins
 - restart grafana
