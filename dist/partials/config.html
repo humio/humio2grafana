@@ -4,7 +4,8 @@
 <h5>Humio access token</h5>
 <div class="gf-form">
   <div class="gf-form">
-    <input type="text" class="gf-form-input" ng-model='ctrl.current.jsonData.humioToken' placeholder=""></input>
+    <input type="text" class="gf-form-input" ng-model='ctrl.current.jsonData.humioToken' placeholder="" ng-change="ctrl.onTokenChage($event)">
+    </input>
   </div>
 </div>
 <div class="gf-form">
