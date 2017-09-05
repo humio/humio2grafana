@@ -35,39 +35,46 @@ System.register(['lodash'], function (_export, _context) {
       }();
 
       _export('GenericDatasource', GenericDatasource = function () {
-        function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+        function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location) {
           _classCallCheck(this, GenericDatasource);
 
           this.type = instanceSettings.type;
           this.url = instanceSettings.url;
           this.name = instanceSettings.name;
-          this.token = instanceSettings.jsonData.humioToken;
           this.q = $q;
+          this.$location = $location;
           this.backendSrv = backendSrv;
           this.templateSrv = templateSrv;
           this.withCredentials = instanceSettings.withCredentials;
+
+          // NOTE: humio specific options
+          this.token = instanceSettings.jsonData.humioToken;
+          this.humioDataspace = instanceSettings.jsonData.humioDataspace;
+
           this.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
           };
+
+          // TODO: remove
           if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
             this.headers['Authorization'] = instanceSettings.basicAuth;
           }
+
+          // NOTE: session query storage
+          this.queryParams = {
+            queryId: null
+          };
         }
 
         _createClass(GenericDatasource, [{
           key: 'query',
           value: function query(options) {
-            var _this = this;
 
             var query = this.buildQueryParameters(options);
 
-            console.log(this.url);
-            console.log('1 ->');
-            console.log('6 ->');
-            console.log(this.token);
-            // console.log(options);
-            // console.log(query);
+            console.log('the options ->');
+            console.log(options);
 
             query.targets = query.targets.filter(function (t) {
               return !t.hide;
@@ -81,38 +88,72 @@ System.register(['lodash'], function (_export, _context) {
 
             var dt = {
               "queryString": "timechart()",
-              "isLive": false,
               "timeZoneOffsetMinutes": 180,
-              "showQueryEventDistribution": true,
+              "showQueryEventDistribution": false,
               "start": "5m"
             };
 
-            var self = this;
+            var composedQuery = this._composeQuery(dt);
+            return composedQuery.then(function (r) {
 
-            return this.doRequest({
-              url: this.url + '/api/v1/dataspaces/humio/queryjobs',
-              data: dt,
-              method: 'POST'
-            }).then(function (r) {
+              var convertEvs = function convertEvs(evs) {
+                return evs.map(function (ev) {
+                  return [ev._count, ev._bucket];
+                });
+              };
 
-              return self.doRequest({
-                url: _this.url + '/api/v1/dataspaces/humio/queryjobs/' + r.data.id,
-                method: 'GET'
-              }).then(function (r) {
+              r.data = [{
+                target: "_count",
+                datapoints: convertEvs(r.data.events)
+              }];
 
-                var convertEvs = function convertEvs(evs) {
-                  return evs.map(function (ev) {
-                    return [ev._count, ev._bucket];
-                  });
-                };
+              return r;
+            });
+          }
+        }, {
+          key: '_composeQuery',
+          value: function _composeQuery(queryDt) {
+            var _this = this;
 
-                r.data = [{
-                  target: "_count",
-                  datapoints: convertEvs(r.data.events)
-                }];
-
-                return r;
+            var refresh = this.$location.search().refresh || null;
+            queryDt.isLive = refresh != null;
+            if (refresh) {
+              return this._composeLiveQuery(queryDt);
+            } else {
+              return this._initQuery(queryDt).then(function (r) {
+                return _this._pollQuery(r.data.id);
               });
+            }
+          }
+        }, {
+          key: '_composeLiveQuery',
+          value: function _composeLiveQuery(queryDt) {
+            var _this2 = this;
+
+            if (this.queryParams.queryId == null) {
+              return this._initQuery(queryDt).then(function (r) {
+                _this2.queryParams.queryId = r.data.id;
+                return _this2._pollQuery(r.data.id);
+              });
+            } else {
+              return this._pollQuery(this.queryParams.queryId);
+            }
+          }
+        }, {
+          key: '_initQuery',
+          value: function _initQuery(queryDt) {
+            return this.doRequest({
+              url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs',
+              data: queryDt,
+              method: 'POST'
+            });
+          }
+        }, {
+          key: '_pollQuery',
+          value: function _pollQuery(queryId) {
+            return this.doRequest({
+              url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs/' + queryId,
+              method: 'GET'
             });
           }
         }, {
@@ -135,7 +176,6 @@ System.register(['lodash'], function (_export, _context) {
         }, {
           key: 'annotationQuery',
           value: function annotationQuery(options) {
-            console.log("-> 11");
             var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
             var annotationQuery = {
               range: options.range,
@@ -154,16 +194,12 @@ System.register(['lodash'], function (_export, _context) {
               method: 'POST',
               data: annotationQuery
             }).then(function (result) {
-              console.log("8 ->");
-              console.log(result.data);
               return result.data;
             });
           }
         }, {
           key: 'metricFindQuery',
           value: function metricFindQuery(query) {
-            console.log("-> 13");
-
             // TODO: for now handling only timechart queries
             return [{
               text: "_count",
@@ -173,7 +209,6 @@ System.register(['lodash'], function (_export, _context) {
         }, {
           key: 'mapToTextValue',
           value: function mapToTextValue(result) {
-            console.log("-> 14");
             return _.map(result.data, function (d, i) {
               if (d && d.text && d.value) {
                 return {
@@ -195,7 +230,6 @@ System.register(['lodash'], function (_export, _context) {
         }, {
           key: 'doRequest',
           value: function doRequest(options) {
-            console.log("-> 15");
             options.withCredentials = this.withCredentials;
             options.headers = this.headers;
 
@@ -204,9 +238,8 @@ System.register(['lodash'], function (_export, _context) {
         }, {
           key: 'buildQueryParameters',
           value: function buildQueryParameters(options) {
-            var _this2 = this;
+            var _this3 = this;
 
-            console.log("-> 16");
             //remove placeholder targets
             options.targets = _.filter(options.targets, function (target) {
               return target.target !== 'select metric';
@@ -214,7 +247,7 @@ System.register(['lodash'], function (_export, _context) {
 
             var targets = _.map(options.targets, function (target) {
               return {
-                target: _this2.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+                target: _this3.templateSrv.replace(target.target, options.scopedVars, 'regex'),
                 refId: target.refId,
                 hide: target.hide,
                 type: target.type || 'timeserie'

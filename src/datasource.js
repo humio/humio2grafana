@@ -2,34 +2,44 @@ import _ from "lodash";
 
 export class GenericDatasource {
 
-  constructor(instanceSettings, $q, backendSrv, templateSrv) {
+  constructor(instanceSettings, $q, backendSrv, templateSrv, $location) {
     this.type = instanceSettings.type;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
-    this.token = instanceSettings.jsonData.humioToken;
     this.q = $q;
+    this.$location = $location;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
     this.withCredentials = instanceSettings.withCredentials;
+
+
+    // NOTE: humio specific options
+    this.token = instanceSettings.jsonData.humioToken;
+    this.humioDataspace = instanceSettings.jsonData.humioDataspace;
+
     this.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
     };
+
+    // TODO: remove
     if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
       this.headers['Authorization'] = instanceSettings.basicAuth;
     }
+
+    // NOTE: session query storage
+    this.queryParams = {
+      queryId: null,
+    };
+
   }
 
   query(options) {
 
     var query = this.buildQueryParameters(options);
 
-    console.log(this.url);
-    console.log('1 ->');
-    console.log('6 ->');
-    console.log(this.token);
-    // console.log(options);
-    // console.log(query);
+    console.log('the options ->');
+    console.log(options);
 
     query.targets = query.targets.filter(t => !t.hide);
 
@@ -41,39 +51,66 @@ export class GenericDatasource {
 
     var dt = {
       "queryString": "timechart()",
-      "isLive": false,
       "timeZoneOffsetMinutes": 180,
-      "showQueryEventDistribution": true,
+      "showQueryEventDistribution": false,
       "start": "5m"
     }
 
-    const self = this;
+    let composedQuery = this._composeQuery(dt);
+    return composedQuery.then((r) => {
 
-    return this.doRequest({
-      url: this.url + '/api/v1/dataspaces/humio/queryjobs',
-      data: dt,
-      method: 'POST',
-    }).then((r) => {
+      var convertEvs = (evs) => {
+        return evs.map((ev) => {
+          return [ev._count, ev._bucket];
+        })
+      };
 
-      return self.doRequest({
-        url: this.url + '/api/v1/dataspaces/humio/queryjobs/' + r.data.id,
-        method: 'GET',
-      }).then((r) => {
+      r.data = [{
+        target: "_count",
+        datapoints: convertEvs(r.data.events)
+      }]
 
-        var convertEvs = (evs) => {
-          return evs.map((ev) => {
-            return [ev._count, ev._bucket];
-          })
-        };
+      return r;
 
-        r.data = [{
-          target: "_count",
-          datapoints: convertEvs(r.data.events)
-        }]
-
-        return r;
-      });
     });
+  }
+
+  _composeQuery(queryDt) {
+    let refresh = this.$location.search().refresh || null;
+    queryDt.isLive = refresh != null;
+    if (refresh) {
+      return this._composeLiveQuery(queryDt);
+    } else {
+      return this._initQuery(queryDt).then((r) => {
+        return this._pollQuery(r.data.id);
+      });
+    }
+  }
+
+  _composeLiveQuery(queryDt) {
+    if (this.queryParams.queryId == null) {
+      return this._initQuery(queryDt).then((r) => {
+        this.queryParams.queryId = r.data.id;
+        return this._pollQuery(r.data.id);
+      });
+    } else {
+      return this._pollQuery(this.queryParams.queryId);
+    }
+  }
+
+  _initQuery(queryDt) {
+    return this.doRequest({
+      url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs',
+      data: queryDt,
+      method: 'POST',
+    })
+  }
+
+  _pollQuery(queryId) {
+    return this.doRequest({
+      url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs/' + queryId,
+      method: 'GET',
+    })
   }
 
   testDatasource() {
@@ -93,7 +130,6 @@ export class GenericDatasource {
   }
 
   annotationQuery(options) {
-    console.log("-> 11");
     var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
     var annotationQuery = {
       range: options.range,
@@ -112,15 +148,11 @@ export class GenericDatasource {
       method: 'POST',
       data: annotationQuery
     }).then(result => {
-      console.log("8 ->");
-      console.log(result.data);
       return result.data;
     });
   }
 
   metricFindQuery(query) {
-    console.log("-> 13");
-
     // TODO: for now handling only timechart queries
     return [{
       text: "_count",
@@ -129,7 +161,6 @@ export class GenericDatasource {
   }
 
   mapToTextValue(result) {
-    console.log("-> 14");
     return _.map(result.data, (d, i) => {
       if (d && d.text && d.value) {
         return {
@@ -150,7 +181,6 @@ export class GenericDatasource {
   }
 
   doRequest(options) {
-    console.log("-> 15");
     options.withCredentials = this.withCredentials;
     options.headers = this.headers;
 
@@ -158,7 +188,6 @@ export class GenericDatasource {
   }
 
   buildQueryParameters(options) {
-    console.log("-> 16");
     //remove placeholder targets
     options.targets = _.filter(options.targets, target => {
       return target.target !== 'select metric';
