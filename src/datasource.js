@@ -39,7 +39,7 @@ export class GenericDatasource {
     var query = this.buildQueryParameters(options);
 
     console.log('the options ->');
-    console.log(options);
+    console.log(options.range.raw);
 
     query.targets = query.targets.filter(t => !t.hide);
 
@@ -56,12 +56,13 @@ export class GenericDatasource {
       "start": "5m"
     }
 
-    let composedQuery = this._composeQuery(dt);
+
+    let composedQuery = this._composeQuery(dt, options);
     return composedQuery.then((r) => {
 
       var convertEvs = (evs) => {
         return evs.map((ev) => {
-          return [ev._count, ev._bucket];
+          return [ev._count, parseInt(ev._bucket)];
         })
       };
 
@@ -75,8 +76,16 @@ export class GenericDatasource {
     });
   }
 
-  _composeQuery(queryDt) {
+  _composeQuery(queryDt, grafanaQueryOpts) {
     let refresh = this.$location.search().refresh || null;
+
+    // NOTE: handling custom date range
+    if ((typeof grafanaQueryOpts.range.raw.from != "string") &&
+      (typeof grafanaQueryOpts.range.raw.to != "string") && refresh == null) {
+      queryDt.start = grafanaQueryOpts.range.raw.from._d.getTime();
+      queryDt.end = grafanaQueryOpts.range.raw.to._d.getTime();
+    }
+
     queryDt.isLive = refresh != null;
     if (refresh) {
       return this._composeLiveQuery(queryDt);

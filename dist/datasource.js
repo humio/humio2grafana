@@ -74,7 +74,7 @@ System.register(['lodash'], function (_export, _context) {
             var query = this.buildQueryParameters(options);
 
             console.log('the options ->');
-            console.log(options);
+            console.log(options.range.raw);
 
             query.targets = query.targets.filter(function (t) {
               return !t.hide;
@@ -93,12 +93,12 @@ System.register(['lodash'], function (_export, _context) {
               "start": "5m"
             };
 
-            var composedQuery = this._composeQuery(dt);
+            var composedQuery = this._composeQuery(dt, options);
             return composedQuery.then(function (r) {
 
               var convertEvs = function convertEvs(evs) {
                 return evs.map(function (ev) {
-                  return [ev._count, ev._bucket];
+                  return [ev._count, parseInt(ev._bucket)];
                 });
               };
 
@@ -112,10 +112,17 @@ System.register(['lodash'], function (_export, _context) {
           }
         }, {
           key: '_composeQuery',
-          value: function _composeQuery(queryDt) {
+          value: function _composeQuery(queryDt, grafanaQueryOpts) {
             var _this = this;
 
             var refresh = this.$location.search().refresh || null;
+
+            // NOTE: handling custom date range
+            if (typeof grafanaQueryOpts.range.raw.from != "string" && typeof grafanaQueryOpts.range.raw.to != "string" && refresh == null) {
+              queryDt.start = grafanaQueryOpts.range.raw.from._d.getTime();
+              queryDt.end = grafanaQueryOpts.range.raw.to._d.getTime();
+            }
+
             queryDt.isLive = refresh != null;
             if (refresh) {
               return this._composeLiveQuery(queryDt);
