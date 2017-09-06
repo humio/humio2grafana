@@ -6,12 +6,11 @@ export class GenericDatasource {
     this.type = instanceSettings.type;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
-    this.q = $q;
+    this.$q = $q;
     this.$location = $location;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
     this.withCredentials = instanceSettings.withCredentials;
-
 
     // NOTE: humio specific options
     this.token = instanceSettings.jsonData.humioToken;
@@ -30,6 +29,7 @@ export class GenericDatasource {
     // NOTE: session query storage
     this.queryParams = {
       queryId: null,
+      isLive: false
     };
 
   }
@@ -38,13 +38,13 @@ export class GenericDatasource {
 
     var query = this.buildQueryParameters(options);
 
-    console.log('the options ->');
-    console.log(options.range.raw);
+    // console.log('the options ->');
+    // console.log(options.range.raw);
 
     query.targets = query.targets.filter(t => !t.hide);
 
     if (query.targets.length <= 0) {
-      return this.q.when({
+      return this.$q.when({
         data: []
       });
     }
@@ -57,42 +57,66 @@ export class GenericDatasource {
     }
 
 
-    let composedQuery = this._composeQuery(dt, options);
-    return composedQuery.then((r) => {
+    return this.$q((resolve, reject) => {
+      let composedQuery = this._composeQuery(dt, options);
+      let handleRes = (r) => {
+        if (r.data.done) {
+          console.log('query done');
+          this.queryParams.queryId = this.queryParams.isLive ? this.queryParams.queryId : null;
+          var convertEvs = (evs) => {
+            return evs.map((ev) => {
+              return [ev._count, parseInt(ev._bucket)];
+            })
+          };
 
-      var convertEvs = (evs) => {
-        return evs.map((ev) => {
-          return [ev._count, parseInt(ev._bucket)];
-        })
-      };
-
-      r.data = [{
-        target: "_count",
-        datapoints: convertEvs(r.data.events)
-      }]
-
-      return r;
-
+          r.data = [{
+            target: "_count",
+            datapoints: convertEvs(r.data.events)
+          }];
+          resolve(r);
+        } else {
+          console.log('query running...');
+          console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
+          setTimeout(() => {
+            let composedQuery2 = this._composeQuery(dt, options);
+            composedQuery2.then(handleRes);
+          }, 1000);
+        }
+      }
+      composedQuery.then(handleRes);
     });
   }
 
   _composeQuery(queryDt, grafanaQueryOpts) {
     let refresh = this.$location.search().refresh || null;
+    let range = grafanaQueryOpts.range;
 
-    // NOTE: handling custom date range
-    if ((typeof grafanaQueryOpts.range.raw.from != "string") &&
-      (typeof grafanaQueryOpts.range.raw.to != "string") && refresh == null) {
-      queryDt.start = grafanaQueryOpts.range.raw.from._d.getTime();
-      queryDt.end = grafanaQueryOpts.range.raw.to._d.getTime();
+    let checkToDateNow = (toDateCheck) => {
+      if (typeof toDateCheck == "string") {
+        return toDateCheck.match(/^(now[^-]|now$)/) != null;
+      } else {
+        return false;
+      }
     }
 
-    queryDt.isLive = refresh != null;
-    if (refresh) {
+    queryDt.isLive = ((refresh != null) && (checkToDateNow(range.raw.to)));
+
+    // NOTE: setting date range
+    if (queryDt.isLive) {
+      queryDt.start = this._parseDateFrom(range.raw.from);
       return this._composeLiveQuery(queryDt);
     } else {
-      return this._initQuery(queryDt).then((r) => {
-        return this._pollQuery(r.data.id);
-      });
+      if (this.queryParams.queryId != null) {
+        return this._pollQuery(this.queryParams.queryId);
+      } else {
+        queryDt.start = range.from._d.getTime();
+        queryDt.end = range.to._d.getTime();
+        return this._initQuery(queryDt).then((r) => {
+          this.queryParams.queryId = r.data.id;
+          this.queryParams.isLive = false;
+          return this._pollQuery(r.data.id);
+        });
+      }
     }
   }
 
@@ -100,6 +124,7 @@ export class GenericDatasource {
     if (this.queryParams.queryId == null) {
       return this._initQuery(queryDt).then((r) => {
         this.queryParams.queryId = r.data.id;
+        this.queryParams.isLive = true;
         return this._pollQuery(r.data.id);
       });
     } else {
@@ -214,5 +239,145 @@ export class GenericDatasource {
     options.targets = targets;
 
     return options;
+  }
+
+  _parseDateFrom(date) {
+    switch (date) {
+      case 'now-2d':
+        {
+          return '2d';
+        }
+        break;
+      case 'now-7d':
+        {
+          return '7d';
+        }
+        break;
+      case 'now-30d':
+        {
+          return '30d';
+        }
+        break;
+      case 'now-90d':
+        {
+          return '90d';
+        }
+        break;
+      case 'now-6M':
+        {
+          return '180d';
+        }
+        break;
+      case 'now-1y':
+        {
+          return '1y';
+        }
+        break;
+      case 'now-2y':
+        {
+          return '2y';
+        }
+        break;
+      case 'now-5y':
+        {
+          return '5y';
+        }
+        break;
+      case 'now-1d/d':
+        {
+          return '1d';
+        }
+        break;
+      case 'now-2d/d':
+        {
+          return '2d';
+        }
+        break;
+      case 'now-7d/d':
+        {
+          return '7d';
+        }
+        break;
+      case 'now-1w/w':
+        {
+          return '7d';
+        }
+        break;
+      case 'now-1M/M':
+        {
+          return '1m';
+        }
+        break;
+      case 'now-1y/y':
+        {
+          return '1y';
+        }
+        break;
+      case 'now/d':
+        {
+          return '1d';
+        }
+        break;
+      case 'now/w':
+        {
+          return '7d';
+        }
+        break;
+      case 'now/M':
+        {
+          return '1m';
+        }
+        break;
+      case 'now/y':
+        {
+          return '1y';
+        }
+        break;
+      case 'now-5m':
+        {
+          return '5m';
+        }
+        break;
+      case 'now-15m':
+        {
+          return '15m';
+        }
+        break;
+      case 'now-30m':
+        {
+          return '30m';
+        }
+        break;
+      case 'now-1h':
+        {
+          return '1h';
+        }
+        break;
+      case 'now-3h':
+        {
+          return '3h';
+        }
+        break;
+      case 'now-6h':
+        {
+          return '6h';
+        }
+        break;
+      case 'now-12h':
+        {
+          return '12h';
+        }
+        break;
+      case 'now-24h':
+        {
+          return '24h';
+        }
+        break;
+      default:
+        {
+          return '24h';
+        }
+        break;
+    }
   }
 }
