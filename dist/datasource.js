@@ -90,38 +90,32 @@ System.register(['lodash'], function (_export, _context) {
 
             var dt = {
               "queryString": "timechart()",
-              "timeZoneOffsetMinutes": 180,
+              "timeZoneOffsetMinutes": -new Date().getTimezoneOffset(),
               "showQueryEventDistribution": false,
-              "start": "5m"
+              "start": "24h"
             };
 
             return this.$q(function (resolve, reject) {
-              var composedQuery = _this._composeQuery(dt, options);
               var handleRes = function handleRes(r) {
                 if (r.data.done) {
                   console.log('query done');
                   _this.queryParams.queryId = _this.queryParams.isLive ? _this.queryParams.queryId : null;
-                  var convertEvs = function convertEvs(evs) {
-                    return evs.map(function (ev) {
-                      return [ev._count, parseInt(ev._bucket)];
-                    });
-                  };
-
                   r.data = [{
                     target: "_count",
-                    datapoints: convertEvs(r.data.events)
+                    datapoints: r.data.events.map(function (ev) {
+                      return [ev._count, parseInt(ev._bucket)];
+                    })
                   }];
                   resolve(r);
                 } else {
                   console.log('query running...');
                   console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
                   setTimeout(function () {
-                    var composedQuery2 = _this._composeQuery(dt, options);
-                    composedQuery2.then(handleRes);
+                    _this._composeQuery(dt, options).then(handleRes);
                   }, 1000);
                 }
               };
-              composedQuery.then(handleRes);
+              _this._composeQuery(dt, options).then(handleRes);
             });
           }
         }, {
@@ -141,6 +135,9 @@ System.register(['lodash'], function (_export, _context) {
             };
 
             queryDt.isLive = refresh != null && checkToDateNow(range.raw.to);
+            if (queryDt.isLive != this.queryParams.isLive) {
+              this.queryParams.queryId = null;
+            }
 
             // NOTE: setting date range
             if (queryDt.isLive) {

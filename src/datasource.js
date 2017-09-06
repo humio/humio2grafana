@@ -51,39 +51,32 @@ export class GenericDatasource {
 
     var dt = {
       "queryString": "timechart()",
-      "timeZoneOffsetMinutes": 180,
+      "timeZoneOffsetMinutes": -(new Date()).getTimezoneOffset(),
       "showQueryEventDistribution": false,
-      "start": "5m"
+      "start": "24h"
     }
 
-
     return this.$q((resolve, reject) => {
-      let composedQuery = this._composeQuery(dt, options);
       let handleRes = (r) => {
         if (r.data.done) {
           console.log('query done');
           this.queryParams.queryId = this.queryParams.isLive ? this.queryParams.queryId : null;
-          var convertEvs = (evs) => {
-            return evs.map((ev) => {
-              return [ev._count, parseInt(ev._bucket)];
-            })
-          };
-
           r.data = [{
             target: "_count",
-            datapoints: convertEvs(r.data.events)
+            datapoints: r.data.events.map((ev) => {
+              return [ev._count, parseInt(ev._bucket)];
+            })
           }];
           resolve(r);
         } else {
           console.log('query running...');
           console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
           setTimeout(() => {
-            let composedQuery2 = this._composeQuery(dt, options);
-            composedQuery2.then(handleRes);
+            this._composeQuery(dt, options).then(handleRes);
           }, 1000);
         }
       }
-      composedQuery.then(handleRes);
+      this._composeQuery(dt, options).then(handleRes);
     });
   }
 
@@ -100,6 +93,9 @@ export class GenericDatasource {
     }
 
     queryDt.isLive = ((refresh != null) && (checkToDateNow(range.raw.to)));
+    if (queryDt.isLive != this.queryParams.isLive) {
+      this.queryParams.queryId = null;
+    }
 
     // NOTE: setting date range
     if (queryDt.isLive) {
