@@ -36,10 +36,8 @@ export class GenericDatasource {
 
   query(options) {
 
+    let humioQuery = options.targets[0].humioQuery;
     var query = this.buildQueryParameters(options);
-
-    // console.log('the options ->');
-    // console.log(options.range.raw);
 
     query.targets = query.targets.filter(t => !t.hide);
 
@@ -50,7 +48,7 @@ export class GenericDatasource {
     }
 
     var dt = {
-      "queryString": "timechart()",
+      "queryString": humioQuery,
       "timeZoneOffsetMinutes": -(new Date()).getTimezoneOffset(),
       "showQueryEventDistribution": false,
       "start": "24h"
