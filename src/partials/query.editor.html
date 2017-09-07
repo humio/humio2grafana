@@ -1,25 +1,9 @@
-<query-editor-row query-ctrl="ctrl" class="generic-datasource-query-row" has-text-edit-mode="true">
+<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
   <div class="gf-form-inline">
-    <!-- <div class="gf-form max-width-8">
-      <select class="gf-form-input" ng-model="ctrl.target.type" ng-options="f as f for f in ['table', 'timeserie']"></select>
-    </div> -->
-
-    <div class="gf-form" ng-if="ctrl.target.rawQuery">
-      <textarea class="gf-form-input" rows="5" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.onChangeInternal()" />
+    <div class="gf-form gf-form--grow">
+      <textarea class="gf-form-input" ng-model="ctrl.target.humioQuery" on-change="ctrl.onChangeInternal()"
+        data-min-length=0 data-items=100 ng-model-onblur spellcheck="false" rows="3">
+      </textarea>
     </div>
-
-    <div ng-if="!ctrl.target.rawQuery">
-      <div class="gf-form">
-        <gf-form-dropdown model="ctrl.target.target" lookup-text="true" get-options="ctrl.getOptions($query)" on-change="ctrl.onChangeInternal()">
-        </gf-form-dropdown>
-        <!-- <input type="text" class="gf-form-input" ng-model='ctrl.current.humioQuery' placeholder="" ng-change="ctrl.onChangeInternal()">
-        </input> -->
-      </div>
-    </div>
-    <div class="gf-form">
-      <input type="text" class="gf-form-input" ng-model='ctrl.target.humioQuery' placeholder="" ng-change="ctrl.onChangeInternal()">
-      </input>
-    </div>
-
   </div>
 </query-editor-row>

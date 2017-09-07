@@ -98,12 +98,40 @@ System.register(['lodash'], function (_export, _context) {
                 if (r.data.done) {
                   console.log('query done');
                   _this.queryParams.queryId = _this.queryParams.isLive ? _this.queryParams.queryId : null;
-                  r.data = [{
-                    target: "_count",
-                    datapoints: r.data.events.map(function (ev) {
-                      return [ev._count, parseInt(ev._bucket)];
-                    })
-                  }];
+
+                  var _dt = _.clone(r.data);
+                  var timeseriesField = "_bucket";
+                  var seriesField = _dt.metaData.extraData.series;
+                  var series = {};
+                  var valueField = _.filter(_dt.metaData.fields, function (f) {
+                    return f.name != timeseriesField && f.name != seriesField;
+                  })[0].name;
+
+                  if (seriesField) {
+                    for (var i = 0; i < r.data.events.length; i++) {
+                      var ev = r.data.events[i];
+                      if (!series[ev[seriesField]]) {
+                        series[ev[seriesField]] = [[ev[valueField], parseInt(ev._bucket)]];
+                      } else {
+                        series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+                      }
+                    }
+
+                    r.data = _.keys(series).map(function (s) {
+                      return {
+                        target: s,
+                        datapoints: series[s]
+                      };
+                    });
+                  } else {
+                    r.data = [{
+                      target: valueField,
+                      datapoints: _dt.events.map(function (ev) {
+                        return [ev[valueField], parseInt(ev._bucket)];
+                      })
+                    }];
+                  }
+
                   resolve(r);
                 } else {
                   console.log('query running...');
@@ -207,6 +235,7 @@ System.register(['lodash'], function (_export, _context) {
         }, {
           key: 'annotationQuery',
           value: function annotationQuery(options) {
+            console.log('annotationQuery -> ');
             var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
             var annotationQuery = {
               range: options.range,
@@ -226,36 +255,6 @@ System.register(['lodash'], function (_export, _context) {
               data: annotationQuery
             }).then(function (result) {
               return result.data;
-            });
-          }
-        }, {
-          key: 'metricFindQuery',
-          value: function metricFindQuery(query) {
-            // TODO: for now handling only timechart queries
-            return [{
-              text: "_count",
-              value: "_count"
-            }];
-          }
-        }, {
-          key: 'mapToTextValue',
-          value: function mapToTextValue(result) {
-            return _.map(result.data, function (d, i) {
-              if (d && d.text && d.value) {
-                return {
-                  text: d.text,
-                  value: d.value
-                };
-              } else if (_.isObject(d)) {
-                return {
-                  text: d,
-                  value: i
-                };
-              }
-              return {
-                text: d,
-                value: d
-              };
             });
           }
         }, {

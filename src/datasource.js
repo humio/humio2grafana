@@ -59,12 +59,42 @@ export class GenericDatasource {
         if (r.data.done) {
           console.log('query done');
           this.queryParams.queryId = this.queryParams.isLive ? this.queryParams.queryId : null;
-          r.data = [{
-            target: "_count",
-            datapoints: r.data.events.map((ev) => {
-              return [ev._count, parseInt(ev._bucket)];
+
+          let dt = _.clone(r.data);
+          let timeseriesField = "_bucket";
+          let seriesField = dt.metaData.extraData.series;
+          let series = {};
+          let valueField = _.filter(dt.metaData.fields, (f) => {
+            return f.name != timeseriesField && f.name != seriesField;
+          })[0].name;
+
+          if (seriesField) {
+            for (let i = 0; i < r.data.events.length; i++) {
+              let ev = r.data.events[i];
+              if (!series[ev[seriesField]]) {
+                series[ev[seriesField]] = [
+                  [ev[valueField], parseInt(ev._bucket)]
+                ];
+              } else {
+                series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+              }
+            }
+
+            r.data = _.keys(series).map((s) => {
+              return {
+                target: s,
+                datapoints: series[s]
+              }
             })
-          }];
+          } else {
+            r.data = [{
+              target: valueField,
+              datapoints: dt.events.map((ev) => {
+                return [ev[valueField], parseInt(ev._bucket)];
+              })
+            }];
+          }
+
           resolve(r);
         } else {
           console.log('query running...');
@@ -158,6 +188,7 @@ export class GenericDatasource {
   }
 
   annotationQuery(options) {
+    console.log('annotationQuery -> ');
     var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
     var annotationQuery = {
       range: options.range,
@@ -180,33 +211,35 @@ export class GenericDatasource {
     });
   }
 
-  metricFindQuery(query) {
-    // TODO: for now handling only timechart queries
-    return [{
-      text: "_count",
-      value: "_count",
-    }];
-  }
+  // metricFindQuery(query) {
+  //   console.log("the query ->");
+  //   console.log(query);
+  //   // TODO: for now handling only timechart queries
+  //   return [{
+  //     text: "_count",
+  //     value: "_count",
+  //   }];
+  // }
 
-  mapToTextValue(result) {
-    return _.map(result.data, (d, i) => {
-      if (d && d.text && d.value) {
-        return {
-          text: d.text,
-          value: d.value
-        };
-      } else if (_.isObject(d)) {
-        return {
-          text: d,
-          value: i
-        };
-      }
-      return {
-        text: d,
-        value: d
-      };
-    });
-  }
+  // mapToTextValue(result) {
+  //   return _.map(result.data, (d, i) => {
+  //     if (d && d.text && d.value) {
+  //       return {
+  //         text: d.text,
+  //         value: d.value
+  //       };
+  //     } else if (_.isObject(d)) {
+  //       return {
+  //         text: d,
+  //         value: i
+  //       };
+  //     }
+  //     return {
+  //       text: d,
+  //       value: d
+  //     };
+  //   });
+  // }
 
   doRequest(options) {
     options.withCredentials = this.withCredentials;
