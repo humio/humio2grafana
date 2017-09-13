@@ -22,26 +22,28 @@ export class GenericDatasource {
     };
 
     // TODO: remove
-    if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
-      this.headers['Authorization'] = instanceSettings.basicAuth;
-    }
+    // if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
+    //   this.headers['Authorization'] = instanceSettings.basicAuth;
+    // }
 
     // NOTE: session query storage
-    this.queryParams = {
-      queryId: null,
-      isLive: false
-    };
+    this.queryParams = {};
 
   }
 
   query(options) {
+    console.log(options);
 
+    let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
     var query = this.buildQueryParameters(options);
 
     query.targets = query.targets.filter(t => !t.hide);
 
-    if (query.targets.length <= 0) {
+    console.log('===========================================>');
+    console.log(humioQuery);
+
+    if (!this.humioDataspace || !humioQuery) {
       return this.$q.when({
         data: []
       });
@@ -55,10 +57,17 @@ export class GenericDatasource {
     }
 
     return this.$q((resolve, reject) => {
+
+      this.queryParams[panelId] = this.queryParams[panelId] ? this.queryParams[panelId] : {
+        queryId: null,
+        isLive: false
+      };
+
       let handleRes = (r) => {
         if (r.data.done) {
           console.log('query done');
-          this.queryParams.queryId = this.queryParams.isLive ? this.queryParams.queryId : null;
+
+          this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ? this.queryParams[panelId].queryId : null;
 
           let dt = _.clone(r.data);
           let timeseriesField = "_bucket";
@@ -100,15 +109,16 @@ export class GenericDatasource {
           console.log('query running...');
           console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
           setTimeout(() => {
-            this._composeQuery(dt, options).then(handleRes);
+            this._composeQuery(panelId, dt, options).then(handleRes);
           }, 1000);
         }
       }
-      this._composeQuery(dt, options).then(handleRes);
+      this._composeQuery(panelId, dt, options).then(handleRes);
     });
   }
 
-  _composeQuery(queryDt, grafanaQueryOpts) {
+  _composeQuery(panelId, queryDt, grafanaQueryOpts) {
+
     let refresh = this.$location.search().refresh || null;
     let range = grafanaQueryOpts.range;
 
@@ -121,38 +131,38 @@ export class GenericDatasource {
     }
 
     queryDt.isLive = ((refresh != null) && (checkToDateNow(range.raw.to)));
-    if (queryDt.isLive != this.queryParams.isLive) {
-      this.queryParams.queryId = null;
+    if (queryDt.isLive != this.queryParams[panelId].isLive) {
+      this.queryParams[panelId].queryId = null;
     }
 
     // NOTE: setting date range
     if (queryDt.isLive) {
       queryDt.start = this._parseDateFrom(range.raw.from);
-      return this._composeLiveQuery(queryDt);
+      return this._composeLiveQuery(panelId, queryDt);
     } else {
-      if (this.queryParams.queryId != null) {
-        return this._pollQuery(this.queryParams.queryId);
+      if (this.queryParams[panelId].queryId != null) {
+        return this._pollQuery(this.queryParams[panelId].queryId);
       } else {
         queryDt.start = range.from._d.getTime();
         queryDt.end = range.to._d.getTime();
         return this._initQuery(queryDt).then((r) => {
-          this.queryParams.queryId = r.data.id;
-          this.queryParams.isLive = false;
+          this.queryParams[panelId].queryId = r.data.id;
+          this.queryParams[panelId].isLive = false;
           return this._pollQuery(r.data.id);
         });
       }
     }
   }
 
-  _composeLiveQuery(queryDt) {
-    if (this.queryParams.queryId == null) {
+  _composeLiveQuery(panelId, queryDt) {
+    if (this.queryParams[panelId].queryId == null) {
       return this._initQuery(queryDt).then((r) => {
-        this.queryParams.queryId = r.data.id;
-        this.queryParams.isLive = true;
+        this.queryParams[panelId].queryId = r.data.id;
+        this.queryParams[panelId].isLive = true;
         return this._pollQuery(r.data.id);
       });
     } else {
-      return this._pollQuery(this.queryParams.queryId);
+      return this._pollQuery(this.queryParams[panelId].queryId);
     }
   }
 

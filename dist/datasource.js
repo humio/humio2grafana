@@ -57,15 +57,12 @@ System.register(['lodash'], function (_export, _context) {
           };
 
           // TODO: remove
-          if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
-            this.headers['Authorization'] = instanceSettings.basicAuth;
-          }
+          // if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
+          //   this.headers['Authorization'] = instanceSettings.basicAuth;
+          // }
 
           // NOTE: session query storage
-          this.queryParams = {
-            queryId: null,
-            isLive: false
-          };
+          this.queryParams = {};
         }
 
         _createClass(GenericDatasource, [{
@@ -73,6 +70,9 @@ System.register(['lodash'], function (_export, _context) {
           value: function query(options) {
             var _this = this;
 
+            console.log(options);
+
+            var panelId = options.panelId;
             var humioQuery = options.targets[0].humioQuery;
             var query = this.buildQueryParameters(options);
 
@@ -80,7 +80,10 @@ System.register(['lodash'], function (_export, _context) {
               return !t.hide;
             });
 
-            if (query.targets.length <= 0) {
+            console.log('===========================================>');
+            console.log(humioQuery);
+
+            if (!this.humioDataspace || !humioQuery) {
               return this.$q.when({
                 data: []
               });
@@ -94,10 +97,17 @@ System.register(['lodash'], function (_export, _context) {
             };
 
             return this.$q(function (resolve, reject) {
+
+              _this.queryParams[panelId] = _this.queryParams[panelId] ? _this.queryParams[panelId] : {
+                queryId: null,
+                isLive: false
+              };
+
               var handleRes = function handleRes(r) {
                 if (r.data.done) {
                   console.log('query done');
-                  _this.queryParams.queryId = _this.queryParams.isLive ? _this.queryParams.queryId : null;
+
+                  _this.queryParams[panelId].queryId = _this.queryParams[panelId].isLive ? _this.queryParams[panelId].queryId : null;
 
                   var _dt = _.clone(r.data);
                   var timeseriesField = "_bucket";
@@ -137,16 +147,16 @@ System.register(['lodash'], function (_export, _context) {
                   console.log('query running...');
                   console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
                   setTimeout(function () {
-                    _this._composeQuery(dt, options).then(handleRes);
+                    _this._composeQuery(panelId, dt, options).then(handleRes);
                   }, 1000);
                 }
               };
-              _this._composeQuery(dt, options).then(handleRes);
+              _this._composeQuery(panelId, dt, options).then(handleRes);
             });
           }
         }, {
           key: '_composeQuery',
-          value: function _composeQuery(queryDt, grafanaQueryOpts) {
+          value: function _composeQuery(panelId, queryDt, grafanaQueryOpts) {
             var _this2 = this;
 
             var refresh = this.$location.search().refresh || null;
@@ -161,23 +171,23 @@ System.register(['lodash'], function (_export, _context) {
             };
 
             queryDt.isLive = refresh != null && checkToDateNow(range.raw.to);
-            if (queryDt.isLive != this.queryParams.isLive) {
-              this.queryParams.queryId = null;
+            if (queryDt.isLive != this.queryParams[panelId].isLive) {
+              this.queryParams[panelId].queryId = null;
             }
 
             // NOTE: setting date range
             if (queryDt.isLive) {
               queryDt.start = this._parseDateFrom(range.raw.from);
-              return this._composeLiveQuery(queryDt);
+              return this._composeLiveQuery(panelId, queryDt);
             } else {
-              if (this.queryParams.queryId != null) {
-                return this._pollQuery(this.queryParams.queryId);
+              if (this.queryParams[panelId].queryId != null) {
+                return this._pollQuery(this.queryParams[panelId].queryId);
               } else {
                 queryDt.start = range.from._d.getTime();
                 queryDt.end = range.to._d.getTime();
                 return this._initQuery(queryDt).then(function (r) {
-                  _this2.queryParams.queryId = r.data.id;
-                  _this2.queryParams.isLive = false;
+                  _this2.queryParams[panelId].queryId = r.data.id;
+                  _this2.queryParams[panelId].isLive = false;
                   return _this2._pollQuery(r.data.id);
                 });
               }
@@ -185,17 +195,17 @@ System.register(['lodash'], function (_export, _context) {
           }
         }, {
           key: '_composeLiveQuery',
-          value: function _composeLiveQuery(queryDt) {
+          value: function _composeLiveQuery(panelId, queryDt) {
             var _this3 = this;
 
-            if (this.queryParams.queryId == null) {
+            if (this.queryParams[panelId].queryId == null) {
               return this._initQuery(queryDt).then(function (r) {
-                _this3.queryParams.queryId = r.data.id;
-                _this3.queryParams.isLive = true;
+                _this3.queryParams[panelId].queryId = r.data.id;
+                _this3.queryParams[panelId].isLive = true;
                 return _this3._pollQuery(r.data.id);
               });
             } else {
-              return this._pollQuery(this.queryParams.queryId);
+              return this._pollQuery(this.queryParams[panelId].queryId);
             }
           }
         }, {
