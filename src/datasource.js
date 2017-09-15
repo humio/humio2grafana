@@ -4,46 +4,40 @@ export class GenericDatasource {
 
   constructor(instanceSettings, $q, backendSrv, templateSrv, $location) {
     this.type = instanceSettings.type;
-    this.url = instanceSettings.url;
+    this.url = instanceSettings.url.replace(/\/$/, '');
     this.name = instanceSettings.name;
+
     this.$q = $q;
     this.$location = $location;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
     this.withCredentials = instanceSettings.withCredentials;
 
-    // NOTE: humio specific options
-    this.token = instanceSettings.jsonData.humioToken;
-    this.humioDataspace = instanceSettings.jsonData.humioDataspace;
-
     this.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
     };
 
-    // TODO: remove
-    // if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
-    //   this.headers['Authorization'] = instanceSettings.basicAuth;
-    // }
-
     // NOTE: session query storage
     this.queryParams = {};
-
   }
 
   query(options) {
     console.log(options);
+    // let tgts = _.clone(options.targets);
+    // console.log(tgts);
 
     let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
-    var query = this.buildQueryParameters(options);
+    let humioDataspace = options.targets[0].humioDataspace;
+    var query = this.buildQueryParameters(options); // TODO: not sure if we need this
 
     query.targets = query.targets.filter(t => !t.hide);
 
-    console.log('===========================================>');
-    console.log(humioQuery);
+    // console.log('===========================================>');
+    // console.log(humioQuery);
 
-    if (!this.humioDataspace || !humioQuery) {
+    if (!humioDataspace || !humioQuery) {
       return this.$q.when({
         data: []
       });
@@ -109,15 +103,15 @@ export class GenericDatasource {
           console.log('query running...');
           console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
           setTimeout(() => {
-            this._composeQuery(panelId, dt, options).then(handleRes);
+            this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes);
           }, 1000);
         }
       }
-      this._composeQuery(panelId, dt, options).then(handleRes);
+      this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes);
     });
   }
 
-  _composeQuery(panelId, queryDt, grafanaQueryOpts) {
+  _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace) {
 
     let refresh = this.$location.search().refresh || null;
     let range = grafanaQueryOpts.range;
@@ -138,45 +132,45 @@ export class GenericDatasource {
     // NOTE: setting date range
     if (queryDt.isLive) {
       queryDt.start = this._parseDateFrom(range.raw.from);
-      return this._composeLiveQuery(panelId, queryDt);
+      return this._composeLiveQuery(panelId, queryDt, humioDataspace);
     } else {
       if (this.queryParams[panelId].queryId != null) {
-        return this._pollQuery(this.queryParams[panelId].queryId);
+        return this._pollQuery(this.queryParams[panelId].queryId, humioDataspace);
       } else {
         queryDt.start = range.from._d.getTime();
         queryDt.end = range.to._d.getTime();
-        return this._initQuery(queryDt).then((r) => {
+        return this._initQuery(queryDt, humioDataspace).then((r) => {
           this.queryParams[panelId].queryId = r.data.id;
           this.queryParams[panelId].isLive = false;
-          return this._pollQuery(r.data.id);
+          return this._pollQuery(r.data.id, humioDataspace);
         });
       }
     }
   }
 
-  _composeLiveQuery(panelId, queryDt) {
+  _composeLiveQuery(panelId, queryDt, humioDataspace) {
     if (this.queryParams[panelId].queryId == null) {
-      return this._initQuery(queryDt).then((r) => {
+      return this._initQuery(queryDt, humioDataspace).then((r) => {
         this.queryParams[panelId].queryId = r.data.id;
         this.queryParams[panelId].isLive = true;
-        return this._pollQuery(r.data.id);
+        return this._pollQuery(r.data.id, humioDataspace);
       });
     } else {
-      return this._pollQuery(this.queryParams[panelId].queryId);
+      return this._pollQuery(this.queryParams[panelId].queryId, humioDataspace);
     }
   }
 
-  _initQuery(queryDt) {
+  _initQuery(queryDt, humioDataspace) {
     return this.doRequest({
-      url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs',
+      url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs',
       data: queryDt,
       method: 'POST',
     })
   }
 
-  _pollQuery(queryId) {
+  _pollQuery(queryId, humioDataspace) {
     return this.doRequest({
-      url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs/' + queryId,
+      url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs/' + queryId,
       method: 'GET',
     })
   }
@@ -254,10 +248,10 @@ export class GenericDatasource {
   doRequest(options) {
     options.withCredentials = this.withCredentials;
     options.headers = this.headers;
-
     return this.backendSrv.datasourceRequest(options);
   }
 
+  // TODO: check if needed
   buildQueryParameters(options) {
     //remove placeholder targets
     options.targets = _.filter(options.targets, target => {
@@ -277,6 +271,7 @@ export class GenericDatasource {
 
     return options;
   }
+
 
   _parseDateFrom(date) {
     switch (date) {

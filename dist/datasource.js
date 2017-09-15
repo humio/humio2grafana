@@ -39,27 +39,19 @@ System.register(['lodash'], function (_export, _context) {
           _classCallCheck(this, GenericDatasource);
 
           this.type = instanceSettings.type;
-          this.url = instanceSettings.url;
+          this.url = instanceSettings.url.replace(/\/$/, '');
           this.name = instanceSettings.name;
+
           this.$q = $q;
           this.$location = $location;
           this.backendSrv = backendSrv;
           this.templateSrv = templateSrv;
           this.withCredentials = instanceSettings.withCredentials;
 
-          // NOTE: humio specific options
-          this.token = instanceSettings.jsonData.humioToken;
-          this.humioDataspace = instanceSettings.jsonData.humioDataspace;
-
           this.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
           };
-
-          // TODO: remove
-          // if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
-          //   this.headers['Authorization'] = instanceSettings.basicAuth;
-          // }
 
           // NOTE: session query storage
           this.queryParams = {};
@@ -71,19 +63,22 @@ System.register(['lodash'], function (_export, _context) {
             var _this = this;
 
             console.log(options);
+            // let tgts = _.clone(options.targets);
+            // console.log(tgts);
 
             var panelId = options.panelId;
             var humioQuery = options.targets[0].humioQuery;
-            var query = this.buildQueryParameters(options);
+            var humioDataspace = options.targets[0].humioDataspace;
+            var query = this.buildQueryParameters(options); // TODO: not sure if we need this
 
             query.targets = query.targets.filter(function (t) {
               return !t.hide;
             });
 
-            console.log('===========================================>');
-            console.log(humioQuery);
+            // console.log('===========================================>');
+            // console.log(humioQuery);
 
-            if (!this.humioDataspace || !humioQuery) {
+            if (!humioDataspace || !humioQuery) {
               return this.$q.when({
                 data: []
               });
@@ -147,16 +142,16 @@ System.register(['lodash'], function (_export, _context) {
                   console.log('query running...');
                   console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
                   setTimeout(function () {
-                    _this._composeQuery(panelId, dt, options).then(handleRes);
+                    _this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes);
                   }, 1000);
                 }
               };
-              _this._composeQuery(panelId, dt, options).then(handleRes);
+              _this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes);
             });
           }
         }, {
           key: '_composeQuery',
-          value: function _composeQuery(panelId, queryDt, grafanaQueryOpts) {
+          value: function _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace) {
             var _this2 = this;
 
             var refresh = this.$location.search().refresh || null;
@@ -178,50 +173,50 @@ System.register(['lodash'], function (_export, _context) {
             // NOTE: setting date range
             if (queryDt.isLive) {
               queryDt.start = this._parseDateFrom(range.raw.from);
-              return this._composeLiveQuery(panelId, queryDt);
+              return this._composeLiveQuery(panelId, queryDt, humioDataspace);
             } else {
               if (this.queryParams[panelId].queryId != null) {
-                return this._pollQuery(this.queryParams[panelId].queryId);
+                return this._pollQuery(this.queryParams[panelId].queryId, humioDataspace);
               } else {
                 queryDt.start = range.from._d.getTime();
                 queryDt.end = range.to._d.getTime();
-                return this._initQuery(queryDt).then(function (r) {
+                return this._initQuery(queryDt, humioDataspace).then(function (r) {
                   _this2.queryParams[panelId].queryId = r.data.id;
                   _this2.queryParams[panelId].isLive = false;
-                  return _this2._pollQuery(r.data.id);
+                  return _this2._pollQuery(r.data.id, humioDataspace);
                 });
               }
             }
           }
         }, {
           key: '_composeLiveQuery',
-          value: function _composeLiveQuery(panelId, queryDt) {
+          value: function _composeLiveQuery(panelId, queryDt, humioDataspace) {
             var _this3 = this;
 
             if (this.queryParams[panelId].queryId == null) {
-              return this._initQuery(queryDt).then(function (r) {
+              return this._initQuery(queryDt, humioDataspace).then(function (r) {
                 _this3.queryParams[panelId].queryId = r.data.id;
                 _this3.queryParams[panelId].isLive = true;
-                return _this3._pollQuery(r.data.id);
+                return _this3._pollQuery(r.data.id, humioDataspace);
               });
             } else {
-              return this._pollQuery(this.queryParams[panelId].queryId);
+              return this._pollQuery(this.queryParams[panelId].queryId, humioDataspace);
             }
           }
         }, {
           key: '_initQuery',
-          value: function _initQuery(queryDt) {
+          value: function _initQuery(queryDt, humioDataspace) {
             return this.doRequest({
-              url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs',
+              url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs',
               data: queryDt,
               method: 'POST'
             });
           }
         }, {
           key: '_pollQuery',
-          value: function _pollQuery(queryId) {
+          value: function _pollQuery(queryId, humioDataspace) {
             return this.doRequest({
-              url: this.url + '/api/v1/dataspaces/' + this.humioDataspace + '/queryjobs/' + queryId,
+              url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs/' + queryId,
               method: 'GET'
             });
           }
@@ -272,7 +267,6 @@ System.register(['lodash'], function (_export, _context) {
           value: function doRequest(options) {
             options.withCredentials = this.withCredentials;
             options.headers = this.headers;
-
             return this.backendSrv.datasourceRequest(options);
           }
         }, {

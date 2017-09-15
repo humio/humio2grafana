@@ -10,11 +10,12 @@ import {
   HumioConfigCtrl
 } from './config_ctrl';
 
+import {
+  GenericQueryOptionsCtrl
+} from './query_options_ctrl';
 // class GenericConfigCtrl {}
 // GenericConfigCtrl.templateUrl = 'partials/config.html';
 
-class GenericQueryOptionsCtrl {}
-GenericQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
 
 class GenericAnnotationsQueryCtrl {}
 GenericAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'

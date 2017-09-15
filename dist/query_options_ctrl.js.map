@@ -1,0 +1,1 @@
+{"version":3,"sources":["../src/query_options_ctrl.js"],"names":["GenericQueryOptionsCtrl","templateUrl"],"mappings":";;;;;;;;;;;;;;;;yCAAaA,uB;;;;;;AACbA,8BAAwBC,WAAxB,GAAsC,6BAAtC","file":"query_options_ctrl.js","sourcesContent":["export class GenericQueryOptionsCtrl {}\nGenericQueryOptionsCtrl.templateUrl = 'partials/query.options.html';\n"]}

@@ -1,9 +1,9 @@
 'use strict';
 
-System.register(['app/plugins/sdk', './css/query-editor.css!'], function (_export, _context) {
+System.register(['app/plugins/sdk', './css/query-editor.css!', 'lodash'], function (_export, _context) {
   "use strict";
 
-  var QueryCtrl, _createClass, GenericDatasourceQueryCtrl;
+  var QueryCtrl, _, _createClass, GenericDatasourceQueryCtrl;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -38,7 +38,9 @@ System.register(['app/plugins/sdk', './css/query-editor.css!'], function (_expor
   return {
     setters: [function (_appPluginsSdk) {
       QueryCtrl = _appPluginsSdk.QueryCtrl;
-    }, function (_cssQueryEditorCss) {}],
+    }, function (_cssQueryEditorCss) {}, function (_lodash) {
+      _ = _lodash.default;
+    }],
     execute: function () {
       _createClass = function () {
         function defineProperties(target, props) {
@@ -61,15 +63,22 @@ System.register(['app/plugins/sdk', './css/query-editor.css!'], function (_expor
       _export('GenericDatasourceQueryCtrl', GenericDatasourceQueryCtrl = function (_QueryCtrl) {
         _inherits(GenericDatasourceQueryCtrl, _QueryCtrl);
 
-        function GenericDatasourceQueryCtrl($scope, $injector) {
+        function GenericDatasourceQueryCtrl($scope, $injector, $http, $q, datasourceSrv) {
           _classCallCheck(this, GenericDatasourceQueryCtrl);
 
           var _this = _possibleConstructorReturn(this, (GenericDatasourceQueryCtrl.__proto__ || Object.getPrototypeOf(GenericDatasourceQueryCtrl)).call(this, $scope, $injector));
 
-          _this.scope = $scope;
-          _this.target.target = _this.target.target || 'select metric';
-          _this.target.type = _this.target.type || 'timeserie';
+          _this.$http = $http;
+          _this.$scope = $scope;
+          _this.$q = $q;
+
           _this.target.humioQuery = _this.target.humioQuery || 'timechart()';
+          _this.target.humioDataspace = _this.target.humioDataspace || undefined;
+
+          _this.dataspaces = [];
+          _this._getHumioDataspaces().then(function (r) {
+            _this.dataspaces = r;
+          });
           return _this;
         }
 
@@ -87,6 +96,30 @@ System.register(['app/plugins/sdk', './css/query-editor.css!'], function (_expor
           key: 'onChangeInternal',
           value: function onChangeInternal() {
             this.panelCtrl.refresh(); // Asks the panel to refresh data.
+          }
+        }, {
+          key: '_getHumioDataspaces',
+          value: function _getHumioDataspaces() {
+            if (this.datasource.url) {
+
+              var requestOpts = {
+                method: 'GET',
+                url: this.datasource.url + '/api/v1/dataspaces',
+                headers: this.datasource.headers
+              };
+
+              return this.datasource.backendSrv.datasourceRequest(requestOpts).then(function (r) {
+                var res = r.data.map(function (ds) {
+                  return {
+                    value: ds.id,
+                    name: ds.id
+                  };
+                });
+                return _.sortBy(res, ['name']);
+              });
+            } else {
+              return this.$q.when([]);
+            }
           }
         }]);
 

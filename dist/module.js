@@ -1,6 +1,6 @@
 'use strict';
 
-System.register(['./datasource', './query_ctrl', './config_ctrl'], function (_export, _context) {
+System.register(['./datasource', './query_ctrl', './config_ctrl', './query_options_ctrl'], function (_export, _context) {
   "use strict";
 
   var GenericDatasource, GenericDatasourceQueryCtrl, HumioConfigCtrl, GenericQueryOptionsCtrl, GenericAnnotationsQueryCtrl;
@@ -18,14 +18,10 @@ System.register(['./datasource', './query_ctrl', './config_ctrl'], function (_ex
       GenericDatasourceQueryCtrl = _query_ctrl.GenericDatasourceQueryCtrl;
     }, function (_config_ctrl) {
       HumioConfigCtrl = _config_ctrl.HumioConfigCtrl;
+    }, function (_query_options_ctrl) {
+      GenericQueryOptionsCtrl = _query_options_ctrl.GenericQueryOptionsCtrl;
     }],
     execute: function () {
-      _export('QueryOptionsCtrl', GenericQueryOptionsCtrl = function GenericQueryOptionsCtrl() {
-        _classCallCheck(this, GenericQueryOptionsCtrl);
-      });
-
-      GenericQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
-
       _export('AnnotationsQueryCtrl', GenericAnnotationsQueryCtrl = function GenericAnnotationsQueryCtrl() {
         _classCallCheck(this, GenericAnnotationsQueryCtrl);
       });
