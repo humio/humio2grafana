@@ -37,3 +37,4 @@ grafana
 /dist/test/
 
 .on-save.json
+dist/

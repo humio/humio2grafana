@@ -164,8 +164,6 @@ System.register(['lodash'], function (_export, _context) {
 
             queryDt.isLive = refresh != null && checkToDateNow(range.raw.to);
 
-            console.log(this.queryParams[panelId].queryId);
-
             if (queryDt.isLive != this.queryParams[panelId].isLive || this.queryParams[panelId].humioQuery != humioQuery) {
               if (this.queryParams[panelId].queryId) {
                 this._stopExecution(this.queryParams[panelId].queryId, humioDataspace);

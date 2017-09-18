@@ -80,10 +80,11 @@ System.register(['app/plugins/sdk', './css/query-editor.css!', 'lodash'], functi
             _this.dataspaces = r;
           });
 
+          // NOTE: settings for timechart
           var linkSettings = {
             'widgetType': 'time-chart',
-            'query': 'timechart()',
-            'live': false,
+            'query': _this.target.humioQuery,
+            'live': false, // TODO: take from grafana
             'start': '24h', // TODO: take time frame from grafana
             'legend': 'y',
             'lx': '',

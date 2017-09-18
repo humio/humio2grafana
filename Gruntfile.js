@@ -4,6 +4,7 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-execute');
   grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-contrib-pug');
 
   grunt.initConfig({
 
@@ -13,7 +14,7 @@ module.exports = function(grunt) {
       src_to_dist: {
         cwd: 'src',
         expand: true,
-        src: ['**/*', '!**/*.js', '!**/*.scss'],
+        src: ['**/*', '!**/*.js', '!**/*.scss', '!**/*.pug'],
         dest: 'dist'
       },
       pluginDef: {
@@ -70,15 +71,25 @@ module.exports = function(grunt) {
       }
     },
 
-    mochaTest: {
-      test: {
+    pug: {
+      compile: {
         options: {
-          reporter: 'spec'
+          data: {
+            debug: false
+          }
         },
-        src: ['dist/test/spec/test-main.js', 'dist/test/spec/*_spec.js']
+        files: [{
+          expand: true,
+          cwd: 'src/partials',
+          src: ['**/*.pug'],
+          dest: 'dist/partials/',
+          ext: '.html',
+          extDot: 'last'
+        }]
       }
     }
+
   });
 
-  grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'copy:pluginDef', 'babel', 'mochaTest']);
+  grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'pug', 'copy:pluginDef', 'babel']);
 };
