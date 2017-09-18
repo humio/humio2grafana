@@ -20,18 +20,45 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
     this._getHumioDataspaces().then((r) => {
       this.dataspaces = r;
     });
-  }
 
-  getOptions(query) {
-    return this.datasource.metricFindQuery(query || '');
-  }
 
-  toggleEditorMode() {
-    this.target.rawQuery = !this.target.rawQuery;
+    let linkSettings = {
+      'widgetType': 'time-chart',
+      'query': 'timechart()',
+      'live': false,
+      'start': '24h', // TODO: take time frame from grafana
+      'legend': 'y',
+      'lx': '',
+      'ly': '',
+      'mn': '',
+      'mx': '',
+      'op': '0.2',
+      'p': 'a',
+      'pl': '',
+      'plY': '',
+      's': '',
+      'sc': 'lin',
+      'stp': 'y'
+    }
+
+    this.humioLink = this.datasource.url + '/' + this.target.humioDataspace +
+      '/search?' + this._serializeQueryOpts(linkSettings);
+
   }
 
   onChangeInternal() {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
+  }
+
+  showHumioLink() {
+    return this.humioLink != undefined
+  }
+
+  _serializeQueryOpts(obj) {
+    var str = [];
+    for (var p in obj)
+      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    return str.join("&");
   }
 
   _getHumioDataspaces() {

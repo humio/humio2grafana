@@ -1,9 +1,5 @@
 import _ from "lodash";
 
-// // query states
-// const INIT_STATE = 0;
-// const RUNNING_STATE = 1;
-
 export class GenericDatasource {
 
   constructor(instanceSettings, $q, backendSrv, templateSrv, $location) {
@@ -27,9 +23,6 @@ export class GenericDatasource {
   }
 
   query(options) {
-    // console.log(options);
-    // let tgts = _.clone(options.targets);
-    // console.log(tgts);
 
     let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
@@ -57,11 +50,6 @@ export class GenericDatasource {
       isLive: false,
       humioQuery: humioQuery
     };
-
-    // console.log('humio query 1 ->');
-    // console.log(this.queryParams[panelId]);
-    // console.log(humioQuery);
-
 
     return this.$q((resolve, reject) => {
       let handleRes = (r) => {

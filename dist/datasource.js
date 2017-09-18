@@ -62,10 +62,6 @@ System.register(['lodash'], function (_export, _context) {
           value: function query(options) {
             var _this = this;
 
-            // console.log(options);
-            // let tgts = _.clone(options.targets);
-            // console.log(tgts);
-
             var panelId = options.panelId;
             var humioQuery = options.targets[0].humioQuery;
             var humioDataspace = options.targets[0].humioDataspace;
@@ -93,11 +89,6 @@ System.register(['lodash'], function (_export, _context) {
               isLive: false,
               humioQuery: humioQuery
             };
-
-            // console.log('humio query 1 ->');
-            // console.log(this.queryParams[panelId]);
-            // console.log(humioQuery);
-
 
             return this.$q(function (resolve, reject) {
               var handleRes = function handleRes(r) {

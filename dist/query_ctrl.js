@@ -79,23 +79,48 @@ System.register(['app/plugins/sdk', './css/query-editor.css!', 'lodash'], functi
           _this._getHumioDataspaces().then(function (r) {
             _this.dataspaces = r;
           });
+
+          var linkSettings = {
+            'widgetType': 'time-chart',
+            'query': 'timechart()',
+            'live': false,
+            'start': '24h', // TODO: take time frame from grafana
+            'legend': 'y',
+            'lx': '',
+            'ly': '',
+            'mn': '',
+            'mx': '',
+            'op': '0.2',
+            'p': 'a',
+            'pl': '',
+            'plY': '',
+            's': '',
+            'sc': 'lin',
+            'stp': 'y'
+          };
+
+          _this.humioLink = _this.datasource.url + '/' + _this.target.humioDataspace + '/search?' + _this._serializeQueryOpts(linkSettings);
+
           return _this;
         }
 
         _createClass(GenericDatasourceQueryCtrl, [{
-          key: 'getOptions',
-          value: function getOptions(query) {
-            return this.datasource.metricFindQuery(query || '');
-          }
-        }, {
-          key: 'toggleEditorMode',
-          value: function toggleEditorMode() {
-            this.target.rawQuery = !this.target.rawQuery;
-          }
-        }, {
           key: 'onChangeInternal',
           value: function onChangeInternal() {
             this.panelCtrl.refresh(); // Asks the panel to refresh data.
+          }
+        }, {
+          key: 'showHumioLink',
+          value: function showHumioLink() {
+            return this.humioLink != undefined;
+          }
+        }, {
+          key: '_serializeQueryOpts',
+          value: function _serializeQueryOpts(obj) {
+            var str = [];
+            for (var p in obj) {
+              str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+            }return str.join("&");
           }
         }, {
           key: '_getHumioDataspaces',
