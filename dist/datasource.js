@@ -65,11 +65,10 @@ System.register(['lodash'], function (_export, _context) {
             var panelId = options.panelId;
             var humioQuery = options.targets[0].humioQuery;
             var humioDataspace = options.targets[0].humioDataspace;
-            var query = this.buildQueryParameters(options); // TODO: not sure if we need this
+            // var query = this.buildQueryParameters(options); // TODO: not sure if we need this
+            var query = options;
 
-            query.targets = query.targets.filter(function (t) {
-              return !t.hide;
-            }); // TODO: not sure if we need this
+            // query.targets = query.targets.filter(t => !t.hide); // TODO: not sure if we need this
 
             if (!humioDataspace || !humioQuery) {
               return this.$q.when({
@@ -86,15 +85,31 @@ System.register(['lodash'], function (_export, _context) {
               // NOTE: modifying query
             };this.queryParams[panelId] = this.queryParams[panelId] ? this.queryParams[panelId] : {
               queryId: null,
+              failCounter: 0,
               isLive: false,
               humioQuery: humioQuery
             };
 
             return this.$q(function (resolve, reject) {
+
+              var handleErr = function handleErr(err) {
+                console.log('fallback ->');
+                console.log(err);
+                // TODO: add a counter, if several times get a error - consider query to be invalid, or distinguish between error types
+                _this.queryParams[panelId].queryId = null;
+                _this.queryParams[panelId].failCounter += 1;
+                if (_this.queryParams[panelId].failCounter <= 3) {
+                  _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
+                } else {
+                  _this.queryParams[panelId].failCounter = 0;
+                }
+              };
+
               var handleRes = function handleRes(r) {
                 if (r.data.done) {
                   console.log('query done');
 
+                  _this.queryParams[panelId].failCounter = 0;
                   _this.queryParams[panelId].queryId = _this.queryParams[panelId].isLive ? _this.queryParams[panelId].queryId : null;
 
                   var _dt = _.clone(r.data);
@@ -138,12 +153,12 @@ System.register(['lodash'], function (_export, _context) {
                   console.log('query running...');
                   console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
                   setTimeout(function () {
-                    _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes);
+                    _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
                   }, 1000);
                 }
               };
 
-              _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes);
+              _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
             });
           }
         }, {
@@ -278,29 +293,6 @@ System.register(['lodash'], function (_export, _context) {
             options.withCredentials = this.withCredentials;
             options.headers = this.headers;
             return this.backendSrv.datasourceRequest(options);
-          }
-        }, {
-          key: 'buildQueryParameters',
-          value: function buildQueryParameters(options) {
-            var _this4 = this;
-
-            //remove placeholder targets
-            options.targets = _.filter(options.targets, function (target) {
-              return target.target !== 'select metric';
-            });
-
-            var targets = _.map(options.targets, function (target) {
-              return {
-                target: _this4.templateSrv.replace(target.target, options.scopedVars, 'regex'),
-                refId: target.refId,
-                hide: target.hide,
-                type: target.type || 'timeserie'
-              };
-            });
-
-            options.targets = targets;
-
-            return options;
           }
         }, {
           key: '_parseDateFrom',

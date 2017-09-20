@@ -27,9 +27,10 @@ export class GenericDatasource {
     let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
     let humioDataspace = options.targets[0].humioDataspace;
-    var query = this.buildQueryParameters(options); // TODO: not sure if we need this
+    // var query = this.buildQueryParameters(options); // TODO: not sure if we need this
+    var query = options;
 
-    query.targets = query.targets.filter(t => !t.hide); // TODO: not sure if we need this
+    // query.targets = query.targets.filter(t => !t.hide); // TODO: not sure if we need this
 
     if (!humioDataspace || !humioQuery) {
       return this.$q.when({
@@ -47,15 +48,31 @@ export class GenericDatasource {
     // NOTE: modifying query
     this.queryParams[panelId] = this.queryParams[panelId] ? this.queryParams[panelId] : {
       queryId: null,
+      failCounter: 0,
       isLive: false,
       humioQuery: humioQuery
     };
 
     return this.$q((resolve, reject) => {
+
+      let handleErr = (err) => {
+        console.log('fallback ->')
+        console.log(err);
+        // TODO: add a counter, if several times get a error - consider query to be invalid, or distinguish between error types
+        this.queryParams[panelId].queryId = null;
+        this.queryParams[panelId].failCounter += 1;
+        if (this.queryParams[panelId].failCounter <= 3) {
+          this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
+        } else {
+          this.queryParams[panelId].failCounter = 0;
+        }
+      }
+
       let handleRes = (r) => {
         if (r.data.done) {
           console.log('query done');
 
+          this.queryParams[panelId].failCounter = 0;
           this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ? this.queryParams[panelId].queryId : null;
 
           let dt = _.clone(r.data);
@@ -101,15 +118,14 @@ export class GenericDatasource {
           console.log('query running...');
           console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
           setTimeout(() => {
-            this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes);
+            this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
           }, 1000);
         }
       }
 
-      this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes);
+      this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
     });
   }
-
 
   _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace, humioQuery) {
 
@@ -235,26 +251,30 @@ export class GenericDatasource {
   }
 
   // TODO: check if needed
-  buildQueryParameters(options) {
-    //remove placeholder targets
-    options.targets = _.filter(options.targets, target => {
-      return target.target !== 'select metric';
-    });
-
-    var targets = _.map(options.targets, target => {
-      return {
-        target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
-        refId: target.refId,
-        hide: target.hide,
-        type: target.type || 'timeserie'
-      };
-    });
-
-    options.targets = targets;
-
-    return options;
-  }
-
+  // buildQueryParameters(options) {
+  //   //remove placeholder targets
+  //   // options.targets = _.filter(options.targets, target => {
+  //   //   console.log('-> 2');
+  //   //   console.log(target);
+  //   //   return target.target !== 'select metric';
+  //   // });
+  //
+  //   var targets = _.map(options.targets, target => {
+  //     console.log('-> 3');
+  //     console.log(target.type);
+  //
+  //     return {
+  //       target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+  //       refId: target.refId,
+  //       hide: target.hide,
+  //       type: target.type || 'timeserie'
+  //     };
+  //   });
+  //
+  //   options.targets = targets;
+  //
+  //   return options;
+  // }
 
   _parseDateFrom(date) {
     switch (date) {

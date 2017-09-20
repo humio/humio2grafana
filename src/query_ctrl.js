@@ -21,7 +21,6 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
       this.dataspaces = r;
     });
 
-
     // NOTE: settings for timechart
     let linkSettings = {
       'widgetType': 'time-chart',
