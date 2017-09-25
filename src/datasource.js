@@ -2,7 +2,7 @@ import _ from "lodash";
 
 export class GenericDatasource {
 
-  constructor(instanceSettings, $q, backendSrv, templateSrv, $location) {
+  constructor(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
     this.type = instanceSettings.type;
     this.url = instanceSettings.url.replace(/\/$/, '');
     this.name = instanceSettings.name;
@@ -11,7 +11,8 @@ export class GenericDatasource {
     this.$location = $location;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
-    this.withCredentials = instanceSettings.withCredentials;
+    this.$rootScope = $rootScope;
+    // this.withCredentials = instanceSettings.withCredentials;
 
     this.headers = {
       'Content-Type': 'application/json',
@@ -56,12 +57,24 @@ export class GenericDatasource {
         console.log('fallback ->')
         console.log(err);
         // TODO: add a counter, if several times get a error - consider query to be invalid, or distinguish between error types
-        this.queryParams[panelId].queryId = null;
-        this.queryParams[panelId].failCounter += 1;
-        if (this.queryParams[panelId].failCounter <= 3) {
-          this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
+        if (err.status == 401) {
+          // query not found - trying to recreate
+          this.queryParams[panelId].queryId = null;
+          this.queryParams[panelId].failCounter += 1;
+          if (this.queryParams[panelId].failCounter <= 3) {
+            this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
+          } else {
+            this.queryParams[panelId].failCounter = 0;
+          }
         } else {
-          this.queryParams[panelId].failCounter = 0;
+          if (err.status = 400) {
+            this.$rootScope.appEvent('alert-error', ['Query error', err.data]);
+          } else {
+            this.$rootScope.appEvent('alert-error', [err.status, err.data]);
+          }
+          resolve({
+            data: []
+          });
         }
       }
 

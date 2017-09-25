@@ -35,7 +35,7 @@ System.register(['lodash'], function (_export, _context) {
       }();
 
       _export('GenericDatasource', GenericDatasource = function () {
-        function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location) {
+        function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
           _classCallCheck(this, GenericDatasource);
 
           this.type = instanceSettings.type;
@@ -46,7 +46,8 @@ System.register(['lodash'], function (_export, _context) {
           this.$location = $location;
           this.backendSrv = backendSrv;
           this.templateSrv = templateSrv;
-          this.withCredentials = instanceSettings.withCredentials;
+          this.$rootScope = $rootScope;
+          // this.withCredentials = instanceSettings.withCredentials;
 
           this.headers = {
             'Content-Type': 'application/json',
@@ -93,12 +94,24 @@ System.register(['lodash'], function (_export, _context) {
                 console.log('fallback ->');
                 console.log(err);
                 // TODO: add a counter, if several times get a error - consider query to be invalid, or distinguish between error types
-                _this.queryParams[panelId].queryId = null;
-                _this.queryParams[panelId].failCounter += 1;
-                if (_this.queryParams[panelId].failCounter <= 3) {
-                  _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
+                if (err.status == 401) {
+                  // query not found - trying to recreate
+                  _this.queryParams[panelId].queryId = null;
+                  _this.queryParams[panelId].failCounter += 1;
+                  if (_this.queryParams[panelId].failCounter <= 3) {
+                    _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
+                  } else {
+                    _this.queryParams[panelId].failCounter = 0;
+                  }
                 } else {
-                  _this.queryParams[panelId].failCounter = 0;
+                  if (err.status = 400) {
+                    _this.$rootScope.appEvent('alert-error', ['Query error', err.data]);
+                  } else {
+                    _this.$rootScope.appEvent('alert-error', [err.status, err.data]);
+                  }
+                  resolve({
+                    data: []
+                  });
                 }
               };
 
