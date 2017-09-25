@@ -24,7 +24,6 @@ export class GenericDatasource {
   }
 
   query(options) {
-
     let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
     let humioDataspace = options.targets[0].humioDataspace;
@@ -85,45 +84,46 @@ export class GenericDatasource {
           this.queryParams[panelId].failCounter = 0;
           this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ? this.queryParams[panelId].queryId : null;
 
-          let dt = _.clone(r.data);
-          let timeseriesField = "_bucket";
-          let seriesField = dt.metaData.extraData.series;
-          let series = {};
-          let valueField = _.filter(dt.metaData.fields, (f) => {
-            return f.name != timeseriesField && f.name != seriesField;
-          })[0].name;
+          resolve(this._composeResult(options, r, () => {
+            let dt = _.clone(r.data);
+            let timeseriesField = "_bucket";
+            let seriesField = dt.metaData.extraData.series;
+            let series = {};
+            let valueField = _.filter(dt.metaData.fields, (f) => {
+              return f.name != timeseriesField && f.name != seriesField;
+            })[0].name;
 
-          // NOTE: aggregating result
-          if (seriesField) {
-            // multiple series
-            for (let i = 0; i < r.data.events.length; i++) {
-              let ev = r.data.events[i];
-              if (!series[ev[seriesField]]) {
-                series[ev[seriesField]] = [
-                  [ev[valueField], parseInt(ev._bucket)]
-                ];
-              } else {
-                series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+            // NOTE: aggregating result
+            if (seriesField) {
+              // multiple series
+              for (let i = 0; i < r.data.events.length; i++) {
+                let ev = r.data.events[i];
+                if (!series[ev[seriesField]]) {
+                  series[ev[seriesField]] = [
+                    [ev[valueField], parseInt(ev._bucket)]
+                  ];
+                } else {
+                  series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+                }
               }
-            }
 
-            r.data = _.keys(series).map((s) => {
-              return {
-                target: s,
-                datapoints: series[s]
-              }
-            })
-          } else {
-            // single series
-            r.data = [{
-              target: valueField,
-              datapoints: dt.events.map((ev) => {
-                return [ev[valueField], parseInt(ev._bucket)];
+              r.data = _.keys(series).map((s) => {
+                return {
+                  target: s,
+                  datapoints: series[s]
+                }
               })
-            }];
-          }
-
-          resolve(r);
+            } else {
+              // single series
+              r.data = [{
+                target: valueField,
+                datapoints: dt.events.map((ev) => {
+                  return [ev[valueField], parseInt(ev._bucket)];
+                })
+              }];
+            }
+            return r;
+          }));
         } else {
           console.log('query running...');
           console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
@@ -135,6 +135,27 @@ export class GenericDatasource {
 
       this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
     });
+  }
+
+  _composeResult(queryOptions, r, resFx) {
+    let currentTarget = queryOptions.targets[0];
+    if ((currentTarget.hasOwnProperty('type') &&
+        ((currentTarget.type == 'timeserie') || (currentTarget.type == 'table')) &&
+        (r.data.hasOwnProperty('metaData') && r.data.metaData.hasOwnProperty('extraData') &&
+          r.data.metaData.extraData.timechart == 'true'))) {
+      // timechart
+      return resFx();
+    } else if (!currentTarget.hasOwnProperty('type') &&
+      (r.data.hasOwnProperty('metaData') && r.data.metaData.isAggregate == true)) {
+      // gauge
+      return resFx();
+    } else {
+      // unsuported query for this type of panel
+      this.$rootScope.appEvent('alert-error', ['Unsupported visualisation', 'can\'t visulize the query result on this panel.']);
+      return {
+        data: []
+      }
+    }
   }
 
   _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace, humioQuery) {

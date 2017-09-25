@@ -122,43 +122,44 @@ System.register(['lodash'], function (_export, _context) {
                   _this.queryParams[panelId].failCounter = 0;
                   _this.queryParams[panelId].queryId = _this.queryParams[panelId].isLive ? _this.queryParams[panelId].queryId : null;
 
-                  var _dt = _.clone(r.data);
-                  var timeseriesField = "_bucket";
-                  var seriesField = _dt.metaData.extraData.series;
-                  var series = {};
-                  var valueField = _.filter(_dt.metaData.fields, function (f) {
-                    return f.name != timeseriesField && f.name != seriesField;
-                  })[0].name;
+                  resolve(_this._composeResult(options, r, function () {
+                    var dt = _.clone(r.data);
+                    var timeseriesField = "_bucket";
+                    var seriesField = dt.metaData.extraData.series;
+                    var series = {};
+                    var valueField = _.filter(dt.metaData.fields, function (f) {
+                      return f.name != timeseriesField && f.name != seriesField;
+                    })[0].name;
 
-                  // NOTE: aggregating result
-                  if (seriesField) {
-                    // multiple series
-                    for (var i = 0; i < r.data.events.length; i++) {
-                      var ev = r.data.events[i];
-                      if (!series[ev[seriesField]]) {
-                        series[ev[seriesField]] = [[ev[valueField], parseInt(ev._bucket)]];
-                      } else {
-                        series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+                    // NOTE: aggregating result
+                    if (seriesField) {
+                      // multiple series
+                      for (var i = 0; i < r.data.events.length; i++) {
+                        var ev = r.data.events[i];
+                        if (!series[ev[seriesField]]) {
+                          series[ev[seriesField]] = [[ev[valueField], parseInt(ev._bucket)]];
+                        } else {
+                          series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+                        }
                       }
+
+                      r.data = _.keys(series).map(function (s) {
+                        return {
+                          target: s,
+                          datapoints: series[s]
+                        };
+                      });
+                    } else {
+                      // single series
+                      r.data = [{
+                        target: valueField,
+                        datapoints: dt.events.map(function (ev) {
+                          return [ev[valueField], parseInt(ev._bucket)];
+                        })
+                      }];
                     }
-
-                    r.data = _.keys(series).map(function (s) {
-                      return {
-                        target: s,
-                        datapoints: series[s]
-                      };
-                    });
-                  } else {
-                    // single series
-                    r.data = [{
-                      target: valueField,
-                      datapoints: _dt.events.map(function (ev) {
-                        return [ev[valueField], parseInt(ev._bucket)];
-                      })
-                    }];
-                  }
-
-                  resolve(r);
+                    return r;
+                  }));
                 } else {
                   console.log('query running...');
                   console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
@@ -170,6 +171,24 @@ System.register(['lodash'], function (_export, _context) {
 
               _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
             });
+          }
+        }, {
+          key: '_composeResult',
+          value: function _composeResult(queryOptions, r, resFx) {
+            var currentTarget = queryOptions.targets[0];
+            if (currentTarget.hasOwnProperty('type') && (currentTarget.type == 'timeserie' || currentTarget.type == 'table') && r.data.hasOwnProperty('metaData') && r.data.metaData.hasOwnProperty('extraData') && r.data.metaData.extraData.timechart == 'true') {
+              // timechart
+              return resFx();
+            } else if (!currentTarget.hasOwnProperty('type') && r.data.hasOwnProperty('metaData') && r.data.metaData.isAggregate == true) {
+              // gauge
+              return resFx();
+            } else {
+              // unsuported query for this type of panel
+              this.$rootScope.appEvent('alert-error', ['Unsupported visualisation', 'can\'t visulize the query result on this panel.']);
+              return {
+                data: []
+              };
+            }
           }
         }, {
           key: '_composeQuery',
