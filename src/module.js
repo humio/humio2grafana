@@ -25,5 +25,5 @@ export {
   GenericDatasourceQueryCtrl as QueryCtrl,
   HumioConfigCtrl as ConfigCtrl,
   GenericQueryOptionsCtrl as QueryOptionsCtrl,
-  GenericAnnotationsQueryCtrl as AnnotationsQueryCtrl
+  GenericAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

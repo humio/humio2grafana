@@ -27,10 +27,7 @@ export class GenericDatasource {
     let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
     let humioDataspace = options.targets[0].humioDataspace;
-    // var query = this.buildQueryParameters(options); // TODO: not sure if we need this
-    var query = options;
-
-    // query.targets = query.targets.filter(t => !t.hide); // TODO: not sure if we need this
+    var query = options; // TODO: not needed really
 
     if (!humioDataspace || !humioQuery) {
       return this.$q.when({
@@ -249,32 +246,6 @@ export class GenericDatasource {
     options.headers = this.headers;
     return this.backendSrv.datasourceRequest(options);
   }
-
-  // TODO: check if needed
-  // buildQueryParameters(options) {
-  //   //remove placeholder targets
-  //   // options.targets = _.filter(options.targets, target => {
-  //   //   console.log('-> 2');
-  //   //   console.log(target);
-  //   //   return target.target !== 'select metric';
-  //   // });
-  //
-  //   var targets = _.map(options.targets, target => {
-  //     console.log('-> 3');
-  //     console.log(target.type);
-  //
-  //     return {
-  //       target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
-  //       refId: target.refId,
-  //       hide: target.hide,
-  //       type: target.type || 'timeserie'
-  //     };
-  //   });
-  //
-  //   options.targets = targets;
-  //
-  //   return options;
-  // }
 
   _parseDateFrom(date) {
     switch (date) {

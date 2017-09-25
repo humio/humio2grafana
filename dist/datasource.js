@@ -65,10 +65,7 @@ System.register(['lodash'], function (_export, _context) {
             var panelId = options.panelId;
             var humioQuery = options.targets[0].humioQuery;
             var humioDataspace = options.targets[0].humioDataspace;
-            // var query = this.buildQueryParameters(options); // TODO: not sure if we need this
-            var query = options;
-
-            // query.targets = query.targets.filter(t => !t.hide); // TODO: not sure if we need this
+            var query = options; // TODO: not needed really
 
             if (!humioDataspace || !humioQuery) {
               return this.$q.when({
