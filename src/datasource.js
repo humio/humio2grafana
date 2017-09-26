@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { HumioHelper } from "./helper";
 
 export class GenericDatasource {
 
@@ -19,6 +20,9 @@ export class GenericDatasource {
       'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
     };
 
+    // TODO: not sure if this is right approach
+    this.timeRange = undefined;
+
     // NOTE: session query storage
     this.queryParams = {};
   }
@@ -28,6 +32,7 @@ export class GenericDatasource {
     let humioQuery = options.targets[0].humioQuery;
     let humioDataspace = options.targets[0].humioDataspace;
     var query = options; // TODO: not needed really
+    this.timeRange = options.range;
 
     if (!humioDataspace || !humioQuery) {
       return this.$q.when({
@@ -163,15 +168,7 @@ export class GenericDatasource {
     let refresh = this.$location.search().refresh || null;
     let range = grafanaQueryOpts.range;
 
-    let checkToDateNow = (toDateCheck) => {
-      if (typeof toDateCheck == "string") {
-        return toDateCheck.match(/^(now[^-]|now$)/) != null;
-      } else {
-        return false;
-      }
-    };
-
-    queryDt.isLive = ((refresh != null) && (checkToDateNow(range.raw.to)));
+    queryDt.isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));
 
     if ((queryDt.isLive != this.queryParams[panelId].isLive) ||
       (this.queryParams[panelId].humioQuery != humioQuery)) {
@@ -184,7 +181,7 @@ export class GenericDatasource {
 
     // NOTE: setting date range
     if (queryDt.isLive) {
-      queryDt.start = this._parseDateFrom(range.raw.from);
+      queryDt.start = HumioHelper.parseDateFrom(range.raw.from);
       return this._composeLiveQuery(panelId, queryDt, humioDataspace);
     } else {
       if (this.queryParams[panelId].queryId != null) {
@@ -251,6 +248,7 @@ export class GenericDatasource {
     });
   }
 
+  // TODO: handle annotationQuery
   annotationQuery(options) {
     console.log('annotationQuery -> ');
     var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
@@ -281,143 +279,4 @@ export class GenericDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
-  _parseDateFrom(date) {
-    switch (date) {
-      case 'now-2d':
-        {
-          return '2d';
-        }
-        break;
-      case 'now-7d':
-        {
-          return '7d';
-        }
-        break;
-      case 'now-30d':
-        {
-          return '30d';
-        }
-        break;
-      case 'now-90d':
-        {
-          return '90d';
-        }
-        break;
-      case 'now-6M':
-        {
-          return '180d';
-        }
-        break;
-      case 'now-1y':
-        {
-          return '1y';
-        }
-        break;
-      case 'now-2y':
-        {
-          return '2y';
-        }
-        break;
-      case 'now-5y':
-        {
-          return '5y';
-        }
-        break;
-      case 'now-1d/d':
-        {
-          return '1d';
-        }
-        break;
-      case 'now-2d/d':
-        {
-          return '2d';
-        }
-        break;
-      case 'now-7d/d':
-        {
-          return '7d';
-        }
-        break;
-      case 'now-1w/w':
-        {
-          return '7d';
-        }
-        break;
-      case 'now-1M/M':
-        {
-          return '1m';
-        }
-        break;
-      case 'now-1y/y':
-        {
-          return '1y';
-        }
-        break;
-      case 'now/d':
-        {
-          return '1d';
-        }
-        break;
-      case 'now/w':
-        {
-          return '7d';
-        }
-        break;
-      case 'now/M':
-        {
-          return '1m';
-        }
-        break;
-      case 'now/y':
-        {
-          return '1y';
-        }
-        break;
-      case 'now-5m':
-        {
-          return '5m';
-        }
-        break;
-      case 'now-15m':
-        {
-          return '15m';
-        }
-        break;
-      case 'now-30m':
-        {
-          return '30m';
-        }
-        break;
-      case 'now-1h':
-        {
-          return '1h';
-        }
-        break;
-      case 'now-3h':
-        {
-          return '3h';
-        }
-        break;
-      case 'now-6h':
-        {
-          return '6h';
-        }
-        break;
-      case 'now-12h':
-        {
-          return '12h';
-        }
-        break;
-      case 'now-24h':
-        {
-          return '24h';
-        }
-        break;
-      default:
-        {
-          return '24h';
-        }
-        break;
-    }
-  }
 }

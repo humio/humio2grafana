@@ -3,15 +3,19 @@ import {
 } from 'app/plugins/sdk';
 import './css/query-editor.css!';
 import _ from "lodash";
+import {
+  HumioHelper
+} from "./helper";
 
 export class GenericDatasourceQueryCtrl extends QueryCtrl {
 
-  constructor($scope, $injector, $http, $q, datasourceSrv) {
+  constructor($scope, $injector, $http, $q, datasourceSrv, $location) {
     super($scope, $injector);
 
     this.$http = $http;
     this.$scope = $scope;
     this.$q = $q;
+    this.$location = $location;
 
     this.target.humioQuery = this.target.humioQuery || 'timechart()';
     this.target.humioDataspace = this.target.humioDataspace || undefined;
@@ -20,30 +24,52 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
     this._getHumioDataspaces().then((r) => {
       this.dataspaces = r;
     });
+  }
 
+  getHumioLink() {
     // NOTE: settings for timechart
-    let linkSettings = {
-      'widgetType': 'time-chart',
-      'query': this.target.humioQuery,
-      'live': false, // TODO: take from grafana
-      'start': '24h', // TODO: take time frame from grafana
-      'legend': 'y',
-      'lx': '',
-      'ly': '',
-      'mn': '',
-      'mx': '',
-      'op': '0.2',
-      'p': 'a',
-      'pl': '',
-      'plY': '',
-      's': '',
-      'sc': 'lin',
-      'stp': 'y'
+    let isLive = this.$location.search().hasOwnProperty('refresh') &&
+      (HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to));
+
+    let start = '24h';
+    let end = undefined;
+
+    if (isLive) {
+      start = HumioHelper.parseDateFrom(this.datasource.timeRange.raw.from);
+    } else {
+      start = this.datasource.timeRange.from._d.getTime();
+      end = this.datasource.timeRange.to._d.getTime();
     }
 
-    this.humioLink = this.datasource.url + '/' + this.target.humioDataspace +
-      '/search?' + this._serializeQueryOpts(linkSettings);
+    let linkSettings = {
+      'query': this.target.humioQuery,
+      'live': isLive,
+      'start': start,
+    }
 
+    if (end) {
+      linkSettings['end'] = end;
+    }
+
+    let widgetType = HumioHelper.getPanelType(this.target.humioQuery);
+    if (widgetType == 'time-chart') {
+      linkSettings['widgetType'] = widgetType;
+      linkSettings['legend'] = 'y';
+      linkSettings['lx'] = '';
+      linkSettings['ly'] = '';
+      linkSettings['mn'] = '';
+      linkSettings['mx'] = '';
+      linkSettings['op'] = '0.2';
+      linkSettings['p'] = 'a';
+      linkSettings['pl'] = '';
+      linkSettings['plY'] = '';
+      linkSettings['s'] = '';
+      linkSettings['sc'] = 'lin';
+      linkSettings['stp'] = 'y';
+    }
+
+    return this.datasource.url + '/' + this.target.humioDataspace +
+      '/search?' + this._serializeQueryOpts(linkSettings);
   }
 
   onChangeInternal() {
@@ -51,7 +77,11 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
   }
 
   showHumioLink() {
-    return this.humioLink != undefined
+    if (this.datasource.timeRange) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   _serializeQueryOpts(obj) {

@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-System.register(['lodash'], function (_export, _context) {
+System.register(["lodash", "./helper"], function (_export, _context) {
   "use strict";
 
-  var _, _createClass, GenericDatasource;
+  var _, HumioHelper, _createClass, GenericDatasource;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -14,6 +14,8 @@ System.register(['lodash'], function (_export, _context) {
   return {
     setters: [function (_lodash) {
       _ = _lodash.default;
+    }, function (_helper) {
+      HumioHelper = _helper.HumioHelper;
     }],
     execute: function () {
       _createClass = function () {
@@ -34,7 +36,7 @@ System.register(['lodash'], function (_export, _context) {
         };
       }();
 
-      _export('GenericDatasource', GenericDatasource = function () {
+      _export("GenericDatasource", GenericDatasource = function () {
         function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
           _classCallCheck(this, GenericDatasource);
 
@@ -54,12 +56,15 @@ System.register(['lodash'], function (_export, _context) {
             'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
           };
 
+          // TODO: not sure if this is right approach
+          this.timeRange = undefined;
+
           // NOTE: session query storage
           this.queryParams = {};
         }
 
         _createClass(GenericDatasource, [{
-          key: 'query',
+          key: "query",
           value: function query(options) {
             var _this = this;
 
@@ -67,6 +72,7 @@ System.register(['lodash'], function (_export, _context) {
             var humioQuery = options.targets[0].humioQuery;
             var humioDataspace = options.targets[0].humioDataspace;
             var query = options; // TODO: not needed really
+            this.timeRange = options.range;
 
             if (!humioDataspace || !humioQuery) {
               return this.$q.when({
@@ -173,7 +179,7 @@ System.register(['lodash'], function (_export, _context) {
             });
           }
         }, {
-          key: '_composeResult',
+          key: "_composeResult",
           value: function _composeResult(queryOptions, r, resFx) {
             var currentTarget = queryOptions.targets[0];
             if (currentTarget.hasOwnProperty('type') && (currentTarget.type == 'timeserie' || currentTarget.type == 'table') && r.data.hasOwnProperty('metaData') && r.data.metaData.hasOwnProperty('extraData') && r.data.metaData.extraData.timechart == 'true') {
@@ -191,22 +197,14 @@ System.register(['lodash'], function (_export, _context) {
             }
           }
         }, {
-          key: '_composeQuery',
+          key: "_composeQuery",
           value: function _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace, humioQuery) {
             var _this2 = this;
 
             var refresh = this.$location.search().refresh || null;
             var range = grafanaQueryOpts.range;
 
-            var checkToDateNow = function checkToDateNow(toDateCheck) {
-              if (typeof toDateCheck == "string") {
-                return toDateCheck.match(/^(now[^-]|now$)/) != null;
-              } else {
-                return false;
-              }
-            };
-
-            queryDt.isLive = refresh != null && checkToDateNow(range.raw.to);
+            queryDt.isLive = refresh != null && HumioHelper.checkToDateNow(range.raw.to);
 
             if (queryDt.isLive != this.queryParams[panelId].isLive || this.queryParams[panelId].humioQuery != humioQuery) {
               if (this.queryParams[panelId].queryId) {
@@ -218,7 +216,7 @@ System.register(['lodash'], function (_export, _context) {
 
             // NOTE: setting date range
             if (queryDt.isLive) {
-              queryDt.start = this._parseDateFrom(range.raw.from);
+              queryDt.start = HumioHelper.parseDateFrom(range.raw.from);
               return this._composeLiveQuery(panelId, queryDt, humioDataspace);
             } else {
               if (this.queryParams[panelId].queryId != null) {
@@ -235,7 +233,7 @@ System.register(['lodash'], function (_export, _context) {
             };
           }
         }, {
-          key: '_composeLiveQuery',
+          key: "_composeLiveQuery",
           value: function _composeLiveQuery(panelId, queryDt, humioDataspace) {
             var _this3 = this;
 
@@ -250,7 +248,7 @@ System.register(['lodash'], function (_export, _context) {
             }
           }
         }, {
-          key: '_initQuery',
+          key: "_initQuery",
           value: function _initQuery(queryDt, humioDataspace) {
             return this.doRequest({
               url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs',
@@ -259,7 +257,7 @@ System.register(['lodash'], function (_export, _context) {
             });
           }
         }, {
-          key: '_pollQuery',
+          key: "_pollQuery",
           value: function _pollQuery(queryId, humioDataspace) {
             return this.doRequest({
               url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs/' + queryId,
@@ -267,7 +265,7 @@ System.register(['lodash'], function (_export, _context) {
             });
           }
         }, {
-          key: '_stopExecution',
+          key: "_stopExecution",
           value: function _stopExecution(queryId, humioDataspace) {
             console.log('stopping execution');
             return this.doRequest({
@@ -276,7 +274,7 @@ System.register(['lodash'], function (_export, _context) {
             });
           }
         }, {
-          key: 'testDatasource',
+          key: "testDatasource",
           value: function testDatasource() {
             return this.doRequest({
               url: this.url + '/',
@@ -292,7 +290,7 @@ System.register(['lodash'], function (_export, _context) {
             });
           }
         }, {
-          key: 'annotationQuery',
+          key: "annotationQuery",
           value: function annotationQuery(options) {
             console.log('annotationQuery -> ');
             var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
@@ -317,159 +315,18 @@ System.register(['lodash'], function (_export, _context) {
             });
           }
         }, {
-          key: 'doRequest',
+          key: "doRequest",
           value: function doRequest(options) {
             options.withCredentials = this.withCredentials;
             options.headers = this.headers;
             return this.backendSrv.datasourceRequest(options);
-          }
-        }, {
-          key: '_parseDateFrom',
-          value: function _parseDateFrom(date) {
-            switch (date) {
-              case 'now-2d':
-                {
-                  return '2d';
-                }
-                break;
-              case 'now-7d':
-                {
-                  return '7d';
-                }
-                break;
-              case 'now-30d':
-                {
-                  return '30d';
-                }
-                break;
-              case 'now-90d':
-                {
-                  return '90d';
-                }
-                break;
-              case 'now-6M':
-                {
-                  return '180d';
-                }
-                break;
-              case 'now-1y':
-                {
-                  return '1y';
-                }
-                break;
-              case 'now-2y':
-                {
-                  return '2y';
-                }
-                break;
-              case 'now-5y':
-                {
-                  return '5y';
-                }
-                break;
-              case 'now-1d/d':
-                {
-                  return '1d';
-                }
-                break;
-              case 'now-2d/d':
-                {
-                  return '2d';
-                }
-                break;
-              case 'now-7d/d':
-                {
-                  return '7d';
-                }
-                break;
-              case 'now-1w/w':
-                {
-                  return '7d';
-                }
-                break;
-              case 'now-1M/M':
-                {
-                  return '1m';
-                }
-                break;
-              case 'now-1y/y':
-                {
-                  return '1y';
-                }
-                break;
-              case 'now/d':
-                {
-                  return '1d';
-                }
-                break;
-              case 'now/w':
-                {
-                  return '7d';
-                }
-                break;
-              case 'now/M':
-                {
-                  return '1m';
-                }
-                break;
-              case 'now/y':
-                {
-                  return '1y';
-                }
-                break;
-              case 'now-5m':
-                {
-                  return '5m';
-                }
-                break;
-              case 'now-15m':
-                {
-                  return '15m';
-                }
-                break;
-              case 'now-30m':
-                {
-                  return '30m';
-                }
-                break;
-              case 'now-1h':
-                {
-                  return '1h';
-                }
-                break;
-              case 'now-3h':
-                {
-                  return '3h';
-                }
-                break;
-              case 'now-6h':
-                {
-                  return '6h';
-                }
-                break;
-              case 'now-12h':
-                {
-                  return '12h';
-                }
-                break;
-              case 'now-24h':
-                {
-                  return '24h';
-                }
-                break;
-              default:
-                {
-                  return '24h';
-                }
-                break;
-            }
           }
         }]);
 
         return GenericDatasource;
       }());
 
-      _export('GenericDatasource', GenericDatasource);
+      _export("GenericDatasource", GenericDatasource);
     }
   };
 });
