@@ -71,6 +71,15 @@ module.exports = function(grunt) {
       }
     },
 
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec'
+        },
+        src: ['dist/test/spec/test-main.js', 'dist/test/spec/*_spec.js']
+      }
+    },
+
     pug: {
       compile: {
         options: {
@@ -92,4 +101,5 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'pug', 'copy:pluginDef', 'babel']);
+  grunt.registerTask('test', ['clean', 'copy:src_to_dist', 'pug', 'copy:pluginDef', 'babel', 'mochaTest']);
 };

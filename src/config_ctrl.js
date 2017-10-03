@@ -1,6 +1,3 @@
-import angular from 'angular';
-// import _ from 'lodash';
-
 export class HumioConfigCtrl {
 
   /** @ngInject */
@@ -16,4 +13,5 @@ export class HumioConfigCtrl {
   }
 
 }
+
 HumioConfigCtrl.templateUrl = 'partials/config.html';

@@ -1,9 +1,9 @@
 'use strict';
 
-System.register(['angular'], function (_export, _context) {
+System.register([], function (_export, _context) {
   "use strict";
 
-  var angular, HumioConfigCtrl;
+  var HumioConfigCtrl;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -12,9 +12,7 @@ System.register(['angular'], function (_export, _context) {
   }
 
   return {
-    setters: [function (_angular) {
-      angular = _angular.default;
-    }],
+    setters: [],
     execute: function () {
       _export('HumioConfigCtrl', HumioConfigCtrl =
 

@@ -41,7 +41,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
           _classCallCheck(this, GenericDatasource);
 
           this.type = instanceSettings.type;
-          this.url = instanceSettings.url.replace(/\/$/, '');
+          this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, '') : '';
           this.name = instanceSettings.name;
 
           this.$q = $q;
@@ -49,11 +49,10 @@ System.register(["lodash", "./helper"], function (_export, _context) {
           this.backendSrv = backendSrv;
           this.templateSrv = templateSrv;
           this.$rootScope = $rootScope;
-          // this.withCredentials = instanceSettings.withCredentials;
 
           this.headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
+            'Authorization': 'Bearer ' + (instanceSettings.jsonData ? instanceSettings.jsonData.humioToken || 'developer' : 'developer')
           };
 
           // TODO: not sure if this is right approach
@@ -68,12 +67,20 @@ System.register(["lodash", "./helper"], function (_export, _context) {
           value: function query(options) {
             var _this = this;
 
+            // NOTE: if no tragests just return an empty result
+            if (options.targets.length == 0) {
+              return this.$q.when({
+                data: []
+              });
+            }
+
             var panelId = options.panelId;
             var humioQuery = options.targets[0].humioQuery;
             var humioDataspace = options.targets[0].humioDataspace;
             var query = options; // TODO: not needed really
             this.timeRange = options.range;
 
+            // NOTE: if no humio dataspace or no query - consider configuration invalid
             if (!humioDataspace || !humioQuery) {
               return this.$q.when({
                 data: []

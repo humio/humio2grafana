@@ -5,7 +5,7 @@ export class GenericDatasource {
 
   constructor(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
     this.type = instanceSettings.type;
-    this.url = instanceSettings.url.replace(/\/$/, '');
+    this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, '') : '';
     this.name = instanceSettings.name;
 
     this.$q = $q;
@@ -13,11 +13,12 @@ export class GenericDatasource {
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
     this.$rootScope = $rootScope;
-    // this.withCredentials = instanceSettings.withCredentials;
 
     this.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + instanceSettings.jsonData.humioToken
+      'Authorization': 'Bearer ' +
+        (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || 'developer') :
+          'developer')
     };
 
     // TODO: not sure if this is right approach
@@ -28,12 +29,21 @@ export class GenericDatasource {
   }
 
   query(options) {
+
+    // NOTE: if no tragests just return an empty result
+    if (options.targets.length == 0) {
+      return this.$q.when({
+        data: []
+      });
+    }
+
     let panelId = options.panelId;
     let humioQuery = options.targets[0].humioQuery;
     let humioDataspace = options.targets[0].humioDataspace;
     var query = options; // TODO: not needed really
     this.timeRange = options.range;
 
+    // NOTE: if no humio dataspace or no query - consider configuration invalid
     if (!humioDataspace || !humioQuery) {
       return this.$q.when({
         data: []
