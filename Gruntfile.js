@@ -21,7 +21,13 @@ module.exports = function(grunt) {
         expand: true,
         src: ['README.md'],
         dest: 'dist'
-      }
+      },
+      testPartials: {
+        cwd: 'spec',
+        expand: true,
+        src: ['**/*.json'],
+        dest: 'dist/test/spec'
+      },
     },
 
     watch: {
@@ -100,6 +106,8 @@ module.exports = function(grunt) {
 
   });
 
-  grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'pug', 'copy:pluginDef', 'babel']);
-  grunt.registerTask('test', ['clean', 'copy:src_to_dist', 'pug', 'copy:pluginDef', 'babel', 'mochaTest']);
+  grunt.registerTask('default', ['clean', 
+    'copy:src_to_dist', 'copy:testPartials', 'pug', 'copy:pluginDef', 'babel']);
+  grunt.registerTask('test', ['clean', 
+    'copy:src_to_dist', 'copy:testPartials', 'pug', 'copy:pluginDef', 'babel', 'mochaTest']);
 };

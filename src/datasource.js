@@ -32,7 +32,7 @@ export class GenericDatasource {
 
     // NOTE: if no tragests just return an empty result
     if (options.targets.length == 0) {
-      return this.$q.when({
+      return this.$q.resolve({
         data: []
       });
     }
@@ -45,7 +45,7 @@ export class GenericDatasource {
 
     // NOTE: if no humio dataspace or no query - consider configuration invalid
     if (!humioDataspace || !humioQuery) {
-      return this.$q.when({
+      return this.$q.resolve({
         data: []
       });
     }
@@ -97,7 +97,8 @@ export class GenericDatasource {
           console.log('query done');
 
           this.queryParams[panelId].failCounter = 0;
-          this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ? this.queryParams[panelId].queryId : null;
+          this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ? 
+            this.queryParams[panelId].queryId : null;
 
           resolve(this._composeResult(options, r, () => {
             let dt = _.clone(r.data);
@@ -175,7 +176,7 @@ export class GenericDatasource {
 
   _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace, humioQuery) {
 
-    let refresh = this.$location.search().refresh || null;
+    let refresh = this.$location ? (this.$location.search().refresh || null) : null;
     let range = grafanaQueryOpts.range;
 
     queryDt.isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));

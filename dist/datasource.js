@@ -69,7 +69,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
 
             // NOTE: if no tragests just return an empty result
             if (options.targets.length == 0) {
-              return this.$q.when({
+              return this.$q.resolve({
                 data: []
               });
             }
@@ -82,7 +82,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
 
             // NOTE: if no humio dataspace or no query - consider configuration invalid
             if (!humioDataspace || !humioQuery) {
-              return this.$q.when({
+              return this.$q.resolve({
                 data: []
               });
             }
@@ -208,7 +208,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
           value: function _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace, humioQuery) {
             var _this2 = this;
 
-            var refresh = this.$location.search().refresh || null;
+            var refresh = this.$location ? this.$location.search().refresh || null : null;
             var range = grafanaQueryOpts.range;
 
             queryDt.isLive = refresh != null && HumioHelper.checkToDateNow(range.raw.to);
