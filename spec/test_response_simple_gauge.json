@@ -1,0 +1,34 @@
+{
+    "events": [
+        {
+            "_count": "97200347"
+        }
+    ],
+    "metaData": {
+        "filterQuery": {
+            "showQueryEventDistribution": false,
+            "end": "now",
+            "start": 0,
+            "isLive": false,
+            "queryString": ""
+        },
+        "workDone": 243,
+        "eventCount": 1,
+        "extraData": {},
+        "totalWork": 243,
+        "processedBytes": 63341524584,
+        "timeMillis": 3853,
+        "queryStart": 1507118754044,
+        "fields": [
+            {
+                "values": [],
+                "hasAllValues": false,
+                "name": "_count",
+                "count": 1
+            }
+        ],
+        "isAggregate": true,
+        "queryEnd": 1507205154044
+    },
+    "done": true
+}
