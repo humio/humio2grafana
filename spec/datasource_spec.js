@@ -1,8 +1,9 @@
-import {Datasource} from "../module";
-import Q from "q";
+import {Datasource} from '../module';
+import Q from 'q';
 import moment from 'moment';
 
 var testResp = require('./test_response.json');
+var testRespMultipleDS = require('./test_response_multiple_series.json');
 
 describe('GenericDatasource', function() {
   var ctx = {};
@@ -46,11 +47,11 @@ describe('GenericDatasource', function() {
       ],
       panelId: 1,
       range: {
-        "from": moment("2017-10-03T07:28:28.363Z"),
-        "to": moment("2017-10-03T13:28:28.363Z"),
-        "raw": {
-          "from": "now-6h",
-          "to": "now"
+        'from': moment('2017-10-03T07:28:28.363Z'),
+        'to': moment('2017-10-03T13:28:28.363Z'),
+        'raw': {
+          'from': 'now-6h',
+          'to': 'now'
         }
       }
     });
@@ -64,8 +65,46 @@ describe('GenericDatasource', function() {
     });
   });
 
+  it('should return the server results when a target is set, and multiple series are returned', function(done) {
+    ctx.backendSrv.datasourceRequest = function(request) {
+      return ctx.$q.resolve({
+        _request: request,
+        data: testRespMultipleDS
+      });
+    };
+
+    ctx.templateSrv.replace = function(data) {
+      return data;
+    }
+
+    var theQuery = ctx.ds.query({
+      targets: [
+        {
+          humioQuery:'dataspace!=humio type=METER  m1>0 | regex("written-events/(?<dataspace>.*)", field=name) | timechart(dataspace, function=avg(m1), span=10m)', 
+          humioDataspace:'humio'
+        }
+      ],
+      panelId: 1,
+      range: {
+        'from': moment('2017-10-03T07:28:28.363Z'),
+        'to': moment('2017-10-03T13:28:28.363Z'),
+        'raw': {
+          'from': 'now-6h',
+          'to': 'now'
+        }
+      }
+    });
+
+    theQuery.then((result) => {
+      expect(result.data).to.have.length(62);
+      let series1 = result.data[0];
+      expect(series1.target).to.equal('syklon');
+      expect(series1.datapoints.length).to.equal(145);
+      done();
+    });
+  });
+
   // TODO: 
   // implement tests for:
-  // 1. multiple series
   // 2. simple gauge
 });

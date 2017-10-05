@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 
-System.register(["lodash", "./helper"], function (_export, _context) {
+System.register(['lodash', './helper'], function (_export, _context) {
   "use strict";
 
   var _, HumioHelper, _createClass, GenericDatasource;
@@ -36,7 +36,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
         };
       }();
 
-      _export("GenericDatasource", GenericDatasource = function () {
+      _export('GenericDatasource', GenericDatasource = function () {
         function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
           _classCallCheck(this, GenericDatasource);
 
@@ -63,7 +63,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
         }
 
         _createClass(GenericDatasource, [{
-          key: "query",
+          key: 'query',
           value: function query(options) {
             var _this = this;
 
@@ -88,10 +88,10 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             }
 
             var dt = {
-              "queryString": humioQuery,
-              "timeZoneOffsetMinutes": -new Date().getTimezoneOffset(),
-              "showQueryEventDistribution": false,
-              "start": "24h"
+              'queryString': humioQuery,
+              'timeZoneOffsetMinutes': -new Date().getTimezoneOffset(),
+              'showQueryEventDistribution': false,
+              'start': '24h'
 
               // NOTE: modifying query
             };this.queryParams[panelId] = this.queryParams[panelId] ? this.queryParams[panelId] : {
@@ -137,7 +137,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
 
                   resolve(_this._composeResult(options, r, function () {
                     var dt = _.clone(r.data);
-                    var timeseriesField = "_bucket";
+                    var timeseriesField = '_bucket';
                     var seriesField = dt.metaData.extraData.series;
                     var series = {};
                     var valueField = _.filter(dt.metaData.fields, function (f) {
@@ -175,7 +175,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
                   }));
                 } else {
                   console.log('query running...');
-                  console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
+                  console.log('' + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + '%');
                   setTimeout(function () {
                     _this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
                   }, 1000);
@@ -186,7 +186,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             });
           }
         }, {
-          key: "_composeResult",
+          key: '_composeResult',
           value: function _composeResult(queryOptions, r, resFx) {
             var currentTarget = queryOptions.targets[0];
             if (currentTarget.hasOwnProperty('type') && (currentTarget.type == 'timeserie' || currentTarget.type == 'table') && r.data.hasOwnProperty('metaData') && r.data.metaData.hasOwnProperty('extraData') && r.data.metaData.extraData.timechart == 'true') {
@@ -204,7 +204,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             }
           }
         }, {
-          key: "_composeQuery",
+          key: '_composeQuery',
           value: function _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace, humioQuery) {
             var _this2 = this;
 
@@ -240,7 +240,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             };
           }
         }, {
-          key: "_composeLiveQuery",
+          key: '_composeLiveQuery',
           value: function _composeLiveQuery(panelId, queryDt, humioDataspace) {
             var _this3 = this;
 
@@ -255,7 +255,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             }
           }
         }, {
-          key: "_initQuery",
+          key: '_initQuery',
           value: function _initQuery(queryDt, humioDataspace) {
             return this.doRequest({
               url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs',
@@ -264,7 +264,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             });
           }
         }, {
-          key: "_pollQuery",
+          key: '_pollQuery',
           value: function _pollQuery(queryId, humioDataspace) {
             return this.doRequest({
               url: this.url + '/api/v1/dataspaces/' + humioDataspace + '/queryjobs/' + queryId,
@@ -272,7 +272,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             });
           }
         }, {
-          key: "_stopExecution",
+          key: '_stopExecution',
           value: function _stopExecution(queryId, humioDataspace) {
             console.log('stopping execution');
             return this.doRequest({
@@ -281,7 +281,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             });
           }
         }, {
-          key: "testDatasource",
+          key: 'testDatasource',
           value: function testDatasource() {
             return this.doRequest({
               url: this.url + '/',
@@ -289,15 +289,15 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             }).then(function (response) {
               if (response.status === 200) {
                 return {
-                  status: "success",
-                  message: "Data source is working",
-                  title: "Success"
+                  status: 'success',
+                  message: 'Data source is working',
+                  title: 'Success'
                 };
               }
             });
           }
         }, {
-          key: "annotationQuery",
+          key: 'annotationQuery',
           value: function annotationQuery(options) {
             console.log('annotationQuery -> ');
             var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
@@ -322,7 +322,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
             });
           }
         }, {
-          key: "doRequest",
+          key: 'doRequest',
           value: function doRequest(options) {
             options.withCredentials = this.withCredentials;
             options.headers = this.headers;
@@ -333,7 +333,7 @@ System.register(["lodash", "./helper"], function (_export, _context) {
         return GenericDatasource;
       }());
 
-      _export("GenericDatasource", GenericDatasource);
+      _export('GenericDatasource', GenericDatasource);
     }
   };
 });

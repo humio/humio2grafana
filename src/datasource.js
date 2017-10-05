@@ -1,5 +1,5 @@
-import _ from "lodash";
-import { HumioHelper } from "./helper";
+import _ from 'lodash';
+import { HumioHelper } from './helper';
 
 export class GenericDatasource {
 
@@ -51,10 +51,10 @@ export class GenericDatasource {
     }
 
     var dt = {
-      "queryString": humioQuery,
-      "timeZoneOffsetMinutes": -(new Date()).getTimezoneOffset(),
-      "showQueryEventDistribution": false,
-      "start": "24h"
+      'queryString': humioQuery,
+      'timeZoneOffsetMinutes': -(new Date()).getTimezoneOffset(),
+      'showQueryEventDistribution': false,
+      'start': '24h'
     }
 
     // NOTE: modifying query
@@ -102,7 +102,7 @@ export class GenericDatasource {
 
           resolve(this._composeResult(options, r, () => {
             let dt = _.clone(r.data);
-            let timeseriesField = "_bucket";
+            let timeseriesField = '_bucket';
             let seriesField = dt.metaData.extraData.series;
             let series = {};
             let valueField = _.filter(dt.metaData.fields, (f) => {
@@ -142,7 +142,7 @@ export class GenericDatasource {
           }));
         } else {
           console.log('query running...');
-          console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
+          console.log('' + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + '%');
           setTimeout(() => {
             this._composeQuery(panelId, dt, options, humioDataspace, humioQuery).then(handleRes, handleErr);
           }, 1000);
@@ -251,9 +251,9 @@ export class GenericDatasource {
     }).then(response => {
       if (response.status === 200) {
         return {
-          status: "success",
-          message: "Data source is working",
-          title: "Success"
+          status: 'success',
+          message: 'Data source is working',
+          title: 'Success'
         };
       }
     });
