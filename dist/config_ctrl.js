@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 System.register([], function (_export, _context) {
   "use strict";
@@ -14,7 +14,7 @@ System.register([], function (_export, _context) {
   return {
     setters: [],
     execute: function () {
-      _export('HumioConfigCtrl', HumioConfigCtrl =
+      _export("HumioConfigCtrl", HumioConfigCtrl =
 
       /** @ngInject */
       function HumioConfigCtrl($scope, $injector, $q, $http) {
@@ -23,12 +23,9 @@ System.register([], function (_export, _context) {
         this.current = this.current || {};
         this.current.jsonData = this.current.jsonData || {};
         this.current.jsonData.humioToken = this.current.jsonData.humioToken || "developer";
-
-        // NOTE: for humio we use only 'direct' mode, if using proxy we need more workaround
-        this.current.access = 'direct';
       });
 
-      _export('HumioConfigCtrl', HumioConfigCtrl);
+      _export("HumioConfigCtrl", HumioConfigCtrl);
 
       HumioConfigCtrl.templateUrl = 'partials/config.html';
     }

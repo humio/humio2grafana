@@ -1,16 +1,4 @@
-.gf-form-group
-  h3.page-heading Http settings
-  .gf-form-group
-    .gf-form-inline
-      .gf-form.max-width-30
-        span.gf-form-label.width-7 Url
-        input.gf-form-input(type="text",
-              ng-model='ctrl.current.url', placeholder="https://cloud.humio.com/", min-length="0",
-              required)
-              //- ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/",
-        info-popover(mode="right-absolute")
-          p Specify a complete HTTP url (for example http://your_server:8080)
-
+datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com/")
 h5 Humio access token
 .gf-form
   input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
