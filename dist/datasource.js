@@ -175,8 +175,8 @@ System.register(['lodash', './helper'], function (_export, _context) {
                         // NOTE: consider to be a barchart
                         r.data = dt.events.map(function (ev) {
                           return {
-                            target: "_" + ev[valueField],
-                            datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
+                            target: ev[valueField],
+                            datapoints: [[parseFloat(ev._count), '_' + ev[valueField]]]
                           };
                         });
                       }

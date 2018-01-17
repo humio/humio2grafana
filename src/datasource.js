@@ -142,8 +142,8 @@ export class GenericDatasource {
                 // NOTE: consider to be a barchart
                 r.data = dt.events.map((ev) => {
                   return {
-                    target: "_" + ev[valueField],
-                    datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
+                    target: ev[valueField],
+                    datapoints: [[parseFloat(ev._count), '_' + ev[valueField]]]
                   }
                 });
               }
