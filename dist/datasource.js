@@ -155,7 +155,6 @@ System.register(['lodash', './helper'], function (_export, _context) {
                           series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
                         }
                       }
-
                       r.data = _.keys(series).map(function (s) {
                         return {
                           target: s,
@@ -163,13 +162,24 @@ System.register(['lodash', './helper'], function (_export, _context) {
                         };
                       });
                     } else {
-                      // single series
-                      r.data = [{
-                        target: valueField,
-                        datapoints: dt.events.map(function (ev) {
-                          return [ev[valueField], parseInt(ev._bucket)];
-                        })
-                      }];
+                      // NOTE: single series
+                      if (dt.events.length == 1) {
+                        // NOTE: consider to be gauge
+                        r.data = dt.events.map(function (ev) {
+                          return {
+                            target: valueField,
+                            datapoints: [[parseFloat(ev[valueField]), valueField]]
+                          };
+                        });
+                      } else {
+                        // NOTE: consider to be a barchart
+                        r.data = dt.events.map(function (ev) {
+                          return {
+                            target: "_" + ev[valueField],
+                            datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
+                          };
+                        });
+                      }
                     }
                     return r;
                   }));
@@ -190,13 +200,13 @@ System.register(['lodash', './helper'], function (_export, _context) {
           value: function _composeResult(queryOptions, r, resFx) {
             var currentTarget = queryOptions.targets[0];
             if (currentTarget.hasOwnProperty('type') && (currentTarget.type == 'timeserie' || currentTarget.type == 'table') && r.data.hasOwnProperty('metaData') && r.data.metaData.hasOwnProperty('extraData') && r.data.metaData.extraData.timechart == 'true') {
-              // timechart
+              // NOTE: timechart
               return resFx();
             } else if (!currentTarget.hasOwnProperty('type') && r.data.hasOwnProperty('metaData') && r.data.metaData.isAggregate == true) {
-              // gauge
+              // NOTE: gauge
               return resFx();
             } else {
-              // unsuported query for this type of panel
+              // NOTE: unsuported query for this type of panel
               this.$rootScope.appEvent('alert-error', ['Unsupported visualisation', 'can\'t visulize the query result on this panel.']);
               return {
                 data: []

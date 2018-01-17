@@ -97,7 +97,7 @@ export class GenericDatasource {
           console.log('query done');
 
           this.queryParams[panelId].failCounter = 0;
-          this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ? 
+          this.queryParams[panelId].queryId = this.queryParams[panelId].isLive ?
             this.queryParams[panelId].queryId : null;
 
           resolve(this._composeResult(options, r, () => {
@@ -122,7 +122,6 @@ export class GenericDatasource {
                   series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
                 }
               }
-
               r.data = _.keys(series).map((s) => {
                 return {
                   target: s,
@@ -130,13 +129,24 @@ export class GenericDatasource {
                 }
               })
             } else {
-              // single series
-              r.data = [{
-                target: valueField,
-                datapoints: dt.events.map((ev) => {
-                  return [ev[valueField], parseInt(ev._bucket)];
-                })
-              }];
+              // NOTE: single series
+              if (dt.events.length == 1) {
+                // NOTE: consider to be gauge
+                r.data = dt.events.map((ev) => {
+                  return {
+                    target: valueField,
+                    datapoints: [[parseFloat(ev[valueField]), valueField]]
+                  }
+                });
+              } else {
+                // NOTE: consider to be a barchart
+                r.data = dt.events.map((ev) => {
+                  return {
+                    target: "_" + ev[valueField],
+                    datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
+                  }
+                });
+              }
             }
             return r;
           }));
@@ -159,14 +169,14 @@ export class GenericDatasource {
         ((currentTarget.type == 'timeserie') || (currentTarget.type == 'table')) &&
         (r.data.hasOwnProperty('metaData') && r.data.metaData.hasOwnProperty('extraData') &&
           r.data.metaData.extraData.timechart == 'true'))) {
-      // timechart
+      // NOTE: timechart
       return resFx();
     } else if (!currentTarget.hasOwnProperty('type') &&
       (r.data.hasOwnProperty('metaData') && r.data.metaData.isAggregate == true)) {
-      // gauge
+      // NOTE: gauge
       return resFx();
     } else {
-      // unsuported query for this type of panel
+      // NOTE: unsuported query for this type of panel
       this.$rootScope.appEvent('alert-error', ['Unsupported visualisation', 'can\'t visulize the query result on this panel.']);
       return {
         data: []
