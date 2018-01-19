@@ -1,7 +1,7 @@
 import {
   QueryCtrl
 } from 'app/plugins/sdk';
-import './css/query-editor.css!';
+import './css/query-editor.css';
 import _ from "lodash";
 import {
   HumioHelper
@@ -115,4 +115,5 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
   }
 }
 
-GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
+// GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
+GenericDatasourceQueryCtrl.template = require('pug-loader!./partials/query.editor.pug');

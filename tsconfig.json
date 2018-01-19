@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "removeComments": false,
+        "noImplicitAny": false,
+        "sourceMap": false,
+        "jsx": "preserve",
+        "pretty": true,
+        "allowUnusedLabels": true
+    },
+    "exclude": [
+    	"node_modules",
+      "dist"
+    ],
+    "typeRoots": [
+      "./node_modules/@types/"
+    ]
+}

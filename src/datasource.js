@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import { HumioHelper } from './helper';
+import DsPanel from './DsPanel';
+import DsPanelStorage from './DsPanelStorage';
 
 export class GenericDatasource {
 
@@ -21,11 +23,9 @@ export class GenericDatasource {
           'developer')
     };
 
-    // TODO: not sure if this is right approach
-    this.timeRange = undefined;
-
     // NOTE: session query storage
-    this.queryParams = {};
+    // this.queryParams = {};
+    this.dsPanelStorage = new DsPanelStorage(this.backendSrv);
   }
 
   query(options) {
@@ -40,8 +40,8 @@ export class GenericDatasource {
     let panelId = options.panelId;
     let humioQueryStr = options.targets[0].humioQuery;
     let humioDataspace = options.targets[0].humioDataspace;
-    var query = options; // TODO: not needed really
-    this.timeRange = options.range;
+    // var query = options; // TODO: not needed really
+    // this.timeRange = options.range;
 
     // NOTE: if no humio dataspace or no query - consider configuration invalid
     if (!humioDataspace || !humioQueryStr) {
@@ -50,21 +50,23 @@ export class GenericDatasource {
       });
     }
 
-    var dt = {
-      'queryString': humioQueryStr,
-      'timeZoneOffsetMinutes': -(new Date()).getTimezoneOffset(),
-      'showQueryEventDistribution': false,
-      'start': '24h'
-    }
+    // var dt = {
+    //   'queryString': humioQueryStr,
+    //   'timeZoneOffsetMinutes': -(new Date()).getTimezoneOffset(),
+    //   'showQueryEventDistribution': false,
+    //   'start': '24h'
+    // }
 
-    // NOTE: modifying query
-    this.queryParams[panelId] = this.queryParams[panelId] ? this.queryParams[panelId] : {
-      queryId: null,
-      failCounter: 0,
-      // humioQueryStr: JSON.stringify(dt),
-      isLive: false,
-      humioQuery: dt
-    };
+
+    // // NOTE: modifying query
+    // this.queryParams[panelId] = this.queryParams[panelId] ? this.queryParams[panelId] : {
+    //   queryId: null,
+    //   failCounter: 0,
+    //   // humioQueryStr: JSON.stringify(dt),
+    //   isLive: false,
+    //   humioQuery: dt
+    // };
+    var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
 
     return this.$q((resolve, reject) => {
 
@@ -74,15 +76,12 @@ export class GenericDatasource {
         // TODO: add a counter, if several times get a error - consider query to be invalid, or distinguish between error types
         if (err.status == 401) {
           // NOTE: query not found - trying to recreate
-          this._updateQueryParams(panelId, {
-            queryId: null,
-            failCounter: this.queryParams[panelId].failCounter + 1
-          });
-          if (this.queryParams[panelId].failCounter <= 3) {
-            this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes, handleErr);
+          dsPanel.setQueryId(null);
+          dsPanel.incFailCounter();
+          if (dsPanel.failCounter <= 3) {
+            this._composeQuery(panelId, dsPanel.getQueryData(), options, humioDataspace).then(handleRes, handleErr);
           } else {
-            // this.queryParams[panelId].failCounter = 0;
-            this._updateQueryParams(panelId, {failCounter: 0});
+            dsPanel.resetFailCounter()
           }
         } else {
           if (err.status = 400) {
@@ -100,10 +99,13 @@ export class GenericDatasource {
         if (r.data.done) {
           console.log('query done');
 
-          this._updateQueryParams(panelId, {
-            failCounter: 0,
-            queryId: this.queryParams[panelId].isLive ? this.queryParams[panelId].queryId : null
-          });
+          // this._updateQueryParams(panelId, {
+          //   failCounter: 0,
+          //   queryId: this.queryParams[panelId].isLive ? this.queryParams[panelId].queryId : null
+          // });
+          dsPanel.resetFailCounter();
+          // TODO: move this check to DsPanel;
+          dsPanel.setQueryId(dsPanel.queryData.isLive ? dsPanel.queryId : null);
 
           resolve(this._composeResult(options, r, () => {
             let dt = _.clone(r.data);
@@ -159,12 +161,12 @@ export class GenericDatasource {
           console.log('query running...');
           console.log('' + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + '%');
           setTimeout(() => {
-            this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes, handleErr);
+            this._composeQuery(panelId, dsPanel.getQueryData(), options, humioDataspace).then(handleRes, handleErr);
           }, 1000);
         }
       }
 
-      this._composeQuery(panelId, dt, options, humioDataspace).then(handleRes, handleErr);
+      this._composeQuery(panelId, dsPanel.getQueryData(), options, humioDataspace).then(handleRes, handleErr);
     });
   }
 
@@ -190,70 +192,79 @@ export class GenericDatasource {
   }
 
   _stopUpdatedQuery(panelId, queryDt, humioDataspace) {
-    if (JSON.stringify(this.queryParams[panelId].humioQuery) !== JSON.stringify(queryDt)) {
-      if (this.queryParams[panelId].queryId) {
-        this._stopExecution(this.queryParams[panelId].queryId, humioDataspace);
-      }
-      this._updateQueryParams(panelId, {
-        queryId: null,
-        humioQuery: queryDt
-      });
-    };
+    // TODO: move this to DsPanel completely;
+    let dsPanel = this.dsPanelStorage.panels.get(panelId);
+    if (dsPanel) {
+      // console.log('1->');
+      // console.log(JSON.stringify(dsPanel.getQueryData()));
+      // console.log(JSON.stringify(queryDt));
+      if (JSON.stringify(dsPanel.getQueryData()) !== JSON.stringify(queryDt)) {
+        console.log("STOP!");
+        if (dsPanel.queryId) {
+          this._stopExecution(dsPanel.queryId, humioDataspace);
+        }
+        dsPanel.setQueryId(null);
+        dsPanel.updateQueryParams(queryDt);
+        // this._updateQueryParams(panelId, {
+        //   queryId: null,
+        //   humioQuery: queryDt
+        // });
+      };
+    }
   }
 
   _composeQuery(panelId, queryDt, grafanaQueryOpts, humioDataspace) {
+    let dsPanel = this.dsPanelStorage.panels.get(panelId);
+    if (dsPanel) {
+      let refresh = this.$location ? (this.$location.search().refresh || null) : null;
+      let range = grafanaQueryOpts.range;
 
-    let refresh = this.$location ? (this.$location.search().refresh || null) : null;
-    let range = grafanaQueryOpts.range;
+      queryDt.isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));
 
-    queryDt.isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));
-
-    // NOTE: setting date range
-    if (queryDt.isLive) {
-      queryDt.start = HumioHelper.parseDateFrom(range.raw.from);
-
-      // TODO: shoudl be moved to _updateQueryParams
-      this._stopUpdatedQuery(panelId, queryDt, humioDataspace);
-
-      this._updateQueryParams(panelId, {humioQuery: queryDt});
-      return this._composeLiveQuery(panelId, queryDt, humioDataspace);
-    } else {
-
-      // TODO: shoudl be moved to _updateQueryParams
-      this._stopUpdatedQuery(panelId, queryDt, humioDataspace);
-
-      if (this.queryParams[panelId].queryId != null) {
-        return this._pollQuery(this.queryParams[panelId].queryId, humioDataspace);
-      } else {
-        queryDt.start = range.from._d.getTime();
-        queryDt.end = range.to._d.getTime();
+      // NOTE: setting date range
+      if (queryDt.isLive) {
+        queryDt.start = HumioHelper.parseDateFrom(range.raw.from);
 
         // TODO: shoudl be moved to _updateQueryParams
         this._stopUpdatedQuery(panelId, queryDt, humioDataspace);
 
-        this._updateQueryParams(panelId, {humioQuery: queryDt});
-        return this._initQuery(queryDt, humioDataspace).then((r) => {
-          this._updateQueryParams(panelId, {
-            queryId: r.data.id,
-            isLive:false
+        dsPanel.updateQueryParams(queryDt);
+        return this._composeLiveQuery(panelId, queryDt, humioDataspace);
+      } else {
+
+        // TODO: shoudl be moved to _updateQueryParams
+        this._stopUpdatedQuery(panelId, queryDt, humioDataspace);
+
+        if (dsPanel.queryId != null) {
+          return this._pollQuery(dsPanel.queryId, humioDataspace);
+        } else {
+          queryDt.start = range.from._d.getTime();
+          queryDt.end = range.to._d.getTime();
+
+          // TODO: shoudl be moved to _updateQueryParams
+          this._stopUpdatedQuery(panelId, queryDt, humioDataspace);
+
+          dsPanel.updateQueryParams(queryDt);
+          return this._initQuery(dsPanel.getQueryData(), humioDataspace).then((r) => {
+            dsPanel.setQueryId(r.data.id);
+            dsPanel.updateQueryParams({isLive: false});
+            return this._pollQuery(r.data.id, humioDataspace);
           });
-          return this._pollQuery(r.data.id, humioDataspace);
-        });
+        };
       };
     };
   }
 
   _composeLiveQuery(panelId, queryDt, humioDataspace) {
-    if (this.queryParams[panelId].queryId == null) {
-      return this._initQuery(queryDt, humioDataspace).then((r) => {
-        this._updateQueryParams(panelId, {
-          queryId: r.data.id,
-          isLive: true
-        });
+    let dsPanel = this.dsPanelStorage.panels.get(panelId);
+    if (dsPanel.queryId == null) {
+      return this._initQuery(dsPanel.getQueryData(), humioDataspace).then((r) => {
+        dsPanel.setQueryId(r.data.id);
+        dsPanel.updateQueryParams({isLive: true});
         return this._pollQuery(r.data.id, humioDataspace);
       });
     } else {
-      return this._pollQuery(this.queryParams[panelId].queryId, humioDataspace);
+      return this._pollQuery(dsPanel.queryId, humioDataspace);
     }
   }
 
@@ -280,10 +291,6 @@ export class GenericDatasource {
     });
   }
 
-  _updateQueryParams(panelId, newQueryParams) {
-    _.assign(this.queryParams[panelId], _.clone(newQueryParams));
-  }
-
   testDatasource() {
     return this.doRequest({
       url: this.url + '/',
@@ -299,30 +306,30 @@ export class GenericDatasource {
     });
   }
 
-  // TODO: handle annotationQuery
-  annotationQuery(options) {
-    console.log('annotationQuery -> ');
-    var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
-    var annotationQuery = {
-      range: options.range,
-      annotation: {
-        name: options.annotation.name,
-        datasource: options.annotation.datasource,
-        enable: options.annotation.enable,
-        iconColor: options.annotation.iconColor,
-        query: query
-      },
-      rangeRaw: options.rangeRaw
-    };
-
-    return this.doRequest({
-      url: this.url + '/annotations',
-      method: 'POST',
-      data: annotationQuery
-    }).then(result => {
-      return result.data;
-    });
-  }
+  // // TODO: handle annotationQuery
+  // annotationQuery(options) {
+  //   console.log('annotationQuery -> ');
+  //   var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
+  //   var annotationQuery = {
+  //     range: options.range,
+  //     annotation: {
+  //       name: options.annotation.name,
+  //       datasource: options.annotation.datasource,
+  //       enable: options.annotation.enable,
+  //       iconColor: options.annotation.iconColor,
+  //       query: query
+  //     },
+  //     rangeRaw: options.rangeRaw
+  //   };
+  //
+  //   return this.doRequest({
+  //     url: this.url + '/annotations',
+  //     method: 'POST',
+  //     data: annotationQuery
+  //   }).then(result => {
+  //     return result.data;
+  //   });
+  // }
 
   doRequest(options) {
     options.withCredentials = this.withCredentials;

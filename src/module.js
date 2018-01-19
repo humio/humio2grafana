@@ -18,7 +18,8 @@ import {
 
 
 class GenericAnnotationsQueryCtrl {}
-GenericAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
+// GenericAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
+GenericAnnotationsQueryCtrl.template = require('pug-loader!./partials/annotations.editor.pug');
 
 export {
   GenericDatasource as Datasource,

@@ -8,4 +8,5 @@ export class HumioConfigCtrl {
   }
 }
 
-HumioConfigCtrl.templateUrl = 'partials/config.html';
+// HumioConfigCtrl.templateUrl = 'partials/config.html';
+HumioConfigCtrl.template = require('pug-loader!./partials/config.pug');
