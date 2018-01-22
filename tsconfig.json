@@ -4,7 +4,7 @@
         "target": "es6",
         "removeComments": false,
         "noImplicitAny": false,
-        "sourceMap": false,
+        "sourceMap": true,
         "jsx": "preserve",
         "pretty": true,
         "allowUnusedLabels": true

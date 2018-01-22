@@ -1,16 +1,14 @@
-import {
-  QueryCtrl
-} from 'app/plugins/sdk';
+import { QueryCtrl } from 'app/plugins/sdk';
 import './css/query-editor.css';
 import _ from "lodash";
-import {
-  HumioHelper
-} from "./helper";
+import { HumioHelper } from "./helper";
 
 export class GenericDatasourceQueryCtrl extends QueryCtrl {
 
   constructor($scope, $injector, $http, $q, datasourceSrv, $location) {
+    console.log('->');
     super($scope, $injector);
+    console.log(this);
 
     this.$http = $http;
     this.$scope = $scope;

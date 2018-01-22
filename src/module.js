@@ -2,9 +2,7 @@ import {
   GenericDatasource
 } from './datasource';
 
-import {
-  GenericDatasourceQueryCtrl
-} from './query_ctrl';
+import { GenericDatasourceQueryCtrl } from './query_ctrl';
 
 import {
   HumioConfigCtrl
@@ -13,12 +11,9 @@ import {
 import {
   GenericQueryOptionsCtrl
 } from './query_options_ctrl';
-// class GenericConfigCtrl {}
-// GenericConfigCtrl.templateUrl = 'partials/config.html';
 
 
 class GenericAnnotationsQueryCtrl {}
-// GenericAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
 GenericAnnotationsQueryCtrl.template = require('pug-loader!./partials/annotations.editor.pug');
 
 export {

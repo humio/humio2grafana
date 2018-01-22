@@ -7,7 +7,10 @@
     "build": "webpack"
   },
   "homepage": "https://github.com/humio/humio2grafana#readme",
-  "keywords": ["humio", "grafana"],
+  "keywords": [
+    "humio",
+    "grafana"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/humio/humio2grafana.git"

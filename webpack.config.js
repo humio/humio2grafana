@@ -29,6 +29,8 @@ module.exports = {
     ])
   ],
 
+  devtool: 'source-map',
+
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx']
   },
@@ -39,7 +41,7 @@ module.exports = {
     loaders: [
       {
         test: /\.tsx?$/,
-        loader: 'awesome-typescript-loader'
+        loaders: ['awesome-typescript-loader']
       },
       {
         test: /\.css$/,
