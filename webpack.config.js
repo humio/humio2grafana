@@ -12,14 +12,26 @@ module.exports = {
     filename: 'module.js'
   },
 
+  externals: [
+    // remove the line below if you don't want to use buildin versions
+    'jquery', 'lodash', 'moment',
+    function(context, request, callback) {
+      var prefix = 'grafana/';
+      if (request.indexOf(prefix) === 0) {
+        return callback(null, request.substr(prefix.length));
+      }
+      callback();
+    }
+  ],
+
   // minify and prepare for grafana consumption
   plugins: [
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production')
     }),
-    new WebpackSystemRegister({
-      systemjsDeps: ['app/plugins/sdk', 'lodash', 'moment', 'angular']
-    }),
+    // new WebpackSystemRegister({
+    //   systemjsDeps: ['app/plugins/sdk', 'lodash', 'moment', 'angular']
+    // }),
     // new webpack.optimize.UglifyJsPlugin({
     //   mangle: false
     // }),
@@ -39,14 +51,29 @@ module.exports = {
   // ],
   module: {
     loaders: [
+      // {
+      //   test: /\.tsx?$/,
+      //   loaders: ['awesome-typescript-loader']
+      // },
       {
         test: /\.tsx?$/,
-        loaders: ['awesome-typescript-loader']
+        loaders: [
+          {
+            loader: "babel-loader",
+            // options: { presets: ['env'] }
+          },
+          "ts-loader"
+        ],
+        exclude: /node_modules/,
       },
       {
         test: /\.css$/,
         exclude: /node_modules/,
         loaders: ['style-loader', 'css-loader', 'postcss-loader']
+      },
+      {
+        test: /\.pug$/,
+        loader: 'pug-html-loader'
       }
     ]
   }

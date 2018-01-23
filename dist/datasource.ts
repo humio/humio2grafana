@@ -1,13 +1,30 @@
-import _ from 'lodash';
-import { HumioHelper } from './helper';
-import DsPanel from './DsPanel';
-import DsPanelStorage from './DsPanelStorage';
+///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
+import HumioHelper from "./helper";
+import DsPanel from "./DsPanel";
+import DsPanelStorage from "./DsPanelStorage";
 
 export class GenericDatasource {
+  type: string;
+  url: string;
+  name: string;
 
+  $q: any;
+  $location: any;
+  backendSrv: any;
+  templateSrv: any;
+  $rootScope: any;
+
+  headers: any;
+
+  dsPanelStorage: DsPanelStorage;
+  withCredentials: boolean;
+
+  timeRange: any; // FIXME: used by
+
+  /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
     this.type = instanceSettings.type;
-    this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, '') : '';
+    this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
     this.name = instanceSettings.name;
 
     this.$q = $q;
@@ -17,21 +34,25 @@ export class GenericDatasource {
     this.$rootScope = $rootScope;
 
     this.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' +
-        (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || 'developer') :
-          'developer')
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " +
+        (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "developer") :
+          "developer")
     };
 
-    this.dsPanelStorage = new DsPanelStorage(this.backendSrv);
+    this.dsPanelStorage = new DsPanelStorage();
+
+    this.timeRange = null;
 
     this.doRequest = this.doRequest.bind(this);
   }
 
   query(options) {
 
+    this.timeRange = options.range;
+
     // NOTE: if no tragests just return an empty result
-    if (options.targets.length == 0) {
+    if (options.targets.length === 0) {
       return this.$q.resolve({
         data: []
       });
@@ -48,7 +69,7 @@ export class GenericDatasource {
       });
     }
 
-    var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
+    let dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
 
     if (dsPanel) {
       return dsPanel.update(this.backendSrv, this.$q, this.$location, options,
@@ -65,14 +86,14 @@ export class GenericDatasource {
 
   testDatasource() {
     return this.doRequest({
-      url: this.url + '/',
-      method: 'GET',
+      url: this.url + "/",
+      method: "GET",
     }).then(response => {
       if (response.status === 200) {
         return {
-          status: 'success',
-          message: 'Data source is working',
-          title: 'Success'
+          status: "success",
+          message: "Data source is working",
+          title: "Success"
         };
       }
     });
@@ -80,8 +101,8 @@ export class GenericDatasource {
 
   // // TODO: handle annotationQuery
   // annotationQuery(options) {
-  //   console.log('annotationQuery -> ');
-  //   var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
+  //   console.log("annotationQuery -> ");
+  //   var query = this.templateSrv.replace(options.annotation.query, {}, "glob");
   //   var annotationQuery = {
   //     range: options.range,
   //     annotation: {
@@ -95,8 +116,8 @@ export class GenericDatasource {
   //   };
   //
   //   return this.doRequest({
-  //     url: this.url + '/annotations',
-  //     method: 'POST',
+  //     url: this.url + "/annotations",
+  //     method: "POST",
   //     data: annotationQuery
   //   }).then(result => {
   //     return result.data;

@@ -4,7 +4,8 @@
   "description": "Humio datasouce for grafana",
   "main": "dist/module",
   "scripts": {
-    "build": "webpack"
+    "build": "grunt",
+    "build-webpack": "xebpack"
   },
   "homepage": "https://github.com/humio/humio2grafana#readme",
   "keywords": [
@@ -20,30 +21,31 @@
   "bugs": {
     "url": "https://github.com/humio/humio2grafana/issues"
   },
-  "devDependencies": {
-    "@types/angular": "1.5.23",
-    "@types/jasmine": "2.2.31",
-    "@types/jquery": "2.0.45",
-    "awesome-typescript-loader": "^3.2.3",
-    "copy-webpack-plugin": "^4.3.1",
-    "css-loader": "^0.28.9",
-    "jasmine": "^2.5.3",
-    "lodash": "4.17.4",
-    "moment": "2.17.1",
-    "nodemon": "^1.11.0",
-    "postcss-loader": "^2.0.10",
-    "pug": "^2.0.0-rc.4",
-    "pug-loader": "^2.3.0",
-    "style-loader": "^0.19.1",
-    "tslint": "4.3.1",
-    "typescript": "2.1.5",
-    "typescript-formatter": "4.0.1",
-    "typings": "2.1.0",
-    "webpack": "^3.5.4",
-    "webpack-system-register": "^1.5.0"
-  },
   "dependencies": {
-    "@types/lodash": "4.14.50",
-    "@types/moment": "2.13.0"
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1",
+    "q": "^1.5.0",
+    "systemjs": "^0.19.47"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.93",
+    "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-pug": "^1.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-typescript": "^0.8.0",
+    "karma": "^1.7.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-expect": "^1.1.3",
+    "karma-mocha": "^1.3.0",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "karma-sinon": "^1.0.5",
+    "karma-systemjs": "^0.16.0",
+    "load-grunt-tasks": "^3.5.2",
+    "plugin-typescript": "^7.1.0",
+    "sinon": "^3.2.1",
+    "systemjs-plugin-css": "^0.1.35"
   }
 }

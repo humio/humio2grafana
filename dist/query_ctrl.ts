@@ -1,21 +1,36 @@
-import { QueryCtrl } from 'app/plugins/sdk';
-import './css/query-editor.css';
-import _ from "lodash";
-import { HumioHelper } from "./helper";
+import { QueryCtrl } from "app/plugins/sdk";
 
-export class GenericDatasourceQueryCtrl extends QueryCtrl {
+// import "./css/query-editor.css";
+import _ from "lodash";
+import HumioHelper from "./helper";
+
+class GenericDatasourceQueryCtrl extends QueryCtrl {
+  public static templateUrl = "partials/query.editor.html";
+
+  $http: any;
+  $scope: any;
+  $q: any;
+  $location: any;
+
+  dataspaces: any[];
+  datasource: any;
+  target: any;
+
+  panelCtrl: any;
 
   constructor($scope, $injector, $http, $q, datasourceSrv, $location) {
-    console.log('->');
+    // console.log('->');
+    // console.log($scope);
+    // console.log($injector);
     super($scope, $injector);
-    console.log(this);
+    // console.log(this);
 
     this.$http = $http;
     this.$scope = $scope;
     this.$q = $q;
     this.$location = $location;
 
-    this.target.humioQuery = this.target.humioQuery || 'timechart()';
+    this.target.humioQuery = this.target.humioQuery || "timechart()";
     this.target.humioDataspace = this.target.humioDataspace || undefined;
 
     this.dataspaces = [];
@@ -26,10 +41,10 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
 
   getHumioLink() {
     // NOTE: settings for timechart
-    let isLive = this.$location.search().hasOwnProperty('refresh') &&
+    let isLive = this.$location.search().hasOwnProperty("refresh") &&
       (HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to));
 
-    let start = '24h';
+    let start = "24h";
     let end = undefined;
 
     if (isLive) {
@@ -40,34 +55,34 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
     }
 
     let linkSettings = {
-      'query': this.target.humioQuery,
-      'live': isLive,
-      'start': start,
+      "query": this.target.humioQuery,
+      "live": isLive,
+      "start": start,
     }
 
     if (end) {
-      linkSettings['end'] = end;
+      linkSettings["end"] = end;
     }
 
     let widgetType = HumioHelper.getPanelType(this.target.humioQuery);
-    if (widgetType == 'time-chart') {
-      linkSettings['widgetType'] = widgetType;
-      linkSettings['legend'] = 'y';
-      linkSettings['lx'] = '';
-      linkSettings['ly'] = '';
-      linkSettings['mn'] = '';
-      linkSettings['mx'] = '';
-      linkSettings['op'] = '0.2';
-      linkSettings['p'] = 'a';
-      linkSettings['pl'] = '';
-      linkSettings['plY'] = '';
-      linkSettings['s'] = '';
-      linkSettings['sc'] = 'lin';
-      linkSettings['stp'] = 'y';
+    if (widgetType === "time-chart") {
+      linkSettings["widgetType"] = widgetType;
+      linkSettings["legend"] = "y";
+      linkSettings["lx"] = "";
+      linkSettings["ly"] = "";
+      linkSettings["mn"] = "";
+      linkSettings["mx"] = "";
+      linkSettings["op"] = "0.2";
+      linkSettings["p"] = "a";
+      linkSettings["pl"] = "";
+      linkSettings["plY"] = "";
+      linkSettings["s"] = "";
+      linkSettings["sc"] = "lin";
+      linkSettings["stp"] = "y";
     }
 
-    return this.datasource.url + '/' + this.target.humioDataspace +
-      '/search?' + this._serializeQueryOpts(linkSettings);
+    return this.datasource.url + "/" + this.target.humioDataspace +
+      "/search?" + this._serializeQueryOpts(linkSettings);
   }
 
   onChangeInternal() {
@@ -83,8 +98,8 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
   }
 
   _serializeQueryOpts(obj) {
-    var str = [];
-    for (var p in obj)
+    let str = [];
+    for (let p in obj)
       str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
     return str.join("&");
   }
@@ -92,9 +107,9 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
   _getHumioDataspaces() {
     if (this.datasource.url) {
 
-      var requestOpts = {
-        method: 'GET',
-        url: this.datasource.url + '/api/v1/dataspaces',
+      let requestOpts = {
+        method: "GET",
+        url: this.datasource.url + "/api/v1/dataspaces",
         headers: this.datasource.headers
       };
 
@@ -105,7 +120,7 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
             name: ds.id
           })
         });
-        return _.sortBy(res, ['name']);
+        return _.sortBy(res, ["name"]);
       });
     } else {
       return this.$q.when([]);
@@ -114,4 +129,5 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
 }
 
 // GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
-GenericDatasourceQueryCtrl.template = require('pug-loader!./partials/query.editor.pug');
+
+export default GenericDatasourceQueryCtrl;

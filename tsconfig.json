@@ -7,7 +7,8 @@
         "sourceMap": true,
         "jsx": "preserve",
         "pretty": true,
-        "allowUnusedLabels": true
+        "allowUnusedLabels": true,
+        "noImplicitAny": false
     },
     "exclude": [
     	"node_modules",

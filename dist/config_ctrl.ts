@@ -1,4 +1,7 @@
 export class HumioConfigCtrl {
+  public static templateUrl = "partials/config.html";
+
+  current: any;
 
   /** @ngInject */
   constructor($scope, $injector, $q, $http) {
@@ -8,5 +11,5 @@ export class HumioConfigCtrl {
   }
 }
 
-// HumioConfigCtrl.templateUrl = 'partials/config.html';
-HumioConfigCtrl.template = require('pug-loader!./partials/config.pug');
+export default HumioConfigCtrl;
+// HumioConfigCtrl.template = require('pug-loader!./partials/config.pug');
