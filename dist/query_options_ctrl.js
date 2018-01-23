@@ -1,27 +1,16 @@
-'use strict';
-
-System.register([], function (_export, _context) {
-  "use strict";
-
-  var GenericQueryOptionsCtrl;
-
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
+System.register([], function(exports_1) {
+    var GenericQueryOptionsCtrl;
+    return {
+        setters:[],
+        execute: function() {
+            GenericQueryOptionsCtrl = (function () {
+                function GenericQueryOptionsCtrl() {
+                }
+                GenericQueryOptionsCtrl.templateUrl = "partials/query.options.html";
+                return GenericQueryOptionsCtrl;
+            })();
+            exports_1("default",GenericQueryOptionsCtrl);
+        }
     }
-  }
-
-  return {
-    setters: [],
-    execute: function () {
-      _export('GenericQueryOptionsCtrl', GenericQueryOptionsCtrl = function GenericQueryOptionsCtrl() {
-        _classCallCheck(this, GenericQueryOptionsCtrl);
-      });
-
-      _export('GenericQueryOptionsCtrl', GenericQueryOptionsCtrl);
-
-      GenericQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
-    }
-  };
 });
 //# sourceMappingURL=query_options_ctrl.js.map

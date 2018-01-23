@@ -1,52 +1,51 @@
 {
   "name": "humio2grafana",
-  "private": true,
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.0.1",
+  "description": "Humio datasouce for grafana",
+  "main": "dist/module",
   "scripts": {
-    "build": "./node_modules/grunt-cli/bin/grunt",
-    "test": "./node_modules/grunt-cli/bin/grunt mochaTest"
+    "build": "grunt",
+    "build-webpack": "xebpack"
   },
+  "homepage": "https://github.com/humio/humio2grafana#readme",
+  "keywords": [
+    "humio",
+    "grafana"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/humio/humio2grafana.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Sergey Grigorev (xors.nn@gmail.com)",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/humio/humio2grafana/issues"
   },
-  "engines": {
-    "node": "6.10.0"
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1",
+    "q": "^1.5.0",
+    "systemjs": "^0.19.47"
   },
-  "engineStrict": true,
   "devDependencies": {
-    "babel": "^6.23.0",
-    "chai": "~3.5.0",
+    "@types/lodash": "^4.14.93",
+    "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
     "grunt": "^1.0.1",
-    "grunt-babel": "~6.0.0",
-    "grunt-cli": "^1.2.0",
     "grunt-contrib-clean": "^1.1.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-pug": "^1.0.0",
-    "grunt-contrib-uglify": "^2.3.0",
     "grunt-contrib-watch": "^1.0.0",
-    "grunt-execute": "~0.2.2",
-    "grunt-mocha-test": "^0.13.2",
-    "grunt-systemjs-builder": "^1.0.0",
-    "jsdom": "~9.12.0",
+    "grunt-typescript": "^0.8.0",
+    "karma": "^1.7.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-expect": "^1.1.3",
+    "karma-mocha": "^1.3.0",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "karma-sinon": "^1.0.5",
+    "karma-systemjs": "^0.16.0",
     "load-grunt-tasks": "^3.5.2",
-    "moment": "^2.18.1",
-    "prunk": "^1.3.0",
-    "q": "^1.5.0"
-  },
-  "dependencies": {
-    "babel-plugin-transform-es2015-for-of": "^6.6.0",
-    "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
-    "lodash": "^4.17.4",
-    "mocha": "^3.2.0"
-  },
-  "homepage": "https://github.com/humio/humio2grafana#readme"
+    "plugin-typescript": "^7.1.0",
+    "sinon": "^3.2.1",
+    "systemjs-plugin-css": "^0.1.35"
+  }
 }

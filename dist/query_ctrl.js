@@ -1,190 +1,126 @@
-'use strict';
-
-System.register(['app/plugins/sdk', './css/query-editor.css!', 'lodash', './helper'], function (_export, _context) {
-  "use strict";
-
-  var QueryCtrl, _, HumioHelper, _createClass, GenericDatasourceQueryCtrl;
-
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-
-  function _possibleConstructorReturn(self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  }
-
-  function _inherits(subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-    }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  }
-
-  return {
-    setters: [function (_appPluginsSdk) {
-      QueryCtrl = _appPluginsSdk.QueryCtrl;
-    }, function (_cssQueryEditorCss) {}, function (_lodash) {
-      _ = _lodash.default;
-    }, function (_helper) {
-      HumioHelper = _helper.HumioHelper;
-    }],
-    execute: function () {
-      _createClass = function () {
-        function defineProperties(target, props) {
-          for (var i = 0; i < props.length; i++) {
-            var descriptor = props[i];
-            descriptor.enumerable = descriptor.enumerable || false;
-            descriptor.configurable = true;
-            if ("value" in descriptor) descriptor.writable = true;
-            Object.defineProperty(target, descriptor.key, descriptor);
-          }
+System.register(["app/plugins/sdk", "lodash", "./helper"], function(exports_1) {
+    var __extends = (this && this.__extends) || function (d, b) {
+        for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+    var sdk_1, lodash_1, helper_1;
+    var GenericDatasourceQueryCtrl;
+    return {
+        setters:[
+            function (sdk_1_1) {
+                sdk_1 = sdk_1_1;
+            },
+            function (lodash_1_1) {
+                lodash_1 = lodash_1_1;
+            },
+            function (helper_1_1) {
+                helper_1 = helper_1_1;
+            }],
+        execute: function() {
+            GenericDatasourceQueryCtrl = (function (_super) {
+                __extends(GenericDatasourceQueryCtrl, _super);
+                function GenericDatasourceQueryCtrl($scope, $injector, $http, $q, datasourceSrv, $location) {
+                    var _this = this;
+                    // console.log('->');
+                    // console.log($scope);
+                    // console.log($injector);
+                    _super.call(this, $scope, $injector);
+                    // console.log(this);
+                    this.$http = $http;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    this.$location = $location;
+                    this.target.humioQuery = this.target.humioQuery || "timechart()";
+                    this.target.humioDataspace = this.target.humioDataspace || undefined;
+                    this.dataspaces = [];
+                    this._getHumioDataspaces().then(function (r) {
+                        _this.dataspaces = r;
+                    });
+                }
+                GenericDatasourceQueryCtrl.prototype.getHumioLink = function () {
+                    // NOTE: settings for timechart
+                    var isLive = this.$location.search().hasOwnProperty("refresh") &&
+                        (helper_1.default.checkToDateNow(this.datasource.timeRange.raw.to));
+                    var start = "24h";
+                    var end = undefined;
+                    if (isLive) {
+                        start = helper_1.default.parseDateFrom(this.datasource.timeRange.raw.from);
+                    }
+                    else {
+                        start = this.datasource.timeRange.from._d.getTime();
+                        end = this.datasource.timeRange.to._d.getTime();
+                    }
+                    var linkSettings = {
+                        "query": this.target.humioQuery,
+                        "live": isLive,
+                        "start": start,
+                    };
+                    if (end) {
+                        linkSettings["end"] = end;
+                    }
+                    var widgetType = helper_1.default.getPanelType(this.target.humioQuery);
+                    if (widgetType === "time-chart") {
+                        linkSettings["widgetType"] = widgetType;
+                        linkSettings["legend"] = "y";
+                        linkSettings["lx"] = "";
+                        linkSettings["ly"] = "";
+                        linkSettings["mn"] = "";
+                        linkSettings["mx"] = "";
+                        linkSettings["op"] = "0.2";
+                        linkSettings["p"] = "a";
+                        linkSettings["pl"] = "";
+                        linkSettings["plY"] = "";
+                        linkSettings["s"] = "";
+                        linkSettings["sc"] = "lin";
+                        linkSettings["stp"] = "y";
+                    }
+                    return this.datasource.url + "/" + this.target.humioDataspace +
+                        "/search?" + this._serializeQueryOpts(linkSettings);
+                };
+                GenericDatasourceQueryCtrl.prototype.onChangeInternal = function () {
+                    this.panelCtrl.refresh(); // Asks the panel to refresh data.
+                };
+                GenericDatasourceQueryCtrl.prototype.showHumioLink = function () {
+                    if (this.datasource.timeRange) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                GenericDatasourceQueryCtrl.prototype._serializeQueryOpts = function (obj) {
+                    var str = [];
+                    for (var p in obj)
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                    return str.join("&");
+                };
+                GenericDatasourceQueryCtrl.prototype._getHumioDataspaces = function () {
+                    if (this.datasource.url) {
+                        var requestOpts = {
+                            method: "GET",
+                            url: this.datasource.url + "/api/v1/dataspaces",
+                            headers: this.datasource.headers
+                        };
+                        return this.datasource.backendSrv.datasourceRequest(requestOpts).then(function (r) {
+                            var res = r.data.map(function (ds) {
+                                return ({
+                                    value: ds.id,
+                                    name: ds.id
+                                });
+                            });
+                            return lodash_1.default.sortBy(res, ["name"]);
+                        });
+                    }
+                    else {
+                        return this.$q.when([]);
+                    }
+                };
+                GenericDatasourceQueryCtrl.templateUrl = "partials/query.editor.html";
+                return GenericDatasourceQueryCtrl;
+            })(sdk_1.QueryCtrl);
+            exports_1("default",GenericDatasourceQueryCtrl);
         }
-
-        return function (Constructor, protoProps, staticProps) {
-          if (protoProps) defineProperties(Constructor.prototype, protoProps);
-          if (staticProps) defineProperties(Constructor, staticProps);
-          return Constructor;
-        };
-      }();
-
-      _export('GenericDatasourceQueryCtrl', GenericDatasourceQueryCtrl = function (_QueryCtrl) {
-        _inherits(GenericDatasourceQueryCtrl, _QueryCtrl);
-
-        function GenericDatasourceQueryCtrl($scope, $injector, $http, $q, datasourceSrv, $location) {
-          _classCallCheck(this, GenericDatasourceQueryCtrl);
-
-          var _this = _possibleConstructorReturn(this, (GenericDatasourceQueryCtrl.__proto__ || Object.getPrototypeOf(GenericDatasourceQueryCtrl)).call(this, $scope, $injector));
-
-          _this.$http = $http;
-          _this.$scope = $scope;
-          _this.$q = $q;
-          _this.$location = $location;
-
-          _this.target.humioQuery = _this.target.humioQuery || 'timechart()';
-          _this.target.humioDataspace = _this.target.humioDataspace || undefined;
-
-          _this.dataspaces = [];
-          _this._getHumioDataspaces().then(function (r) {
-            _this.dataspaces = r;
-          });
-          return _this;
-        }
-
-        _createClass(GenericDatasourceQueryCtrl, [{
-          key: 'getHumioLink',
-          value: function getHumioLink() {
-            // NOTE: settings for timechart
-            var isLive = this.$location.search().hasOwnProperty('refresh') && HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);
-
-            var start = '24h';
-            var end = undefined;
-
-            if (isLive) {
-              start = HumioHelper.parseDateFrom(this.datasource.timeRange.raw.from);
-            } else {
-              start = this.datasource.timeRange.from._d.getTime();
-              end = this.datasource.timeRange.to._d.getTime();
-            }
-
-            var linkSettings = {
-              'query': this.target.humioQuery,
-              'live': isLive,
-              'start': start
-            };
-
-            if (end) {
-              linkSettings['end'] = end;
-            }
-
-            var widgetType = HumioHelper.getPanelType(this.target.humioQuery);
-            if (widgetType == 'time-chart') {
-              linkSettings['widgetType'] = widgetType;
-              linkSettings['legend'] = 'y';
-              linkSettings['lx'] = '';
-              linkSettings['ly'] = '';
-              linkSettings['mn'] = '';
-              linkSettings['mx'] = '';
-              linkSettings['op'] = '0.2';
-              linkSettings['p'] = 'a';
-              linkSettings['pl'] = '';
-              linkSettings['plY'] = '';
-              linkSettings['s'] = '';
-              linkSettings['sc'] = 'lin';
-              linkSettings['stp'] = 'y';
-            }
-
-            return this.datasource.url + '/' + this.target.humioDataspace + '/search?' + this._serializeQueryOpts(linkSettings);
-          }
-        }, {
-          key: 'onChangeInternal',
-          value: function onChangeInternal() {
-            this.panelCtrl.refresh(); // Asks the panel to refresh data.
-          }
-        }, {
-          key: 'showHumioLink',
-          value: function showHumioLink() {
-            if (this.datasource.timeRange) {
-              return true;
-            } else {
-              return false;
-            }
-          }
-        }, {
-          key: '_serializeQueryOpts',
-          value: function _serializeQueryOpts(obj) {
-            var str = [];
-            for (var p in obj) {
-              str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-            }return str.join("&");
-          }
-        }, {
-          key: '_getHumioDataspaces',
-          value: function _getHumioDataspaces() {
-            if (this.datasource.url) {
-
-              var requestOpts = {
-                method: 'GET',
-                url: this.datasource.url + '/api/v1/dataspaces',
-                headers: this.datasource.headers
-              };
-
-              return this.datasource.backendSrv.datasourceRequest(requestOpts).then(function (r) {
-                var res = r.data.map(function (ds) {
-                  return {
-                    value: ds.id,
-                    name: ds.id
-                  };
-                });
-                return _.sortBy(res, ['name']);
-              });
-            } else {
-              return this.$q.when([]);
-            }
-          }
-        }]);
-
-        return GenericDatasourceQueryCtrl;
-      }(QueryCtrl));
-
-      _export('GenericDatasourceQueryCtrl', GenericDatasourceQueryCtrl);
-
-      GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
     }
-  };
 });
 //# sourceMappingURL=query_ctrl.js.map
