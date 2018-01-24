@@ -31,7 +31,7 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                 DsPanel.prototype.update = function (dsAttrs, queryAttrs) {
                     var _this = this;
                     return dsAttrs.$q(function (resolve, reject) {
-                        _this._composeQuery(dsAttrs.$location, _this.getQueryData(), queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace, queryAttrs.doRequest)
+                        _this._composeQuery(dsAttrs, queryAttrs, _this.getQueryData())
                             .then(function (result) {
                             _this._handleRes(dsAttrs, queryAttrs, result, resolve);
                         }, function (err) {
@@ -119,7 +119,7 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                         console.log("query running...");
                         console.log("" + (res["data"].metaData.workDone / res["data"].metaData.totalWork * 100).toFixed(2) + "%");
                         setTimeout(function () {
-                            _this._composeQuery(dsAttrs.$location, _this.getQueryData(), queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace, queryAttrs.doRequest)
+                            _this._composeQuery(dsAttrs, queryAttrs, _this.getQueryData())
                                 .then(function (result) {
                                 _this._handleRes(dsAttrs, queryAttrs, result, resolve);
                             }, function (err) {
@@ -142,7 +142,7 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                                 this.setQueryId(null);
                                 this.incFailCounter();
                                 if (this.failCounter <= 3) {
-                                    this._composeQuery(dsAttrs.$location, this.getQueryData(), queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace, queryAttrs.doRequest)
+                                    this._composeQuery(dsAttrs, queryAttrs, this.getQueryData())
                                         .then(function (result) {
                                         _this._handleRes(dsAttrs, queryAttrs, result, resolve);
                                     }, function (err) {
@@ -169,8 +169,10 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                 DsPanel.prototype._composeResult = function (queryOptions, r, resFx, errorCb) {
                     var currentTarget = queryOptions.targets[0];
                     if ((currentTarget.hasOwnProperty("type") &&
-                        ((currentTarget.type === "timeserie") || (currentTarget.type === "table")) &&
-                        (r.data.hasOwnProperty("metaData") && r.data.metaData.hasOwnProperty("extraData") &&
+                        ((currentTarget.type === "timeserie") ||
+                            (currentTarget.type === "table")) &&
+                        (r.data.hasOwnProperty("metaData") &&
+                            r.data.metaData.hasOwnProperty("extraData") &&
                             r.data.metaData.extraData.timechart === "true"))) {
                         // NOTE: timechart
                         return resFx();
@@ -182,41 +184,44 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                     }
                     else {
                         // NOTE: unsuported query for this type of panel
-                        errorCb("alert-error", ["Unsupported visualisation", "can\'t visulize the query result on this panel."]);
+                        errorCb("alert-error", [
+                            "Unsupported visualisation",
+                            "can\'t visulize the query result on this panel."
+                        ]);
                         return {
                             data: []
                         };
                     }
                 };
-                DsPanel.prototype._composeQuery = function ($location, queryDt, grafanaQueryOpts, humioDataspace, doRequest) {
+                DsPanel.prototype._composeQuery = function (dsAttrs, queryAttrs, queryDt) {
                     var _this = this;
-                    var refresh = $location ? ($location.search().refresh || null) : null;
-                    var range = grafanaQueryOpts.range;
+                    var refresh = dsAttrs.$location ? (dsAttrs.$location.search().refresh || null) : null;
+                    var range = queryAttrs.grafanaQueryOpts.range;
                     queryDt.isLive = ((refresh != null) && (helper_1.default.checkToDateNow(range.raw.to)));
                     // NOTE: setting date range
                     if (queryDt.isLive) {
                         queryDt.start = helper_1.default.parseDateFrom(range.raw.from);
                         // TODO: shoudl be moved to _updateQueryParams
-                        this._stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+                        this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
                         this.updateQueryParams(queryDt);
-                        return this._composeLiveQuery(queryDt, humioDataspace, doRequest);
+                        return this._composeLiveQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
                     }
                     else {
                         // TODO: shoudl be moved to _updateQueryParams
-                        this._stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+                        this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
                         if (this.queryId != null) {
-                            return this._pollQuery(this.queryId, humioDataspace, doRequest);
+                            return this._pollQuery(this.queryId, queryAttrs.humioDataspace, queryAttrs.doRequest);
                         }
                         else {
                             queryDt.start = range.from._d.getTime();
                             queryDt.end = range.to._d.getTime();
                             // TODO: shoudl be moved to _updateQueryParams
-                            this._stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+                            this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
                             this.updateQueryParams(queryDt);
-                            return this._initQuery(this.getQueryData(), humioDataspace, doRequest).then(function (r) {
+                            return this._initQuery(this.getQueryData(), queryAttrs.humioDataspace, queryAttrs.doRequest).then(function (r) {
                                 _this.setQueryId(r.data.id);
                                 _this.updateQueryParams({ isLive: false });
-                                return _this._pollQuery(r.data.id, humioDataspace, doRequest);
+                                return _this._pollQuery(r.data.id, queryAttrs.humioDataspace, queryAttrs.doRequest);
                             });
                         }
                         ;

@@ -32,9 +32,7 @@ class DsPanel {
 
   update(dsAttrs: IDatasourceAtts, queryAttrs: IQueryAttrs): any {
     return dsAttrs.$q((resolve, reject) => {
-      this._composeQuery(dsAttrs.$location, this.getQueryData(),
-        queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace,
-        queryAttrs.doRequest)
+      this._composeQuery(dsAttrs, queryAttrs, this.getQueryData())
         .then((result) => {
           this._handleRes(dsAttrs, queryAttrs, result, resolve);
         }, (err: Object) => {
@@ -118,9 +116,7 @@ class DsPanel {
       console.log("query running...");
       console.log("" + (res["data"].metaData.workDone / res["data"].metaData.totalWork * 100).toFixed(2) + "%");
       setTimeout(() => {
-        this._composeQuery(dsAttrs.$location, this.getQueryData(),
-          queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace,
-          queryAttrs.doRequest)
+        this._composeQuery(dsAttrs, queryAttrs, this.getQueryData())
           .then((result) => {
             this._handleRes(dsAttrs, queryAttrs, result, resolve);
           }, (err) => {
@@ -142,9 +138,7 @@ class DsPanel {
         this.setQueryId(null);
         this.incFailCounter();
         if (this.failCounter <= 3) {
-          this._composeQuery(dsAttrs.$location, this.getQueryData(),
-            queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace,
-            queryAttrs.doRequest)
+          this._composeQuery(dsAttrs, queryAttrs, this.getQueryData())
             .then((result) => {
               this._handleRes(dsAttrs, queryAttrs, result, resolve);
             }, (err: Object) => {
@@ -165,11 +159,14 @@ class DsPanel {
     }
   }
 
-  private _composeResult(queryOptions: any, r: any, resFx: any, errorCb: (errorTitle: string, errorBody: any) => void) {
+  private _composeResult(queryOptions: any, r: any, resFx: any,
+    errorCb: (errorTitle: string, errorBody: any) => void) {
     let currentTarget = queryOptions.targets[0];
     if ((currentTarget.hasOwnProperty("type") &&
-        ((currentTarget.type === "timeserie") || (currentTarget.type === "table")) &&
-        (r.data.hasOwnProperty("metaData") && r.data.metaData.hasOwnProperty("extraData") &&
+        ((currentTarget.type === "timeserie") ||
+        (currentTarget.type === "table")) &&
+        (r.data.hasOwnProperty("metaData") &&
+        r.data.metaData.hasOwnProperty("extraData") &&
           r.data.metaData.extraData.timechart === "true"))) {
       // NOTE: timechart
       return resFx();
@@ -179,16 +176,19 @@ class DsPanel {
       return resFx();
     } else {
       // NOTE: unsuported query for this type of panel
-      errorCb("alert-error", ["Unsupported visualisation", "can\'t visulize the query result on this panel."]);
+      errorCb("alert-error", [
+        "Unsupported visualisation",
+        "can\'t visulize the query result on this panel."
+      ]);
       return {
         data: []
       }
     }
   }
 
-  private _composeQuery($location: any, queryDt, grafanaQueryOpts, humioDataspace, doRequest: (data: any) => any) {
-    let refresh = $location ? ($location.search().refresh || null) : null;
-    let range = grafanaQueryOpts.range;
+  private _composeQuery(dsAttrs: IDatasourceAtts, queryAttrs: IQueryAttrs, queryDt: any) {
+    let refresh = dsAttrs.$location ? (dsAttrs.$location.search().refresh || null) : null;
+    let range = queryAttrs.grafanaQueryOpts.range;
 
     queryDt.isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));
 
@@ -197,35 +197,36 @@ class DsPanel {
       queryDt.start = HumioHelper.parseDateFrom(range.raw.from);
 
       // TODO: shoudl be moved to _updateQueryParams
-      this._stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+      this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
 
       this.updateQueryParams(queryDt);
-      return this._composeLiveQuery(queryDt, humioDataspace, doRequest);
+      return this._composeLiveQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
     } else {
 
       // TODO: shoudl be moved to _updateQueryParams
-      this._stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+      this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
 
       if (this.queryId != null) {
-        return this._pollQuery(this.queryId, humioDataspace, doRequest);
+        return this._pollQuery(this.queryId, queryAttrs.humioDataspace, queryAttrs.doRequest);
       } else {
         queryDt.start = range.from._d.getTime();
         queryDt.end = range.to._d.getTime();
 
         // TODO: shoudl be moved to _updateQueryParams
-        this._stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+        this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
 
         this.updateQueryParams(queryDt);
-        return this._initQuery(this.getQueryData(), humioDataspace, doRequest).then((r) => {
+        return this._initQuery(this.getQueryData(), queryAttrs.humioDataspace,
+          queryAttrs.doRequest).then((r) => {
           this.setQueryId(r.data.id);
           this.updateQueryParams({isLive: false});
-          return this._pollQuery(r.data.id, humioDataspace, doRequest);
+          return this._pollQuery(r.data.id, queryAttrs.humioDataspace, queryAttrs.doRequest);
         });
       };
     };
   }
 
-  _stopUpdatedQuery(queryDt: Object, humioDataspace: string, doRequest: (data: any) => any) {
+  private _stopUpdatedQuery(queryDt: Object, humioDataspace: string, doRequest: (data: any) => any) {
     if (JSON.stringify(this.getQueryData()) !== JSON.stringify(queryDt)) {
       if (this.queryId) {
         // TODO: make a promise
@@ -236,7 +237,7 @@ class DsPanel {
     };
   }
 
-  _composeLiveQuery(queryDt, humioDataspace, doRequest: (data: any) => any) {
+  private _composeLiveQuery(queryDt, humioDataspace, doRequest: (data: any) => any) {
     if (this.queryId == null) {
       return this._initQuery(this.getQueryData(), humioDataspace, doRequest).then((r) => {
         this.setQueryId(r.data.id);
@@ -248,7 +249,7 @@ class DsPanel {
     }
   }
 
-  _initQuery(queryDt, humioDataspace, doRequest: (data: any) => any) {
+  private _initQuery(queryDt, humioDataspace, doRequest: (data: any) => any) {
     return doRequest({
       url: "/api/v1/dataspaces/" + humioDataspace + "/queryjobs",
       data: queryDt,
@@ -256,14 +257,14 @@ class DsPanel {
     });
   }
 
-  _pollQuery(queryId, humioDataspace, doRequest: (data: any) => any) {
+  private _pollQuery(queryId, humioDataspace, doRequest: (data: any) => any) {
     return doRequest({
       url: "/api/v1/dataspaces/" + humioDataspace + "/queryjobs/" + queryId,
       method: "GET",
     });
   }
 
-  _stopExecution(queryId, humioDataspace, doRequest: (data: any) => any) {
+  private _stopExecution(queryId, humioDataspace, doRequest: (data: any) => any) {
     console.log("stopping execution");
     return doRequest({
       url: "/api/v1/dataspaces/" + humioDataspace + "/queryjobs/" + queryId,

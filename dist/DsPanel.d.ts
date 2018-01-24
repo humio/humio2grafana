@@ -13,12 +13,12 @@ declare class DsPanel {
     private _handleRes(dsAttrs, queryAttrs, res, resolve);
     private _handleErr(dsAttrs, queryAttrs, err, resolve);
     private _composeResult(queryOptions, r, resFx, errorCb);
-    private _composeQuery($location, queryDt, grafanaQueryOpts, humioDataspace, doRequest);
-    _stopUpdatedQuery(queryDt: Object, humioDataspace: string, doRequest: (data: any) => any): void;
-    _composeLiveQuery(queryDt: any, humioDataspace: any, doRequest: (data: any) => any): any;
-    _initQuery(queryDt: any, humioDataspace: any, doRequest: (data: any) => any): any;
-    _pollQuery(queryId: any, humioDataspace: any, doRequest: (data: any) => any): any;
-    _stopExecution(queryId: any, humioDataspace: any, doRequest: (data: any) => any): any;
+    private _composeQuery(dsAttrs, queryAttrs, queryDt);
+    private _stopUpdatedQuery(queryDt, humioDataspace, doRequest);
+    private _composeLiveQuery(queryDt, humioDataspace, doRequest);
+    private _initQuery(queryDt, humioDataspace, doRequest);
+    private _pollQuery(queryId, humioDataspace, doRequest);
+    private _stopExecution(queryId, humioDataspace, doRequest);
     getQueryData(): Object;
     updateQueryParams(newQueryParams: Object): void;
     cleanupQueryData(): void;

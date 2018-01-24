@@ -1,4 +1,4 @@
-System.register(["app/plugins/sdk", "lodash", "./helper"], function(exports_1) {
+System.register(["app/plugins/sdk", "lodash", "./helper", "./css/query-editor.css!"], function(exports_1) {
     var __extends = (this && this.__extends) || function (d, b) {
         for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
         function __() { this.constructor = d; }
@@ -16,10 +16,9 @@ System.register(["app/plugins/sdk", "lodash", "./helper"], function(exports_1) {
             },
             function (helper_1_1) {
                 helper_1 = helper_1_1;
-            }],
+            },
+            function (_1) {}],
         execute: function() {
-            // TODO: figure out later how to import
-            // import "./css/query-editor.css";
             GenericDatasourceQueryCtrl = (function (_super) {
                 __extends(GenericDatasourceQueryCtrl, _super);
                 function GenericDatasourceQueryCtrl($scope, $injector, $http, $q, datasourceSrv, $location) {

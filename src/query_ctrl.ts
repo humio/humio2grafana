@@ -3,7 +3,7 @@ import _ from "lodash";
 import HumioHelper from "./helper";
 
 // TODO: figure out later how to import
-// import "./css/query-editor.css";
+import "./css/query-editor.css!";
 
 class GenericDatasourceQueryCtrl extends QueryCtrl {
   public static templateUrl = "partials/query.editor.html";
