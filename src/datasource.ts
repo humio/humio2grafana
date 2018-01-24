@@ -2,24 +2,24 @@
 import HumioHelper from "./helper";
 import DsPanel from "./DsPanel";
 import DsPanelStorage from "./DsPanelStorage";
+import IDatasourceAttrs from "./Interfaces/IDatasourceAttrs";
+import IQueryAttrs from "./Interfaces/IQueryAttrs";
 
 export class GenericDatasource {
   type: string;
   url: string;
   name: string;
 
-  $q: any;
-  $location: any;
-  backendSrv: any;
-  templateSrv: any;
-  $rootScope: any;
+  dsAttrs: IDatasourceAttrs;
+
+  templateSrv: any; // TODO: not sure if needed
 
   headers: any;
 
   dsPanelStorage: DsPanelStorage;
   withCredentials: boolean;
 
-  timeRange: any; // FIXME: used by
+  timeRange: any; // FIXME: used by parent controller
 
   /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
@@ -27,11 +27,15 @@ export class GenericDatasource {
     this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
     this.name = instanceSettings.name;
 
-    this.$q = $q;
-    this.$location = $location;
-    this.backendSrv = backendSrv;
+    this.dsAttrs = {
+      $q: $q,
+      $location: $location,
+      backendSrv: backendSrv,
+      $rootScope: $rootScope
+    }
+
+
     this.templateSrv = templateSrv;
-    this.$rootScope = $rootScope;
 
     this.headers = {
       "Content-Type": "application/json",
@@ -53,7 +57,7 @@ export class GenericDatasource {
 
     // NOTE: if no tragests just return an empty result
     if (options.targets.length === 0) {
-      return this.$q.resolve({
+      return this.dsAttrs.$q.resolve({
         data: []
       });
     }
@@ -64,7 +68,7 @@ export class GenericDatasource {
 
     // NOTE: if no humio dataspace or no query - consider configuration invalid
     if (!humioDataspace || !humioQueryStr) {
-      return this.$q.resolve({
+      return this.dsAttrs.$q.resolve({
         data: []
       });
     }
@@ -72,13 +76,21 @@ export class GenericDatasource {
     let dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
 
     if (dsPanel) {
-      return dsPanel.update(this.backendSrv, this.$q, this.$location, options,
-        humioQueryStr, humioDataspace, (errorTitle, errorBody) => {
-          this.$rootScope.appEvent(errorTitle, errorBody);
-        }, this.doRequest);
+      let queryAttrs: IQueryAttrs = {
+        grafanaQueryOpts: options,
+        humioQueryStr: humioQueryStr,
+        humioDataspace: humioDataspace,
+        errorCb: (errorTitle, errorBody) => {
+          this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
+        },
+        doRequest: this.doRequest
+      }
+
+
+      return dsPanel.update(this.dsAttrs, queryAttrs);
     } else {
       // TODO: handle the case
-      return this.$q.resolve({
+      return this.dsAttrs.$q.resolve({
         data: []
       });
     }
@@ -128,7 +140,7 @@ export class GenericDatasource {
     options.withCredentials = this.withCredentials;
     options.headers = this.headers;
     options.url = this.url + options.url; // NOTE: adding base
-    return this.backendSrv.datasourceRequest(options);
+    return this.dsAttrs.backendSrv.datasourceRequest(options);
   }
 
 }

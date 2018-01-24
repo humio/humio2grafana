@@ -18,15 +18,13 @@ System.register(["app/plugins/sdk", "lodash", "./helper"], function(exports_1) {
                 helper_1 = helper_1_1;
             }],
         execute: function() {
+            // TODO: figure out later how to import
+            // import "./css/query-editor.css";
             GenericDatasourceQueryCtrl = (function (_super) {
                 __extends(GenericDatasourceQueryCtrl, _super);
                 function GenericDatasourceQueryCtrl($scope, $injector, $http, $q, datasourceSrv, $location) {
                     var _this = this;
-                    // console.log('->');
-                    // console.log($scope);
-                    // console.log($injector);
                     _super.call(this, $scope, $injector);
-                    // console.log(this);
                     this.$http = $http;
                     this.$scope = $scope;
                     this.$q = $q;
@@ -102,7 +100,7 @@ System.register(["app/plugins/sdk", "lodash", "./helper"], function(exports_1) {
                             url: this.datasource.url + "/api/v1/dataspaces",
                             headers: this.datasource.headers
                         };
-                        return this.datasource.backendSrv.datasourceRequest(requestOpts).then(function (r) {
+                        return this.datasource.dsAttrs.backendSrv.datasourceRequest(requestOpts).then(function (r) {
                             var res = r.data.map(function (ds) {
                                 return ({
                                     value: ds.id,

@@ -2,14 +2,16 @@
 
 import _ from "lodash";
 import HumioHelper from "./helper";
-import IQueryData from "./IQueryData";
-
+import IQueryData from "./Interfaces/IQueryData";
+import IDatasourceAtts from "./Interfaces/IDatasourceAttrs";
+import IQueryAttrs from "./Interfaces/IQueryAttrs";
+import RequestStatus from "./Enums/RequestStatus";
 
 class DsPanel {
 
   queryId: string;
   failCounter: number;
-
+  requestStatus: RequestStatus;
   queryData: IQueryData;
 
   constructor(queryStr: string) {
@@ -23,132 +25,147 @@ class DsPanel {
 
     this.queryId = null;
     this.failCounter = 0;
+    this.requestStatus = RequestStatus.INITIAL;
+
+    this._handleErr = this._handleErr.bind(this);
   }
 
-  update(backendSrv: any, $q: any, $location: any, grafanaQueryOpts: any, humioQueryStr: string, humioDataspace: string,
-    errorCb: (errorTitle: string, errorBody: any) => void, doRequest: (data: any) => any): any {
-
-    return $q((resolve, reject) => {
-
-      let handleRes = (r) => {
-        if (r.data.done) {
-          console.log("query done");
-          this.resetFailCounter();
-          // TODO: move this check to DsPanel;
-          this.setQueryId(this.queryData.isLive ? this.queryId : null);
-
-          resolve(this._composeResult(grafanaQueryOpts, r, () => {
-            if (r.data.events.length === 0) {
-              r.data = [];
-            } else {
-              let dt = _.clone(r.data);
-              let timeseriesField = "_bucket";
-              let isTimechart = dt.metaData.extraData.timechart === "true";
-              let seriesField = dt.metaData.extraData.series;
-              let series = {};
-              let valueField = _.filter(dt.metaData.fields, (f) => {
-                return f["name"] !== timeseriesField && f["name"] !== seriesField;
-              })[0]["name"];
-
-              // NOTE: aggregating result
-              if (seriesField) {
-                // multiple series
-                for (let i = 0; i < r.data.events.length; i++) {
-                  let ev = r.data.events[i];
-                  if (!series[ev[seriesField]]) {
-                    series[ev[seriesField]] = [
-                      [ev[valueField], parseInt(ev._bucket)]
-                    ];
-                  } else {
-                    series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
-                  }
-                }
-                r.data = _.keys(series).map((s) => {
-                  return {
-                    target: s,
-                    datapoints: series[s]
-                  }
-                })
-              } else {
-                // NOTE: single series
-                if (dt.events.length === 1) {
-                  // NOTE: consider to be gauge
-                  r.data = dt.events.map((ev) => {
-                    return {
-                      target: valueField,
-                      datapoints: [[parseFloat(ev[valueField]), valueField]]
-                    }
-                  });
-                } else {
-                  if (isTimechart) {
-                    r.data = [{
-                      target: "_count",
-                      datapoints: dt.events.map((ev) => {
-                        return [parseFloat(ev._count), parseInt(ev._bucket)];
-                      })
-                    }];
-                  } else {
-                    // NOTE: consider to be a barchart
-                    r.data = dt.events.map((ev) => {
-                      return {
-                        target: ev[valueField],
-                        datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
-                      }
-                    });
-                  }
-                }
-              }
-            }
-            return r;
-          }, errorCb));
-        } else {
-          console.log("query running...");
-          console.log("" + (r.data.metaData.workDone / r.data.metaData.totalWork * 100).toFixed(2) + "%");
-          setTimeout(() => {
-            this._composeQuery($location, this.getQueryData(), grafanaQueryOpts, humioDataspace, doRequest)
-              .then(handleRes, (err) => {
-                // TODO: handle error
-                resolve({
-                  data: []
-                });
-              });
-          }, 1000);
-        }
-      }
-
-      let handleErr = (err) => {
-        console.log("fallback ->");
-        console.log(err);
-        // TODO: add a counter, if several times get a error - consider query to be
-        // invalid, or distinguish between error types
-        if (err.status === 401) {
-          // NOTE: query not found - trying to recreate
-          this.setQueryId(null);
-          this.incFailCounter();
-          if (this.failCounter <= 3) {
-            this._composeQuery($location, this.getQueryData(), grafanaQueryOpts, humioDataspace, doRequest)
-              .then(handleRes, handleErr);
-          } else {
-            this.resetFailCounter()
-          }
-        } else {
-          if (err.status = 400) {
-            errorCb("Query error", err.data);
-          } else {
-            errorCb(err.status.toString(), err.data);
-          }
-          resolve({
-            data: []
-          });
-        }
-      }
-
-      this._composeQuery($location, this.getQueryData(), grafanaQueryOpts, humioDataspace, doRequest)
-        .then(handleRes, handleErr);
+  update(dsAttrs: IDatasourceAtts, queryAttrs: IQueryAttrs): any {
+    return dsAttrs.$q((resolve, reject) => {
+      this._composeQuery(dsAttrs.$location, this.getQueryData(),
+        queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace,
+        queryAttrs.doRequest)
+        .then((result) => {
+          this._handleRes(dsAttrs, queryAttrs, result, resolve);
+        }, (err: Object) => {
+          this._handleErr(dsAttrs, queryAttrs, err, resolve);
+        });
     });
   }
 
-  _composeResult(queryOptions: any, r: any, resFx: any, errorCb: (errorTitle: string, errorBody: any) => void) {
+  private _handleRes(dsAttrs: IDatasourceAtts, queryAttrs: IQueryAttrs, res: Object, resolve: any): any {
+    if (res["data"].done) {
+      console.log("query done");
+      this.resetFailCounter();
+      // TODO: move this check to DsPanel;
+      this.setQueryId(this.queryData.isLive ? this.queryId : null);
+
+      resolve(this._composeResult(queryAttrs.grafanaQueryOpts, res, () => {
+        if (res["data"].events.length === 0) {
+          res["data"] = [];
+        } else {
+          let dt = res["data"];
+          let timeseriesField = "_bucket";
+          let isTimechart = dt.metaData.extraData.timechart === "true";
+          let seriesField = dt.metaData.extraData.series;
+          let series = {};
+          let valueField = _.filter(dt.metaData.fields, (f) => {
+            return f["name"] !== timeseriesField && f["name"] !== seriesField;
+          })[0]["name"];
+
+          // NOTE: aggregating result
+          if (seriesField) {
+            // multiple series
+            for (let i = 0; i < res["data"].events.length; i++) {
+              let ev = res["data"].events[i];
+              if (!series[ev[seriesField]]) {
+                series[ev[seriesField]] = [
+                  [ev[valueField], parseInt(ev._bucket)]
+                ];
+              } else {
+                series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
+              }
+            }
+            res["data"] = _.keys(series).map((s) => {
+              return {
+                target: s,
+                datapoints: series[s]
+              }
+            })
+          } else {
+            // NOTE: single series
+            if (dt.events.length === 1) {
+              // NOTE: consider to be gauge
+              res["data"] = dt.events.map((ev) => {
+                return {
+                  target: valueField,
+                  datapoints: [[parseFloat(ev[valueField]), valueField]]
+                }
+              });
+            } else {
+              if (isTimechart) {
+                res["data"] = [{
+                  target: "_count",
+                  datapoints: dt.events.map((ev) => {
+                    return [parseFloat(ev._count), parseInt(ev._bucket)];
+                  })
+                }];
+              } else {
+                // NOTE: consider to be a barchart
+                res["data"] = dt.events.map((ev) => {
+                  return {
+                    target: ev[valueField],
+                    datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
+                  }
+                });
+              }
+            }
+          }
+        }
+        return res;
+      }, queryAttrs.errorCb));
+    } else {
+      console.log("query running...");
+      console.log("" + (res["data"].metaData.workDone / res["data"].metaData.totalWork * 100).toFixed(2) + "%");
+      setTimeout(() => {
+        this._composeQuery(dsAttrs.$location, this.getQueryData(),
+          queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace,
+          queryAttrs.doRequest)
+          .then((result) => {
+            this._handleRes(dsAttrs, queryAttrs, result, resolve);
+          }, (err) => {
+            // TODO: handle error
+            resolve({
+              data: []
+            });
+          });
+      }, 1000);
+    }
+  }
+
+  private _handleErr(dsAttrs: IDatasourceAtts, queryAttrs: IQueryAttrs, err: Object, resolve: any): any {
+    // TODO: add a counter, if several times get a error - consider query to be
+    // invalid, or distinguish between error types
+    switch (err["status"]) {
+      case (401): {
+        // NOTE: query not found - trying to recreate
+        this.setQueryId(null);
+        this.incFailCounter();
+        if (this.failCounter <= 3) {
+          this._composeQuery(dsAttrs.$location, this.getQueryData(),
+            queryAttrs.grafanaQueryOpts, queryAttrs.humioDataspace,
+            queryAttrs.doRequest)
+            .then((result) => {
+              this._handleRes(dsAttrs, queryAttrs, result, resolve);
+            }, (err: Object) => {
+              this._handleErr(dsAttrs, queryAttrs, err, resolve);
+            });
+        } else {
+          this.resetFailCounter()
+        }
+      } break;
+      case (400): {
+        queryAttrs.errorCb("Query error", err["data"]);
+        resolve({data: []});
+      } break;
+      default: {
+        queryAttrs.errorCb(err["status"].toString(), err["data"]);
+        resolve({data: []});
+      }
+    }
+  }
+
+  private _composeResult(queryOptions: any, r: any, resFx: any, errorCb: (errorTitle: string, errorBody: any) => void) {
     let currentTarget = queryOptions.targets[0];
     if ((currentTarget.hasOwnProperty("type") &&
         ((currentTarget.type === "timeserie") || (currentTarget.type === "table")) &&
@@ -209,9 +226,7 @@ class DsPanel {
   }
 
   _stopUpdatedQuery(queryDt: Object, humioDataspace: string, doRequest: (data: any) => any) {
-    // TODO: move this to DsPanel completely;
     if (JSON.stringify(this.getQueryData()) !== JSON.stringify(queryDt)) {
-      console.log("STOP!");
       if (this.queryId) {
         // TODO: make a promise
         this._stopExecution(this.queryId, humioDataspace, doRequest);

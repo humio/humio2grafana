@@ -1,14 +1,12 @@
 /// <reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 import DsPanelStorage from "./DsPanelStorage";
+import IDatasourceAttrs from "./Interfaces/IDatasourceAttrs";
 export declare class GenericDatasource {
     type: string;
     url: string;
     name: string;
-    $q: any;
-    $location: any;
-    backendSrv: any;
+    dsAttrs: IDatasourceAttrs;
     templateSrv: any;
-    $rootScope: any;
     headers: any;
     dsPanelStorage: DsPanelStorage;
     withCredentials: boolean;

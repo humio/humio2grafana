@@ -1,8 +1,9 @@
 import { QueryCtrl } from "app/plugins/sdk";
-
-// import "./css/query-editor.css";
 import _ from "lodash";
 import HumioHelper from "./helper";
+
+// TODO: figure out later how to import
+// import "./css/query-editor.css";
 
 class GenericDatasourceQueryCtrl extends QueryCtrl {
   public static templateUrl = "partials/query.editor.html";
@@ -19,11 +20,7 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
   panelCtrl: any;
 
   constructor($scope, $injector, $http, $q, datasourceSrv, $location) {
-    // console.log('->');
-    // console.log($scope);
-    // console.log($injector);
     super($scope, $injector);
-    // console.log(this);
 
     this.$http = $http;
     this.$scope = $scope;
@@ -113,7 +110,7 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
         headers: this.datasource.headers
       };
 
-      return this.datasource.backendSrv.datasourceRequest(requestOpts).then((r) => {
+      return this.datasource.dsAttrs.backendSrv.datasourceRequest(requestOpts).then((r) => {
         let res = r.data.map((ds) => {
           return ({
             value: ds.id,
@@ -127,7 +124,5 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
     }
   }
 }
-
-// GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
 
 export default GenericDatasourceQueryCtrl;

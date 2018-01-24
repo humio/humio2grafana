@@ -13,11 +13,13 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                     this.type = instanceSettings.type;
                     this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
                     this.name = instanceSettings.name;
-                    this.$q = $q;
-                    this.$location = $location;
-                    this.backendSrv = backendSrv;
+                    this.dsAttrs = {
+                        $q: $q,
+                        $location: $location,
+                        backendSrv: backendSrv,
+                        $rootScope: $rootScope
+                    };
                     this.templateSrv = templateSrv;
-                    this.$rootScope = $rootScope;
                     this.headers = {
                         "Content-Type": "application/json",
                         "Authorization": "Bearer " +
@@ -33,7 +35,7 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                     this.timeRange = options.range;
                     // NOTE: if no tragests just return an empty result
                     if (options.targets.length === 0) {
-                        return this.$q.resolve({
+                        return this.dsAttrs.$q.resolve({
                             data: []
                         });
                     }
@@ -42,19 +44,26 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                     var humioDataspace = options.targets[0].humioDataspace;
                     // NOTE: if no humio dataspace or no query - consider configuration invalid
                     if (!humioDataspace || !humioQueryStr) {
-                        return this.$q.resolve({
+                        return this.dsAttrs.$q.resolve({
                             data: []
                         });
                     }
                     var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
                     if (dsPanel) {
-                        return dsPanel.update(this.backendSrv, this.$q, this.$location, options, humioQueryStr, humioDataspace, function (errorTitle, errorBody) {
-                            _this.$rootScope.appEvent(errorTitle, errorBody);
-                        }, this.doRequest);
+                        var queryAttrs = {
+                            grafanaQueryOpts: options,
+                            humioQueryStr: humioQueryStr,
+                            humioDataspace: humioDataspace,
+                            errorCb: function (errorTitle, errorBody) {
+                                _this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
+                            },
+                            doRequest: this.doRequest
+                        };
+                        return dsPanel.update(this.dsAttrs, queryAttrs);
                     }
                     else {
                         // TODO: handle the case
-                        return this.$q.resolve({
+                        return this.dsAttrs.$q.resolve({
                             data: []
                         });
                     }
@@ -101,7 +110,7 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                     options.withCredentials = this.withCredentials;
                     options.headers = this.headers;
                     options.url = this.url + options.url; // NOTE: adding base
-                    return this.backendSrv.datasourceRequest(options);
+                    return this.dsAttrs.backendSrv.datasourceRequest(options);
                 };
                 return GenericDatasource;
             })();
