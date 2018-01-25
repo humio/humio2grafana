@@ -59,9 +59,9 @@ class DsPanel {
             } else {
               if (isTimechart) {
                 result = result.concat([{
-                  target: "_count",
+                  target: valueField,
                   datapoints: dt.events.map((ev) => {
-                    return [parseFloat(ev._count), parseInt(ev._bucket)];
+                    return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
                   })
                 }]);
               } else {

@@ -102,7 +102,6 @@ class HumioQuery {
     let range = grafanaAttrs.grafanaQueryOpts.range;
 
     let isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));
-    console.log(target.humioDataspace);
     if (target.humioDataspace) {
       if (isLive) {
         return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);

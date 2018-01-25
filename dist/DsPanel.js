@@ -59,9 +59,9 @@ System.register(["lodash", "./HumioQuery"], function(exports_1) {
                                     else {
                                         if (isTimechart) {
                                             result = result.concat([{
-                                                    target: "_count",
+                                                    target: valueField,
                                                     datapoints: dt.events.map(function (ev) {
-                                                        return [parseFloat(ev._count), parseInt(ev._bucket)];
+                                                        return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
                                                     })
                                                 }]);
                                         }
