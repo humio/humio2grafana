@@ -102,11 +102,15 @@ class HumioQuery {
     let range = grafanaAttrs.grafanaQueryOpts.range;
 
     let isLive = ((refresh != null) && (HumioHelper.checkToDateNow(range.raw.to)));
-
-    if (isLive) {
-      return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
+    console.log(target.humioDataspace);
+    if (target.humioDataspace) {
+      if (isLive) {
+        return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
+      } else {
+        return this._composeStaticQuery(dsAttrs, grafanaAttrs, target);
+      }
     } else {
-      return this._composeStaticQuery(dsAttrs, grafanaAttrs, target);
+      return dsAttrs.$q.when({data: {events: [], done: true}});
     }
   }
 

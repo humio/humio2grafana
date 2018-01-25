@@ -99,11 +99,17 @@ System.register(["./helper", "lodash"], function(exports_1) {
                     var refresh = dsAttrs.$location ? (dsAttrs.$location.search().refresh || null) : null;
                     var range = grafanaAttrs.grafanaQueryOpts.range;
                     var isLive = ((refresh != null) && (helper_1.default.checkToDateNow(range.raw.to)));
-                    if (isLive) {
-                        return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
+                    console.log(target.humioDataspace);
+                    if (target.humioDataspace) {
+                        if (isLive) {
+                            return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
+                        }
+                        else {
+                            return this._composeStaticQuery(dsAttrs, grafanaAttrs, target);
+                        }
                     }
                     else {
-                        return this._composeStaticQuery(dsAttrs, grafanaAttrs, target);
+                        return dsAttrs.$q.when({ data: { events: [], done: true } });
                     }
                 };
                 HumioQuery.prototype._composeLiveQuery = function (dsAttrs, grafanaAttrs, target) {
