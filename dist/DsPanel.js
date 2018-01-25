@@ -1,54 +1,36 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(exports_1) {
-    var lodash_1, helper_1, RequestStatus_1;
+System.register(["lodash", "./HumioQuery"], function(exports_1) {
+    var lodash_1, HumioQuery_1;
     var DsPanel;
     return {
         setters:[
             function (lodash_1_1) {
                 lodash_1 = lodash_1_1;
             },
-            function (helper_1_1) {
-                helper_1 = helper_1_1;
-            },
-            function (RequestStatus_1_1) {
-                RequestStatus_1 = RequestStatus_1_1;
+            function (HumioQuery_1_1) {
+                HumioQuery_1 = HumioQuery_1_1;
             }],
         execute: function() {
             DsPanel = (function () {
-                function DsPanel(queryStr) {
-                    this.queryData = {
-                        queryString: queryStr,
-                        timeZoneOffsetMinutes: -(new Date()).getTimezoneOffset(),
-                        showQueryEventDistribution: false,
-                        start: "24h",
-                        isLive: false
-                    };
-                    this.queryId = null;
-                    this.failCounter = 0;
-                    this.requestStatus = RequestStatus_1.default.INITIAL;
-                    this._handleErr = this._handleErr.bind(this);
+                function DsPanel() {
+                    this.queries = new Map();
                 }
-                DsPanel.prototype.update = function (dsAttrs, queryAttrs) {
+                DsPanel.prototype.update = function (dsAttrs, grafanaAttrs, targets) {
                     var _this = this;
-                    return dsAttrs.$q(function (resolve, reject) {
-                        _this._composeQuery(dsAttrs, queryAttrs, _this.getQueryData())
-                            .then(function (result) {
-                            _this._handleRes(dsAttrs, queryAttrs, result, resolve);
-                        }, function (err) {
-                            _this._handleErr(dsAttrs, queryAttrs, err, resolve);
-                        });
+                    var allQueryPromise = targets.map(function (target, index) {
+                        var query = _this.queries.get(index);
+                        if (!query) {
+                            query = new HumioQuery_1.default(target.humioQuery);
+                            _this.queries.set(index, query);
+                        }
+                        var result = query.composeQuery(dsAttrs, grafanaAttrs, target);
+                        return result;
                     });
-                };
-                DsPanel.prototype._handleRes = function (dsAttrs, queryAttrs, res, resolve) {
-                    var _this = this;
-                    if (res["data"].done) {
-                        console.log("query done");
-                        this.resetFailCounter();
-                        // TODO: move this check to DsPanel;
-                        this.setQueryId(this.queryData.isLive ? this.queryId : null);
-                        resolve(this._composeResult(queryAttrs.grafanaQueryOpts, res, function () {
+                    return dsAttrs.$q.all(allQueryPromise).then(function (responseList) {
+                        var result = [];
+                        lodash_1.default.each(responseList, function (res, index) {
                             if (res["data"].events.length === 0) {
-                                res["data"] = [];
+                                result.push([]);
                             }
                             else {
                                 var dt = res["data"];
@@ -61,110 +43,64 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                                 })[0]["name"];
                                 // NOTE: aggregating result
                                 if (seriesField) {
-                                    // multiple series
-                                    for (var i = 0; i < res["data"].events.length; i++) {
-                                        var ev = res["data"].events[i];
-                                        if (!series[ev[seriesField]]) {
-                                            series[ev[seriesField]] = [
-                                                [ev[valueField], parseInt(ev._bucket)]
-                                            ];
-                                        }
-                                        else {
-                                            series[ev[seriesField]].push([ev[valueField], parseInt(ev._bucket)]);
-                                        }
-                                    }
-                                    res["data"] = lodash_1.default.keys(series).map(function (s) {
-                                        return {
-                                            target: s,
-                                            datapoints: series[s]
-                                        };
-                                    });
+                                    result = result.concat(_this._composeTimechartData(seriesField, dt, valueField));
                                 }
                                 else {
                                     // NOTE: single series
                                     if (dt.events.length === 1) {
                                         // NOTE: consider to be gauge
-                                        res["data"] = dt.events.map(function (ev) {
+                                        result = result.concat(dt.events.map(function (ev) {
                                             return {
                                                 target: valueField,
                                                 datapoints: [[parseFloat(ev[valueField]), valueField]]
                                             };
-                                        });
+                                        }));
                                     }
                                     else {
                                         if (isTimechart) {
-                                            res["data"] = [{
+                                            result = result.concat([{
                                                     target: "_count",
                                                     datapoints: dt.events.map(function (ev) {
                                                         return [parseFloat(ev._count), parseInt(ev._bucket)];
                                                     })
-                                                }];
+                                                }]);
                                         }
                                         else {
                                             // NOTE: consider to be a barchart
-                                            res["data"] = dt.events.map(function (ev) {
+                                            result = result.concat(dt.events.map(function (ev) {
                                                 return {
                                                     target: ev[valueField],
                                                     datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
                                                 };
-                                            });
+                                            }));
                                         }
                                     }
                                 }
                             }
-                            return res;
-                        }, queryAttrs.errorCb));
-                    }
-                    else {
-                        console.log("query running...");
-                        console.log("" + (res["data"].metaData.workDone / res["data"].metaData.totalWork * 100).toFixed(2) + "%");
-                        setTimeout(function () {
-                            _this._composeQuery(dsAttrs, queryAttrs, _this.getQueryData())
-                                .then(function (result) {
-                                _this._handleRes(dsAttrs, queryAttrs, result, resolve);
-                            }, function (err) {
-                                // TODO: handle error
-                                resolve({
-                                    data: []
-                                });
-                            });
-                        }, 1000);
-                    }
+                        });
+                        return { data: result };
+                    });
                 };
-                DsPanel.prototype._handleErr = function (dsAttrs, queryAttrs, err, resolve) {
-                    var _this = this;
-                    // TODO: add a counter, if several times get a error - consider query to be
-                    // invalid, or distinguish between error types
-                    switch (err["status"]) {
-                        case (401):
-                            {
-                                // NOTE: query not found - trying to recreate
-                                this.setQueryId(null);
-                                this.incFailCounter();
-                                if (this.failCounter <= 3) {
-                                    this._composeQuery(dsAttrs, queryAttrs, this.getQueryData())
-                                        .then(function (result) {
-                                        _this._handleRes(dsAttrs, queryAttrs, result, resolve);
-                                    }, function (err) {
-                                        _this._handleErr(dsAttrs, queryAttrs, err, resolve);
-                                    });
-                                }
-                                else {
-                                    this.resetFailCounter();
-                                }
-                            }
-                            break;
-                        case (400):
-                            {
-                                queryAttrs.errorCb("Query error", err["data"]);
-                                resolve({ data: [] });
-                            }
-                            break;
-                        default: {
-                            queryAttrs.errorCb(err["status"].toString(), err["data"]);
-                            resolve({ data: [] });
+                // NOTE: Multiple series timecharts
+                DsPanel.prototype._composeTimechartData = function (seriesField, data, valueField) {
+                    var series = {};
+                    // multiple series
+                    for (var i = 0; i < data["events"].length; i++) {
+                        var ev = data["events"][i];
+                        var point = [ev[valueField], parseInt(ev._bucket)];
+                        if (!series[ev[seriesField]]) {
+                            series[ev[seriesField]] = [point];
+                        }
+                        else {
+                            series[ev[seriesField]].push(point);
                         }
                     }
+                    return lodash_1.default.keys(series).map(function (s) {
+                        return {
+                            target: s,
+                            datapoints: series[s]
+                        };
+                    });
                 };
                 DsPanel.prototype._composeResult = function (queryOptions, r, resFx, errorCb) {
                     var currentTarget = queryOptions.targets[0];
@@ -192,118 +128,6 @@ System.register(["lodash", "./helper", "./Enums/RequestStatus"], function(export
                             data: []
                         };
                     }
-                };
-                DsPanel.prototype._composeQuery = function (dsAttrs, queryAttrs, queryDt) {
-                    var _this = this;
-                    var refresh = dsAttrs.$location ? (dsAttrs.$location.search().refresh || null) : null;
-                    var range = queryAttrs.grafanaQueryOpts.range;
-                    queryDt.isLive = ((refresh != null) && (helper_1.default.checkToDateNow(range.raw.to)));
-                    // NOTE: setting date range
-                    if (queryDt.isLive) {
-                        queryDt.start = helper_1.default.parseDateFrom(range.raw.from);
-                        // TODO: shoudl be moved to _updateQueryParams
-                        this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
-                        this.updateQueryParams(queryDt);
-                        return this._composeLiveQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
-                    }
-                    else {
-                        // TODO: shoudl be moved to _updateQueryParams
-                        this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
-                        if (this.queryId != null) {
-                            return this._pollQuery(this.queryId, queryAttrs.humioDataspace, queryAttrs.doRequest);
-                        }
-                        else {
-                            queryDt.start = range.from._d.getTime();
-                            queryDt.end = range.to._d.getTime();
-                            // TODO: shoudl be moved to _updateQueryParams
-                            this._stopUpdatedQuery(queryDt, queryAttrs.humioDataspace, queryAttrs.doRequest);
-                            this.updateQueryParams(queryDt);
-                            return this._initQuery(this.getQueryData(), queryAttrs.humioDataspace, queryAttrs.doRequest).then(function (r) {
-                                _this.setQueryId(r.data.id);
-                                _this.updateQueryParams({ isLive: false });
-                                return _this._pollQuery(r.data.id, queryAttrs.humioDataspace, queryAttrs.doRequest);
-                            });
-                        }
-                        ;
-                    }
-                    ;
-                };
-                DsPanel.prototype._stopUpdatedQuery = function (queryDt, humioDataspace, doRequest) {
-                    if (JSON.stringify(this.getQueryData()) !== JSON.stringify(queryDt)) {
-                        if (this.queryId) {
-                            // TODO: make a promise
-                            this._stopExecution(this.queryId, humioDataspace, doRequest);
-                        }
-                        this.setQueryId(null);
-                        this.updateQueryParams(queryDt);
-                    }
-                    ;
-                };
-                DsPanel.prototype._composeLiveQuery = function (queryDt, humioDataspace, doRequest) {
-                    var _this = this;
-                    if (this.queryId == null) {
-                        return this._initQuery(this.getQueryData(), humioDataspace, doRequest).then(function (r) {
-                            _this.setQueryId(r.data.id);
-                            _this.updateQueryParams({ isLive: true });
-                            return _this._pollQuery(r.data.id, humioDataspace, doRequest);
-                        });
-                    }
-                    else {
-                        return this._pollQuery(this.queryId, humioDataspace, doRequest);
-                    }
-                };
-                DsPanel.prototype._initQuery = function (queryDt, humioDataspace, doRequest) {
-                    return doRequest({
-                        url: "/api/v1/dataspaces/" + humioDataspace + "/queryjobs",
-                        data: queryDt,
-                        method: "POST",
-                    });
-                };
-                DsPanel.prototype._pollQuery = function (queryId, humioDataspace, doRequest) {
-                    return doRequest({
-                        url: "/api/v1/dataspaces/" + humioDataspace + "/queryjobs/" + queryId,
-                        method: "GET",
-                    });
-                };
-                DsPanel.prototype._stopExecution = function (queryId, humioDataspace, doRequest) {
-                    console.log("stopping execution");
-                    return doRequest({
-                        url: "/api/v1/dataspaces/" + humioDataspace + "/queryjobs/" + queryId,
-                        method: "DELETE",
-                    });
-                };
-                // *
-                // * RECONSIDER FOLOWING
-                // *
-                DsPanel.prototype.getQueryData = function () {
-                    var _this = this;
-                    var resObj = {};
-                    Object.keys(this.queryData).forEach(function (key) {
-                        // NOTE: filtering null parameters;
-                        if (_this.queryData[key] !== null) {
-                            resObj[key] = _this.queryData[key];
-                        }
-                    });
-                    return resObj;
-                };
-                DsPanel.prototype.updateQueryParams = function (newQueryParams) {
-                    lodash_1.default.assign(this.queryData, newQueryParams);
-                    this.cleanupQueryData();
-                };
-                DsPanel.prototype.cleanupQueryData = function () {
-                    if (this.queryData["isLive"]) {
-                        this.queryData["end"] = null;
-                    }
-                };
-                DsPanel.prototype.setQueryId = function (newId) {
-                    this.queryId = newId;
-                };
-                // TODO: deprecated;
-                DsPanel.prototype.incFailCounter = function () {
-                    this.failCounter += 1;
-                };
-                DsPanel.prototype.resetFailCounter = function () {
-                    this.failCounter = 0;
                 };
                 return DsPanel;
             })();

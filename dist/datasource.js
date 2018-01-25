@@ -40,26 +40,17 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                         });
                     }
                     var panelId = options.panelId;
-                    var humioQueryStr = options.targets[0].humioQuery;
-                    var humioDataspace = options.targets[0].humioDataspace;
-                    // NOTE: if no humio dataspace or no query - consider configuration invalid
-                    if (!humioDataspace || !humioQueryStr) {
-                        return this.dsAttrs.$q.resolve({
-                            data: []
-                        });
-                    }
-                    var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
+                    // TODO: take a look at the second argument
+                    var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId);
                     if (dsPanel) {
-                        var queryAttrs = {
+                        var grafanaAttrs = {
                             grafanaQueryOpts: options,
-                            humioQueryStr: humioQueryStr,
-                            humioDataspace: humioDataspace,
                             errorCb: function (errorTitle, errorBody) {
                                 _this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
                             },
                             doRequest: this.doRequest
                         };
-                        return dsPanel.update(this.dsAttrs, queryAttrs);
+                        return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
                     }
                     else {
                         // TODO: handle the case

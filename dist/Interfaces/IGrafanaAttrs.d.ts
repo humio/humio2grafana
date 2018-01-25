@@ -1,8 +1,6 @@
-interface IQueryAttrs {
+interface IGrafanaAttrs {
     grafanaQueryOpts: any;
-    humioQueryStr: string;
-    humioDataspace: string;
     errorCb: (errorTitle: string, errorBody: any) => void;
     doRequest: (data: any) => any;
 }
-export default IQueryAttrs;
+export default IGrafanaAttrs;

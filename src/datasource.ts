@@ -3,7 +3,7 @@ import HumioHelper from "./helper";
 import DsPanel from "./DsPanel";
 import DsPanelStorage from "./DsPanelStorage";
 import IDatasourceAttrs from "./Interfaces/IDatasourceAttrs";
-import IQueryAttrs from "./Interfaces/IQueryAttrs";
+import IGrafanaAttrs from "./Interfaces/IGrafanaAttrs";
 
 export class GenericDatasource {
   type: string;
@@ -63,31 +63,20 @@ export class GenericDatasource {
     }
 
     let panelId = options.panelId;
-    let humioQueryStr = options.targets[0].humioQuery;
-    let humioDataspace = options.targets[0].humioDataspace;
 
-    // NOTE: if no humio dataspace or no query - consider configuration invalid
-    if (!humioDataspace || !humioQueryStr) {
-      return this.dsAttrs.$q.resolve({
-        data: []
-      });
-    }
-
-    let dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId, humioQueryStr);
+    // TODO: take a look at the second argument
+    let dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId);
 
     if (dsPanel) {
-      let queryAttrs: IQueryAttrs = {
+      let grafanaAttrs: IGrafanaAttrs = {
         grafanaQueryOpts: options,
-        humioQueryStr: humioQueryStr,
-        humioDataspace: humioDataspace,
         errorCb: (errorTitle, errorBody) => {
           this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
         },
         doRequest: this.doRequest
       }
 
-
-      return dsPanel.update(this.dsAttrs, queryAttrs);
+      return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
     } else {
       // TODO: handle the case
       return this.dsAttrs.$q.resolve({

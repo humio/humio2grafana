@@ -11,14 +11,11 @@ System.register(["./DsPanel"], function(exports_1) {
                 function DsPanelStorage() {
                     this.panels = new Map();
                 }
-                DsPanelStorage.prototype.getOrGreatePanel = function (panelId, queryStr) {
+                DsPanelStorage.prototype.getOrGreatePanel = function (panelId) {
                     var panel = this.panels.get(panelId);
                     if (!panel) {
-                        panel = new DsPanel_1.default(queryStr);
+                        panel = new DsPanel_1.default();
                         this.panels.set(panelId, panel);
-                    }
-                    else {
-                        panel.updateQueryParams({ queryString: queryStr });
                     }
                     return panel;
                 };

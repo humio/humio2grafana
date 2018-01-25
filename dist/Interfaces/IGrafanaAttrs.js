@@ -5,4 +5,4 @@ System.register([], function(exports_1) {
         }
     }
 });
-//# sourceMappingURL=IQueryData.js.map
+//# sourceMappingURL=IGrafanaAttrs.js.map

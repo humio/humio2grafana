@@ -7,13 +7,11 @@ class DsPanelStorage {
     this.panels = new Map<string, DsPanel>();
   }
 
-  getOrGreatePanel(panelId: string, queryStr: string): DsPanel {
+  getOrGreatePanel(panelId: string): DsPanel {
     let panel = this.panels.get(panelId);
     if (!panel) {
-      panel = new DsPanel(queryStr);
+      panel = new DsPanel();
       this.panels.set(panelId, panel);
-    } else {
-      panel.updateQueryParams({queryString: queryStr});
     }
     return panel;
   }
