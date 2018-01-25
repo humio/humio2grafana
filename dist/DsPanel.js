@@ -36,44 +36,42 @@ System.register(["lodash", "./HumioQuery"], function(exports_1) {
                                 var dt = res["data"];
                                 var timeseriesField = "_bucket";
                                 var isTimechart = dt.metaData.extraData.timechart === "true";
+                                var isAggregate = dt.metaData.isAggregate;
                                 var seriesField = dt.metaData.extraData.series;
+                                var groupbyFields = dt.metaData.extraData.groupby_fields;
                                 var series = {};
                                 var valueField = lodash_1.default.filter(dt.metaData.fields, function (f) {
-                                    return f["name"] !== timeseriesField && f["name"] !== seriesField;
+                                    return f["name"] !== timeseriesField && f["name"] !== seriesField && f["name"] !== groupbyFields;
                                 })[0]["name"];
                                 // NOTE: aggregating result
                                 if (seriesField) {
                                     result = result.concat(_this._composeTimechartData(seriesField, dt, valueField));
                                 }
                                 else {
-                                    // NOTE: single series
-                                    if (dt.events.length === 1) {
-                                        // NOTE: consider to be gauge
-                                        result = result.concat(dt.events.map(function (ev) {
-                                            return {
+                                    if (isTimechart) {
+                                        result = result.concat([{
                                                 target: valueField,
-                                                datapoints: [[parseFloat(ev[valueField]), valueField]]
-                                            };
-                                        }));
+                                                datapoints: dt.events.map(function (ev) {
+                                                    return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
+                                                })
+                                            }]);
                                     }
                                     else {
-                                        if (isTimechart) {
-                                            result = result.concat([{
-                                                    target: valueField,
-                                                    datapoints: dt.events.map(function (ev) {
-                                                        return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
-                                                    })
-                                                }]);
-                                        }
-                                        else {
-                                            // NOTE: consider to be a barchart
-                                            result = result.concat(dt.events.map(function (ev) {
+                                        // NOTE: consider to be a barchart
+                                        result = result.concat(dt.events.map(function (ev) {
+                                            if (lodash_1.default.keys(ev).length > 1) {
                                                 return {
-                                                    target: ev[valueField],
-                                                    datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
+                                                    target: ev[groupbyFields],
+                                                    datapoints: [[parseFloat(ev[valueField]), "_" + ev[groupbyFields]]]
                                                 };
-                                            }));
-                                        }
+                                            }
+                                            else {
+                                                return {
+                                                    target: valueField,
+                                                    datapoints: [[parseFloat(ev[valueField]), valueField]]
+                                                };
+                                            }
+                                        }));
                                     }
                                 }
                             }

@@ -37,42 +37,40 @@ class DsPanel {
           let dt = res["data"];
           let timeseriesField = "_bucket";
           let isTimechart = dt.metaData.extraData.timechart === "true";
+          let isAggregate = dt.metaData.isAggregate;
           let seriesField = dt.metaData.extraData.series;
+          let groupbyFields = dt.metaData.extraData.groupby_fields;
           let series = {};
           let valueField = _.filter(dt.metaData.fields, (f) => {
-            return f["name"] !== timeseriesField && f["name"] !== seriesField;
+            return f["name"] !== timeseriesField && f["name"] !== seriesField && f["name"] !== groupbyFields;
           })[0]["name"];
 
           // NOTE: aggregating result
           if (seriesField) {
             result = result.concat(this._composeTimechartData(seriesField, dt, valueField));
           } else {
-            // NOTE: single series
-            if (dt.events.length === 1) {
-              // NOTE: consider to be gauge
+            if (isTimechart) {
+              result = result.concat([{
+                target: valueField,
+                datapoints: dt.events.map((ev) => {
+                  return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
+                })
+              }]);
+            } else {
+              // NOTE: consider to be a barchart
               result = result.concat(dt.events.map((ev) => {
-                return {
-                  target: valueField,
-                  datapoints: [[parseFloat(ev[valueField]), valueField]]
+                if (_.keys(ev).length > 1) {
+                  return {
+                    target: ev[groupbyFields],
+                    datapoints: [[parseFloat(ev[valueField]), "_" + ev[groupbyFields]]]
+                  }
+                } else {
+                  return {
+                    target: valueField,
+                    datapoints: [[parseFloat(ev[valueField]), valueField]]
+                  }
                 }
               }));
-            } else {
-              if (isTimechart) {
-                result = result.concat([{
-                  target: valueField,
-                  datapoints: dt.events.map((ev) => {
-                    return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
-                  })
-                }]);
-              } else {
-                // NOTE: consider to be a barchart
-                result = result.concat(dt.events.map((ev) => {
-                  return {
-                    target: ev[valueField],
-                    datapoints: [[parseFloat(ev._count), "_" + ev[valueField]]]
-                  }
-                }));
-              }
             }
           }
         }
