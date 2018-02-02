@@ -35,20 +35,26 @@ System.register(["./helper", "lodash"], function(exports_1) {
                 // NOTE: manage query
                 HumioQuery.prototype.init = function (dsAttrs, grafanaAttrs, target) {
                     var _this = this;
-                    return grafanaAttrs.doRequest({
-                        url: "/api/v1/dataspaces/" + target.humioDataspace + "/queryjobs",
-                        data: this.data,
-                        method: "POST",
-                    }).then(function (res) {
-                        _this.queryId = res["data"].id;
-                        return _this.pollUntillDone(dsAttrs, grafanaAttrs, target);
-                    }, function (err) {
-                        _this._handleErr(dsAttrs, grafanaAttrs, target, err);
+                    return new Promise(function (resolve) {
+                        return grafanaAttrs.doRequest({
+                            url: "/api/v1/dataspaces/" + target.humioDataspace + "/queryjobs",
+                            data: _this.data,
+                            method: "POST",
+                        }).then(function (res) {
+                            _this.queryId = res["data"].id;
+                            _this.pollUntillDone(dsAttrs, grafanaAttrs, target).then(function (res) {
+                                resolve(res);
+                            });
+                        }, function (err) {
+                            _this._handleErr(dsAttrs, grafanaAttrs, target, err).then(function (res) {
+                                resolve(res);
+                            });
+                        });
                     });
                 };
                 HumioQuery.prototype.pollUntillDone = function (dsAttrs, grafanaAttrs, target) {
                     var _this = this;
-                    return dsAttrs.$q(function (resolve, reject) {
+                    return new Promise(function (resolve) {
                         var pollFx = function () {
                             _this.poll(dsAttrs, grafanaAttrs, target).then(function (res) {
                                 // console.log("" + (res["data"].metaData.workDone / res["data"].metaData.totalWork * 100).toFixed(2) + "%");
@@ -71,28 +77,37 @@ System.register(["./helper", "lodash"], function(exports_1) {
                 };
                 HumioQuery.prototype.poll = function (dsAttrs, grafanaAttrs, target) {
                     var _this = this;
-                    if (this.queryId) {
-                        return grafanaAttrs.doRequest({
-                            url: "/api/v1/dataspaces/" + target.humioDataspace + "/queryjobs/" + this.queryId,
-                            method: "GET",
-                        }).then(function (res) { return res; }, function (err) {
-                            _this._handleErr(dsAttrs, grafanaAttrs, target, err);
-                        });
-                    }
-                    else {
-                        return dsAttrs.$q.when([]);
-                    }
+                    return new Promise(function (resolve, reject) {
+                        if (_this.queryId) {
+                            return grafanaAttrs.doRequest({
+                                url: "/api/v1/dataspaces/" + target.humioDataspace + "/queryjobs/" + _this.queryId,
+                                method: "GET",
+                            }).then(function (res) { resolve(res); }, function (err) {
+                                return _this._handleErr(dsAttrs, grafanaAttrs, target, err).then(function (res) {
+                                    reject(res);
+                                });
+                            });
+                        }
+                        else {
+                            return Promise.resolve([]);
+                        }
+                    });
                 };
                 HumioQuery.prototype.cancel = function (dsAttrs, grafanaAttrs, target) {
-                    if (this.queryId) {
-                        return grafanaAttrs.doRequest({
-                            url: "/api/v1/dataspaces/" + target.humioDataspace + "/queryjobs/" + this.queryId,
-                            method: "DELETE",
-                        });
-                    }
-                    else {
-                        return dsAttrs.$q.when({});
-                    }
+                    var _this = this;
+                    return new Promise(function (resolve) {
+                        if (_this.queryId) {
+                            return grafanaAttrs.doRequest({
+                                url: "/api/v1/dataspaces/" + target.humioDataspace + "/queryjobs/" + _this.queryId,
+                                method: "DELETE",
+                            }).then(function () {
+                                return resolve({});
+                            });
+                        }
+                        else {
+                            return resolve({});
+                        }
+                    });
                 };
                 // NOTE: composing query
                 HumioQuery.prototype.composeQuery = function (dsAttrs, grafanaAttrs, target) {
@@ -108,7 +123,7 @@ System.register(["./helper", "lodash"], function(exports_1) {
                         }
                     }
                     else {
-                        return dsAttrs.$q.when({ data: { events: [], done: true } });
+                        return Promise.resolve({ data: { events: [], done: true } });
                     }
                 };
                 HumioQuery.prototype._composeLiveQuery = function (dsAttrs, grafanaAttrs, target) {
@@ -164,19 +179,19 @@ System.register(["./helper", "lodash"], function(exports_1) {
                                 else {
                                     this.failCounter = 0;
                                     grafanaAttrs.errorCb("alert-error", ["failed to create query", "tried 3 times"]);
-                                    return dsAttrs.$q.when({ data: { events: [], done: true } });
+                                    return Promise.resolve({ data: { events: [], done: true } });
                                 }
                             }
                             break;
                         case (400):
                             {
                                 grafanaAttrs.errorCb("alert-error", ["bad query", err["data"]]);
-                                return dsAttrs.$q.when({ data: { events: [], done: true } });
+                                return Promise.resolve({ data: { events: [], done: true } });
                             }
                             break;
                         default: {
                             grafanaAttrs.errorCb("alert-error", err["data"]);
-                            return dsAttrs.$q.when({ data: { events: [], done: true } });
+                            return Promise.resolve({ data: { events: [], done: true } });
                         }
                     }
                 };

@@ -23,10 +23,9 @@ System.register(["lodash", "./HumioQuery"], function(exports_1) {
                             query = new HumioQuery_1.default(target.humioQuery);
                             _this.queries.set(index, query);
                         }
-                        var result = query.composeQuery(dsAttrs, grafanaAttrs, target);
-                        return result;
+                        return query.composeQuery(dsAttrs, grafanaAttrs, target);
                     });
-                    return dsAttrs.$q.all(allQueryPromise).then(function (responseList) {
+                    return Promise.all(allQueryPromise).then(function (responseList) {
                         var result = [];
                         lodash_1.default.each(responseList, function (res, index) {
                             if (res["data"].events.length === 0) {

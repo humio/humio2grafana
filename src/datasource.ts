@@ -51,7 +51,6 @@ export class GenericDatasource {
   }
 
   query(options) {
-
     this.timeRange = options.range;
 
     // NOTE: if no tragests just return an empty result
@@ -74,7 +73,6 @@ export class GenericDatasource {
         },
         doRequest: this.doRequest
       };
-
       return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
     } else {
       // TODO: handle the case

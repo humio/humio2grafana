@@ -12,7 +12,6 @@ class DsPanel {
 
   constructor() {
     this.queries = new Map<number, HumioQuery>();
-
   }
 
   update(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, targets: any[]): any {
@@ -23,11 +22,11 @@ class DsPanel {
         query = new HumioQuery(target.humioQuery);
         this.queries.set(index, query);
       }
-      let result = query.composeQuery(dsAttrs, grafanaAttrs, target);
-      return result;
+      return query.composeQuery(dsAttrs, grafanaAttrs, target);
     });
 
-    return dsAttrs.$q.all(allQueryPromise).then((responseList) => {
+
+    return Promise.all(allQueryPromise).then((responseList) => {
       let result = [];
 
       _.each(responseList, (res, index) => {

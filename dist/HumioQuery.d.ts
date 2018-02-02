@@ -7,11 +7,11 @@ declare class HumioQuery {
     failCounter: number;
     constructor(queryStr: string);
     updateQueryData(newData: UpdateQueryData): boolean;
-    init(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): any;
-    pollUntillDone(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): any;
-    poll(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): any;
-    cancel(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): any;
-    composeQuery(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): any;
+    init(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): Promise<any>;
+    pollUntillDone(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): Promise<any>;
+    poll(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): Promise<any>;
+    cancel(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): Promise<any>;
+    composeQuery(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: any): Promise<any>;
     private _composeLiveQuery(dsAttrs, grafanaAttrs, target);
     private _composeStaticQuery(dsAttrs, grafanaAttrs, target);
     private _handleErr(dsAttrs, grafanaAttrs, target, err);
