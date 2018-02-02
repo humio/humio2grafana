@@ -2,12 +2,10 @@
   "name": "humio2grafana",
   "id": "humio2grafana",
   "type": "datasource",
-
   "metrics": true,
-  "annotations": true,
-
+  "annotations": false,
   "info": {
-    "description": "humio datasource",
+    "description": "Humio datasouce for grafana",
     "author": {
       "name": "Humio apps",
       "url": "https://humio.com"
@@ -18,12 +16,11 @@
     },
     "links": [
       {"name": "GitHub", "url": "https://github.com/humio/humio2grafana"},
-      {"name": "MIT License", "url": "https://github.com/humio/humio2grafana/blob/master/LICENSE"}
+      {"name": "Apache License", "url": "https://github.com/humio/humio2grafana/blob/master/LICENSE.md"}
     ],
-    "version": "0.1.0",
-    "updated": "2017-09-01"
+    "version": "1.0.1",
+    "updated": "2018-02-02"
   },
-
   "dependencies": {
     "grafanaVersion": "4.x.x",
     "plugins": [ ]
