@@ -63,18 +63,18 @@ class DsPanel {
                   return {
                     target: ev[groupbyFields],
                     datapoints: [[parseFloat(ev[valueField]), "_" + ev[groupbyFields]]]
-                  }
+                  };
                 } else {
                   return {
                     target: valueField,
                     datapoints: [[parseFloat(ev[valueField]), valueField]]
-                  }
+                  };
                 }
               }));
             }
           }
         }
-      })
+      });
       return { data: result };
     });
   }
@@ -98,8 +98,8 @@ class DsPanel {
       return {
         target: s,
         datapoints: series[s]
-      }
-    })
+      };
+    });
   }
 
   private _composeResult(queryOptions: any, r: any, resFx: any,
@@ -125,7 +125,7 @@ class DsPanel {
       ]);
       return {
         data: []
-      }
+      };
     }
   }
 }

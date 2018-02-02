@@ -88,8 +88,9 @@ System.register(["app/plugins/sdk", "lodash", "./helper", "./css/query-editor.cs
                 };
                 GenericDatasourceQueryCtrl.prototype._serializeQueryOpts = function (obj) {
                     var str = [];
-                    for (var p in obj)
+                    for (var p in obj) {
                         str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                    }
                     return str.join("&");
                 };
                 GenericDatasourceQueryCtrl.prototype._getHumioDataspaces = function () {

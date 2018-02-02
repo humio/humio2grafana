@@ -16,7 +16,7 @@ class HumioQuery {
       showQueryEventDistribution: false,
       start: "24h",
       isLive: false
-    }
+    };
 
     this.failCounter = 0;
     this.queryId = null;
@@ -61,7 +61,7 @@ class HumioQuery {
             resolve(res);
           } else {
             setTimeout(() => {
-              pollFx()
+              pollFx();
             }, 1000);
           }
         });
@@ -126,7 +126,7 @@ class HumioQuery {
     if (!this.queryId || queryUpdated) {
       return this.cancel(dsAttrs, grafanaAttrs, target).then(() => {
         return this.init(dsAttrs, grafanaAttrs, target);
-      })
+      });
     } else {
       return this.pollUntillDone(dsAttrs, grafanaAttrs, target);
     }
@@ -150,7 +150,7 @@ class HumioQuery {
     } else {
       return this.cancel(dsAttrs, grafanaAttrs, target).then(() => {
         return this.init(dsAttrs, grafanaAttrs, target);
-      })
+      });
     }
   }
 

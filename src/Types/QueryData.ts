@@ -6,7 +6,7 @@ type QueryData = {
   isLive: boolean;
   start: string;
   end?: string;
-}
+};
 
 type UpdateQueryData = {
   queryString?: string;
@@ -15,7 +15,7 @@ type UpdateQueryData = {
   isLive?: boolean;
   start?: string;
   end?: string;
-}
+};
 
 export {
   QueryData as QueryData,

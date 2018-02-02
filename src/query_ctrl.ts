@@ -2,7 +2,6 @@ import { QueryCtrl } from "app/plugins/sdk";
 import _ from "lodash";
 import HumioHelper from "./helper";
 
-// TODO: figure out later how to import
 import "./css/query-editor.css!";
 
 class GenericDatasourceQueryCtrl extends QueryCtrl {
@@ -55,7 +54,7 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
       "query": this.target.humioQuery,
       "live": isLive,
       "start": start,
-    }
+    };
 
     if (end) {
       linkSettings["end"] = end;
@@ -96,8 +95,9 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
 
   _serializeQueryOpts(obj) {
     let str = [];
-    for (let p in obj)
+    for (let p in obj) {
       str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    }
     return str.join("&");
   }
 
@@ -115,7 +115,7 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
           return ({
             value: ds.id,
             name: ds.id
-          })
+          });
         });
         return _.sortBy(res, ["name"]);
       });

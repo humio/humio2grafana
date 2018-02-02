@@ -73,30 +73,6 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                         }
                     });
                 };
-                // // TODO: handle annotationQuery
-                // annotationQuery(options) {
-                //   console.log("annotationQuery -> ");
-                //   var query = this.templateSrv.replace(options.annotation.query, {}, "glob");
-                //   var annotationQuery = {
-                //     range: options.range,
-                //     annotation: {
-                //       name: options.annotation.name,
-                //       datasource: options.annotation.datasource,
-                //       enable: options.annotation.enable,
-                //       iconColor: options.annotation.iconColor,
-                //       query: query
-                //     },
-                //     rangeRaw: options.rangeRaw
-                //   };
-                //
-                //   return this.doRequest({
-                //     url: this.url + "/annotations",
-                //     method: "POST",
-                //     data: annotationQuery
-                //   }).then(result => {
-                //     return result.data;
-                //   });
-                // }
                 GenericDatasource.prototype.doRequest = function (options) {
                     options.withCredentials = this.withCredentials;
                     options.headers = this.headers;

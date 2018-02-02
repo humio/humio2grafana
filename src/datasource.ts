@@ -32,8 +32,7 @@ export class GenericDatasource {
       $location: $location,
       backendSrv: backendSrv,
       $rootScope: $rootScope
-    }
-
+    };
 
     this.templateSrv = templateSrv;
 
@@ -74,7 +73,7 @@ export class GenericDatasource {
           this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
         },
         doRequest: this.doRequest
-      }
+      };
 
       return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
     } else {
@@ -100,36 +99,10 @@ export class GenericDatasource {
     });
   }
 
-  // // TODO: handle annotationQuery
-  // annotationQuery(options) {
-  //   console.log("annotationQuery -> ");
-  //   var query = this.templateSrv.replace(options.annotation.query, {}, "glob");
-  //   var annotationQuery = {
-  //     range: options.range,
-  //     annotation: {
-  //       name: options.annotation.name,
-  //       datasource: options.annotation.datasource,
-  //       enable: options.annotation.enable,
-  //       iconColor: options.annotation.iconColor,
-  //       query: query
-  //     },
-  //     rangeRaw: options.rangeRaw
-  //   };
-  //
-  //   return this.doRequest({
-  //     url: this.url + "/annotations",
-  //     method: "POST",
-  //     data: annotationQuery
-  //   }).then(result => {
-  //     return result.data;
-  //   });
-  // }
-
   doRequest(options) {
     options.withCredentials = this.withCredentials;
     options.headers = this.headers;
     options.url = this.url + options.url; // NOTE: adding base
     return this.dsAttrs.backendSrv.datasourceRequest(options);
   }
-
 }

@@ -18,5 +18,4 @@ System.register([], function(exports_1) {
         }
     }
 });
-// HumioConfigCtrl.template = require('pug-loader!./partials/config.pug');
 //# sourceMappingURL=config_ctrl.js.map

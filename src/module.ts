@@ -8,7 +8,6 @@ import GenericQueryOptionsCtrl from "./query_options_ctrl";
 
 
 class GenericAnnotationsQueryCtrl {}
-// GenericAnnotationsQueryCtrl.template = require('pug-loader!./partials/annotations.editor.pug');
 GenericAnnotationsQueryCtrl["templateUrl"] = "partials/annotations.editor.html";
 
 export {

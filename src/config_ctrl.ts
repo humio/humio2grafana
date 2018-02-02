@@ -12,4 +12,3 @@ export class HumioConfigCtrl {
 }
 
 export default HumioConfigCtrl;
-// HumioConfigCtrl.template = require('pug-loader!./partials/config.pug');

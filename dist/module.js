@@ -21,7 +21,6 @@ System.register(["./datasource", "./query_ctrl", "./config_ctrl", "./query_optio
                 }
                 return GenericAnnotationsQueryCtrl;
             })();
-            // GenericAnnotationsQueryCtrl.template = require('pug-loader!./partials/annotations.editor.pug');
             GenericAnnotationsQueryCtrl["templateUrl"] = "partials/annotations.editor.html";
             exports_1("Datasource", datasource_1.GenericDatasource);
             exports_1("QueryCtrl", query_ctrl_1.default);
