@@ -1,23 +1,23 @@
 {
   "name": "humio2grafana",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Humio datasouce for grafana",
   "main": "dist/module",
   "scripts": {
     "build": "grunt",
-    "build-webpack": "xebpack"
   },
   "homepage": "https://github.com/humio/humio2grafana#readme",
   "keywords": [
     "humio",
-    "grafana"
+    "grafana",
+    "datasouce"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/humio/humio2grafana.git"
   },
-  "author": "Sergey Grigorev (xors.nn@gmail.com)",
-  "license": "MIT",
+  "author": "Humio apps",
+  "license": "Apache License, Version 2.0",
   "bugs": {
     "url": "https://github.com/humio/humio2grafana/issues"
   },

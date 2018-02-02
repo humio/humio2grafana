@@ -1,6 +1,6 @@
 {
   "name": "humio2grafana",
-  "id": "humio2grafana",
+  "id": "humio-humio2grafana-datasource",
   "type": "datasource",
   "metrics": true,
   "annotations": false,
@@ -10,6 +10,7 @@
       "name": "Humio apps",
       "url": "https://humio.com"
     },
+    "keywords": ["humio", "datasouce"],
     "logos": {
       "small": "img/humio_logo.svg",
       "large": "img/humio_logo.svg"
@@ -18,7 +19,7 @@
       {"name": "GitHub", "url": "https://github.com/humio/humio2grafana"},
       {"name": "Apache License", "url": "https://github.com/humio/humio2grafana/blob/master/LICENSE.md"}
     ],
-    "version": "1.0.1",
+    "version": "1.0.2",
     "updated": "2018-02-02"
   },
   "dependencies": {
