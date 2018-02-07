@@ -23,8 +23,8 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                     this.headers = {
                         "Content-Type": "application/json",
                         "Authorization": "Bearer " +
-                            (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "developer") :
-                                "developer")
+                            (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "") :
+                                "")
                     };
                     this.dsPanelStorage = new DsPanelStorage_1.default();
                     this.timeRange = null;
@@ -61,7 +61,7 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                 };
                 GenericDatasource.prototype.testDatasource = function () {
                     return this.doRequest({
-                        url: this.url + "/",
+                        url: "/api/v1/users/current",
                         method: "GET",
                     }).then(function (response) {
                         if (response.status === 200) {

@@ -1,5 +1,5 @@
 {
-  "name": "humio2grafana",
+  "name": "Humio",
   "id": "humio-humio2grafana-datasource",
   "type": "datasource",
   "metrics": true,
@@ -19,8 +19,8 @@
       {"name": "GitHub", "url": "https://github.com/humio/humio2grafana"},
       {"name": "Apache License", "url": "https://github.com/humio/humio2grafana/blob/master/LICENSE.md"}
     ],
-    "version": "1.0.2",
-    "updated": "2018-02-02"
+    "version": "1.0.3",
+    "updated": "2018-02-07"
   },
   "dependencies": {
     "grafanaVersion": "4.x.x",

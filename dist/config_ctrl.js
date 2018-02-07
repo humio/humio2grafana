@@ -8,7 +8,7 @@ System.register([], function(exports_1) {
                 function HumioConfigCtrl($scope, $injector, $q, $http) {
                     this.current = this.current || {};
                     this.current.jsonData = this.current.jsonData || {};
-                    this.current.jsonData.humioToken = this.current.jsonData.humioToken || "developer";
+                    this.current.jsonData.humioToken = this.current.jsonData.humioToken || "";
                 }
                 HumioConfigCtrl.templateUrl = "partials/config.html";
                 return HumioConfigCtrl;

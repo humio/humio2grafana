@@ -39,8 +39,8 @@ export class GenericDatasource {
     this.headers = {
       "Content-Type": "application/json",
       "Authorization": "Bearer " +
-        (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "developer") :
-          "developer")
+        (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "") :
+          "")
     };
 
     this.dsPanelStorage = new DsPanelStorage();
@@ -84,7 +84,7 @@ export class GenericDatasource {
 
   testDatasource() {
     return this.doRequest({
-      url: this.url + "/",
+      url: "/api/v1/users/current",
       method: "GET",
     }).then(response => {
       if (response.status === 200) {
