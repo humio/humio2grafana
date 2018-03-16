@@ -1,13 +1,14 @@
-a(ng-href="{{ctrl.getHumioLink()}}", ng-show="ctrl.showHumioLink()", target="_blank") Open query in Humio
-.gf-form-query
-  .gf-form-query-content
-    .gf-form-inline
-      .gf-form.gf-form--grow
-        textarea.gf-form-input(ng-model="ctrl.target.humioQuery", on-change="ctrl.onChangeInternal()",
-          data-min-length=0, data-items=100, ng-model-onblur, spellcheck="false", rows="3")
-    .gf-form
-      span.gf-form-label.width-7 Dataspace
-      span.gf-form-select-wrapper
-        select.gf-form-input.gf-size-auto(
-          ng-model="ctrl.target.humioDataspace"
-          ng-options="v.value as v.name for v in ctrl.dataspaces")
+query-editor-row(query-ctrl="ctrl" can-collapse="true")
+  a(ng-href="{{ctrl.getHumioLink()}}", ng-show="ctrl.showHumioLink()", target="_blank") Open query in Humio
+  .gf-form-query
+    .gf-form-query-content
+      .gf-form-inline
+        .gf-form.gf-form--grow
+          textarea.gf-form-input(ng-model="ctrl.target.humioQuery", on-change="ctrl.onChangeInternal()",
+            data-min-length=0, data-items=100, ng-model-onblur, spellcheck="false", rows="3")
+      .gf-form
+        span.gf-form-label.width-7 Dataspace
+        span.gf-form-select-wrapper
+          select.gf-form-input.gf-size-auto(
+            ng-model="ctrl.target.humioDataspace"
+            ng-options="v.value as v.name for v in ctrl.dataspaces")

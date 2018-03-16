@@ -9,6 +9,7 @@ export class GenericDatasource {
   type: string;
   url: string;
   name: string;
+  id: string;
 
   dsAttrs: IDatasourceAttrs;
 
@@ -26,6 +27,7 @@ export class GenericDatasource {
     this.type = instanceSettings.type;
     this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
     this.name = instanceSettings.name;
+    this.id = instanceSettings.id;
 
     this.dsAttrs = {
       $q: $q,

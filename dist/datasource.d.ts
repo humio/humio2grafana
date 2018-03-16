@@ -5,6 +5,7 @@ export declare class GenericDatasource {
     type: string;
     url: string;
     name: string;
+    id: string;
     dsAttrs: IDatasourceAttrs;
     templateSrv: any;
     headers: any;

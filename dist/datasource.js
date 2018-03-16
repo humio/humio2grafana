@@ -13,6 +13,7 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                     this.type = instanceSettings.type;
                     this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
                     this.name = instanceSettings.name;
+                    this.id = instanceSettings.id;
                     this.dsAttrs = {
                         $q: $q,
                         $location: $location,

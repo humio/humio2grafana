@@ -5,6 +5,7 @@ declare class GenericDatasourceQueryCtrl extends QueryCtrl {
     $scope: any;
     $q: any;
     $location: any;
+    originalUrl: string;
     dataspaces: any[];
     datasource: any;
     target: any;
