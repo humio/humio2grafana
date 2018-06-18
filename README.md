@@ -1,6 +1,4 @@
 # humio2grafana
-![Humio Panel](https://github.com/humio/humio2grafana/blob/master/src/img/humio_logo.png)
-
 
 Grafana integration for Humio
 
