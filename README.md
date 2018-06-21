@@ -28,6 +28,8 @@ Grafana integration for Humio
 
 # Using Grafana [Worldmap Panel plugin](https://grafana.com/plugins/grafana-worldmap-panel)
 
+![worldmap plugin example](https://github.com/humio/humio2grafana/blob/master/img/worldmap-panel-example.png)
+
 -   Install Grafana Worldmap Panel plugin (see installation instructions on [plugin page](https://grafana.com/plugins/grafana-worldmap-panel))
 -   Select Humio as datasource
 -   Extract country code using ipLocation Humio function (see [Humio docs](https://docs.humio.com/) for function description),
