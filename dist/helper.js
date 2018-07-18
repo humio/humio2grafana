@@ -1,8 +1,10 @@
-System.register([], function(exports_1) {
+System.register([], function (exports_1, context_1) {
+    "use strict";
     var HumioHelper;
+    var __moduleName = context_1 && context_1.id;
     return {
-        setters:[],
-        execute: function() {
+        setters: [],
+        execute: function () {
             HumioHelper = (function () {
                 function HumioHelper() {
                 }
@@ -15,7 +17,7 @@ System.register([], function(exports_1) {
                     }
                 };
                 HumioHelper.getPanelType = function (queryStr) {
-                    var buf = queryStr.split("|"); // getting last part in the pipe
+                    var buf = queryStr.split("|");
                     var lastFx = buf[buf.length - 1];
                     if (lastFx.trim().match(/^timechart\(.*\)$/)) {
                         return "time-chart";
@@ -137,9 +139,9 @@ System.register([], function(exports_1) {
                     }
                 };
                 return HumioHelper;
-            })();
-            exports_1("default",HumioHelper);
+            }());
+            exports_1("default", HumioHelper);
         }
-    }
+    };
 });
 //# sourceMappingURL=helper.js.map

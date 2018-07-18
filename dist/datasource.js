@@ -1,31 +1,35 @@
-System.register(["./DsPanelStorage"], function(exports_1) {
-    var DsPanelStorage_1;
-    var GenericDatasource;
+System.register(["./DsPanelStorage"], function (exports_1, context_1) {
+    "use strict";
+    var DsPanelStorage_1, GenericDatasource;
+    var __moduleName = context_1 && context_1.id;
     return {
-        setters:[
+        setters: [
             function (DsPanelStorage_1_1) {
                 DsPanelStorage_1 = DsPanelStorage_1_1;
-            }],
-        execute: function() {
+            }
+        ],
+        execute: function () {
             GenericDatasource = (function () {
-                /** @ngInject */
                 function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
                     this.type = instanceSettings.type;
-                    this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
+                    this.url = instanceSettings.url
+                        ? instanceSettings.url.replace(/\/$/, '')
+                        : '';
                     this.name = instanceSettings.name;
                     this.id = instanceSettings.id;
                     this.dsAttrs = {
                         $q: $q,
                         $location: $location,
                         backendSrv: backendSrv,
-                        $rootScope: $rootScope
+                        $rootScope: $rootScope,
                     };
                     this.templateSrv = templateSrv;
                     this.headers = {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " +
-                            (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "") :
-                                "")
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' +
+                            (instanceSettings.jsonData
+                                ? instanceSettings.jsonData.humioToken || ''
+                                : ''),
                     };
                     this.dsPanelStorage = new DsPanelStorage_1.default();
                     this.timeRange = null;
@@ -34,14 +38,12 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                 GenericDatasource.prototype.query = function (options) {
                     var _this = this;
                     this.timeRange = options.range;
-                    // NOTE: if no tragests just return an empty result
                     if (options.targets.length === 0) {
                         return this.dsAttrs.$q.resolve({
-                            data: []
+                            data: [],
                         });
                     }
                     var panelId = options.panelId;
-                    // TODO: take a look at the second argument
                     var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId);
                     if (dsPanel) {
                         var grafanaAttrs = {
@@ -49,27 +51,26 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                             errorCb: function (errorTitle, errorBody) {
                                 _this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
                             },
-                            doRequest: this.doRequest
+                            doRequest: this.doRequest,
                         };
                         return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
                     }
                     else {
-                        // TODO: handle the case
                         return this.dsAttrs.$q.resolve({
-                            data: []
+                            data: [],
                         });
                     }
                 };
                 GenericDatasource.prototype.testDatasource = function () {
                     return this.doRequest({
-                        url: "/api/v1/users/current",
-                        method: "GET",
+                        url: '/api/v1/users/current',
+                        method: 'GET',
                     }).then(function (response) {
                         if (response.status === 200) {
                             return {
-                                status: "success",
-                                message: "Data source is working",
-                                title: "Success"
+                                status: 'success',
+                                message: 'Data source is working',
+                                title: 'Success',
                             };
                         }
                     });
@@ -77,13 +78,13 @@ System.register(["./DsPanelStorage"], function(exports_1) {
                 GenericDatasource.prototype.doRequest = function (options) {
                     options.withCredentials = this.withCredentials;
                     options.headers = this.headers;
-                    options.url = this.url + options.url; // NOTE: adding base
+                    options.url = this.url + options.url;
                     return this.dsAttrs.backendSrv.datasourceRequest(options);
                 };
                 return GenericDatasource;
-            })();
+            }());
             exports_1("GenericDatasource", GenericDatasource);
         }
-    }
+    };
 });
 //# sourceMappingURL=datasource.js.map
