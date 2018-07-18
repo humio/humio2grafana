@@ -1,9 +1,9 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-import HumioHelper from "./helper";
-import DsPanel from "./DsPanel";
-import DsPanelStorage from "./DsPanelStorage";
-import IDatasourceAttrs from "./Interfaces/IDatasourceAttrs";
-import IGrafanaAttrs from "./Interfaces/IGrafanaAttrs";
+import HumioHelper from './helper';
+import DsPanel from './DsPanel';
+import DsPanelStorage from './DsPanelStorage';
+import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
+import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 
 export class GenericDatasource {
   type: string;
@@ -23,9 +23,18 @@ export class GenericDatasource {
   timeRange: any; // FIXME: used by parent controller
 
   /** @ngInject */
-  constructor(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
+  constructor(
+    instanceSettings,
+    $q,
+    backendSrv,
+    templateSrv,
+    $location,
+    $rootScope,
+  ) {
     this.type = instanceSettings.type;
-    this.url = instanceSettings.url ? instanceSettings.url.replace(/\/$/, "") : "";
+    this.url = instanceSettings.url
+      ? instanceSettings.url.replace(/\/$/, '')
+      : '';
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
 
@@ -33,16 +42,18 @@ export class GenericDatasource {
       $q: $q,
       $location: $location,
       backendSrv: backendSrv,
-      $rootScope: $rootScope
+      $rootScope: $rootScope,
     };
 
     this.templateSrv = templateSrv;
 
     this.headers = {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " +
-        (instanceSettings.jsonData ? (instanceSettings.jsonData.humioToken || "") :
-          "")
+      'Content-Type': 'application/json',
+      Authorization:
+        'Bearer ' +
+        (instanceSettings.jsonData
+          ? instanceSettings.jsonData.humioToken || ''
+          : ''),
     };
 
     this.dsPanelStorage = new DsPanelStorage();
@@ -58,7 +69,7 @@ export class GenericDatasource {
     // NOTE: if no tragests just return an empty result
     if (options.targets.length === 0) {
       return this.dsAttrs.$q.resolve({
-        data: []
+        data: [],
       });
     }
 
@@ -73,27 +84,27 @@ export class GenericDatasource {
         errorCb: (errorTitle, errorBody) => {
           this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
         },
-        doRequest: this.doRequest
+        doRequest: this.doRequest,
       };
       return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
     } else {
       // TODO: handle the case
       return this.dsAttrs.$q.resolve({
-        data: []
+        data: [],
       });
     }
   }
 
   testDatasource() {
     return this.doRequest({
-      url: "/api/v1/users/current",
-      method: "GET",
+      url: '/api/v1/users/current',
+      method: 'GET',
     }).then(response => {
       if (response.status === 200) {
         return {
-          status: "success",
-          message: "Data source is working",
-          title: "Success"
+          status: 'success',
+          message: 'Data source is working',
+          title: 'Success',
         };
       }
     });

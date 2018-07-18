@@ -37,3 +37,5 @@ grafana
 /dist/test/
 
 .on-save.json
+
+.tscache/

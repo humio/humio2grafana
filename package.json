@@ -1,6 +1,6 @@
 {
   "name": "humio2grafana",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Humio datasouce for grafana",
   "main": "dist/module",
   "scripts": {
@@ -31,12 +31,12 @@
   "devDependencies": {
     "@types/lodash": "^4.14.93",
     "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
-    "grunt": "^1.0.1",
+    "grunt": "^1.0.3",
     "grunt-contrib-clean": "^1.1.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-pug": "^1.0.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-typescript": "^0.8.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-ts": "^6.0.0-beta.20",
     "karma": "^1.7.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-es6-shim": "^1.0.0",
@@ -50,6 +50,7 @@
     "mocha": "^5.0.0",
     "plugin-typescript": "^7.1.0",
     "sinon": "^3.2.1",
-    "systemjs-plugin-css": "^0.1.35"
+    "systemjs-plugin-css": "^0.1.35",
+    "typescript": "^2.9.2"
   }
 }

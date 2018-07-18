@@ -1,15 +1,16 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-      "target": "ES5",
-      "module": "system",
-      "sourceMap": true,
-      "declaration": true,
-      "emitDecoratorMetadata": true,
-      "experimentalDecorators": true,
-      "noImplicitAny": false
+    "target": "ES5",
+    "module": "system",
+    "sourceMap": true,
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "rootDir": "src/",
+    "typeRoots": ["./node_modules/@types/"]
   },
-  "exclude": [
-      "node_modules"
-  ]
+  "exclude": ["node_modules", "specs"]
 }

@@ -1,6 +1,4 @@
 # humio2grafana
-![Humio Panel](https://github.com/humio/humio2grafana/blob/master/src/img/humio_logo.png)
-
 
 Grafana integration for Humio
 
@@ -27,3 +25,17 @@ Grafana integration for Humio
 -   "Dataspace" dropdown list should be populated with avaliable dataspaces, select one
 -   enter query ("timechart()" is the default one)
 -   you should see the data, when panel is refreshed.
+
+# Using Grafana [Worldmap Panel plugin](https://grafana.com/plugins/grafana-worldmap-panel)
+
+![worldmap plugin example](https://github.com/humio/humio2grafana/blob/master/img/worldmap-panel-example.png)
+
+-   Install Grafana Worldmap Panel plugin (see installation instructions on [plugin page](https://grafana.com/plugins/grafana-worldmap-panel))
+-   Select Humio as datasource
+-   Extract country code using ipLocation Humio function (see [Humio docs](https://docs.humio.com/) for function description),
+
+
+Example query:
+```
+format("%s", field="client", as=ip) | ipLocation(ip) | groupby(ip.country)
+```

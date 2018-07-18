@@ -1,4 +1,5 @@
-import { QueryCtrl } from "app/plugins/sdk";
+import { QueryCtrl } from 'app/plugins/sdk';
+import './css/query-editor.css!';
 declare class GenericDatasourceQueryCtrl extends QueryCtrl {
     static templateUrl: string;
     $http: any;
