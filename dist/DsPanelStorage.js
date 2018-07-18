@@ -1,12 +1,14 @@
-System.register(["./DsPanel"], function(exports_1) {
-    var DsPanel_1;
-    var DsPanelStorage;
+System.register(["./DsPanel"], function (exports_1, context_1) {
+    "use strict";
+    var DsPanel_1, DsPanelStorage;
+    var __moduleName = context_1 && context_1.id;
     return {
-        setters:[
+        setters: [
             function (DsPanel_1_1) {
                 DsPanel_1 = DsPanel_1_1;
-            }],
-        execute: function() {
+            }
+        ],
+        execute: function () {
             DsPanelStorage = (function () {
                 function DsPanelStorage() {
                     this.panels = new Map();
@@ -20,9 +22,9 @@ System.register(["./DsPanel"], function(exports_1) {
                     return panel;
                 };
                 return DsPanelStorage;
-            })();
-            exports_1("default",DsPanelStorage);
+            }());
+            exports_1("default", DsPanelStorage);
         }
-    }
+    };
 });
 //# sourceMappingURL=DsPanelStorage.js.map
