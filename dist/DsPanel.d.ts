@@ -8,7 +8,7 @@ declare class DsPanel {
     update(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, targets: any[]): Promise<{
         data: Array<{
             target: string;
-            datapoints: any[];
+            datapoints: Array<[number, number]>;
         }>;
     }>;
     private _composeTimechartData;

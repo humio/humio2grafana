@@ -17,7 +17,7 @@ class DsPanel {
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     targets: any[],
-  ): Promise<{data: Array<{target: string, datapoints: any[]}>}> {
+  ): Promise<{data: Array<{target: string, datapoints: Array<[number, number]>}>}> {
     let allQueryPromise = targets.map((target: any, index: number) => {
       let query = this.queries.get(index);
       if (!query) {
@@ -30,20 +30,16 @@ class DsPanel {
     const responseList = await Promise.all(allQueryPromise);
 
     const result = _.flatMap(responseList, (res, index) => {
-
       const dt = res.data;
       const timeseriesField = '_bucket';
       const isTimechart = dt.metaData.extraData.timechart == 'true';
       const isAggregate = dt.metaData.isAggregate;
       const seriesField = dt.metaData.extraData.series;
       const groupbyFields = dt.metaData.extraData.groupby_fields;
-      const valueField = _.filter(dt.metaData.fieldOrder, f => {
-        return (
-          f !== timeseriesField &&
-          f !== seriesField &&
-          f !== groupbyFields
-        );
-      })[0] || '_count';
+      const valueField = _.filter(
+        dt.metaData.fieldOrder,
+        f => !_.includes(_.flatten([timeseriesField, seriesField, groupbyFields]), f)
+      )[0] || '_count';
 
       if (res.data.events.length === 0) {
         return [];

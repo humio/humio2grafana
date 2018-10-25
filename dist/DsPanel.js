@@ -76,11 +76,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                                         var isAggregate = dt.metaData.isAggregate;
                                         var seriesField = dt.metaData.extraData.series;
                                         var groupbyFields = dt.metaData.extraData.groupby_fields;
-                                        var valueField = lodash_1.default.filter(dt.metaData.fieldOrder, function (f) {
-                                            return (f !== timeseriesField &&
-                                                f !== seriesField &&
-                                                f !== groupbyFields);
-                                        })[0] || '_count';
+                                        var valueField = lodash_1.default.filter(dt.metaData.fieldOrder, function (f) { return !lodash_1.default.includes(lodash_1.default.flatten([timeseriesField, seriesField, groupbyFields]), f); })[0] || '_count';
                                         if (res.data.events.length === 0) {
                                             return [];
                                         }
