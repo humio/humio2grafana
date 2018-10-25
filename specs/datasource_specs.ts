@@ -79,7 +79,7 @@ describe('GenericDatasource', function() {
         expect(series1.target).to.equal('_count');
         expect(series1.datapoints.length).to.equal(241);
         done();
-      });
+      }).catch(() => done());
     });
   });
 
@@ -128,7 +128,7 @@ describe('GenericDatasource', function() {
         expect(series1.target).to.equal('syklon');
         expect(series1.datapoints.length).to.equal(145);
         done();
-      });
+      }).catch(() => done());
     });
   });
 
@@ -175,7 +175,7 @@ describe('GenericDatasource', function() {
         expect(series1.target).to.equal('_count');
         expect(series1.datapoints.length).to.equal(1);
         done();
-      });
+      }).catch(() => done());
     });
   });
 });
