@@ -36,9 +36,11 @@ class DsPanel {
       const isAggregate = dt.metaData.isAggregate;
       const seriesField = dt.metaData.extraData.series;
       const groupbyFields = dt.metaData.extraData.groupby_fields;
+
+      const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupbyFields]);
       const valueField = _.filter(
         dt.metaData.fieldOrder,
-        f => !_.includes(_.flatten([timeseriesField, seriesField, groupbyFields]), f)
+        f => !_.includes(valueFieldsToExclude, f)
       )[0] || '_count';
 
       if (res.data.events.length === 0) {
