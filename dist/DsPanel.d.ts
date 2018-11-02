@@ -5,7 +5,12 @@ import HumioQuery from './HumioQuery';
 declare class DsPanel {
     queries: Map<number, HumioQuery>;
     constructor();
-    update(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, targets: any[]): any;
+    update(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, targets: any[]): Promise<{
+        data: Array<{
+            target: string;
+            datapoints: Array<[number, number]>;
+        }>;
+    }>;
     private _composeTimechartData;
     private _composeResult;
 }
