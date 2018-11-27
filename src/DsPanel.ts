@@ -31,17 +31,11 @@ class DsPanel {
 
     const result = _.flatMap(responseList, (res, index) => {
       const dt = res.data;
-      const timeseriesField = '_bucket';
       const isTimechart = dt.metaData.extraData.timechart == 'true';
-      const isAggregate = dt.metaData.isAggregate;
       const seriesField = dt.metaData.extraData.series;
       const groupbyFields = dt.metaData.extraData.groupby_fields;
 
-      const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupbyFields]);
-      const valueField = _.filter(
-        dt.metaData.fieldOrder,
-        f => !_.includes(valueFieldsToExclude, f)
-      )[0] || '_count';
+      const valueField = getValueFieldName(dt);
 
       if (res.data.events.length === 0) {
         return [];
@@ -101,41 +95,35 @@ class DsPanel {
       };
     });
   }
+}
 
-  private _composeResult(
-    queryOptions: any,
-    r: any,
-    resFx: any,
-    errorCb: (errorTitle: string, errorBody: any) => void,
-  ) {
-    let currentTarget = queryOptions.targets[0];
-    if (
-      currentTarget.hasOwnProperty('type') &&
-      (currentTarget.type === 'timeserie' || currentTarget.type === 'table') &&
-      (r.data.hasOwnProperty('metaData') &&
-        r.data.metaData.hasOwnProperty('extraData') &&
-        r.data.metaData.extraData.timechart === 'true')
-    ) {
-      // NOTE: timechart
-      return resFx();
-    } else if (
-      !currentTarget.hasOwnProperty('type') &&
-      (r.data.hasOwnProperty('metaData') &&
-        r.data.metaData.isAggregate === true)
-    ) {
-      // NOTE: gauge
-      return resFx();
-    } else {
-      // NOTE: unsuported query for this type of panel
-      errorCb('alert-error', [
-        'Unsupported visualisation',
-        "can't visulize the query result on this panel.",
-      ]);
-      return {
-        data: [],
-      };
-    }
+export const getValueFieldName = (responseData) => {
+  const timeseriesField = '_bucket';
+  const seriesField = responseData.metaData.extraData.series;
+  const groupbyFields = responseData.metaData.extraData.groupby_fields;
+  const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupbyFields]);
+  const defaultValueFieldName = '_count';
+
+  if (responseData.metaData.fieldOrder) {
+    const valueFieldNames = _.filter(
+      responseData.metaData.fieldOrder,
+      fieldName => !_.includes(valueFieldsToExclude, fieldName)
+    ); 
+    
+    return valueFieldNames[0] || defaultValueFieldName;
   }
+
+  if (responseData.events.length > 0) {
+    const valueFieldNames = responseData.events.reduce((allFieldNames, event) => {
+      const valueFields = _.difference(Object.keys(event), valueFieldsToExclude);
+      
+      return [...valueFields, ...allFieldNames];
+    }, []);
+
+    return valueFieldNames[0] || defaultValueFieldName;
+  }
+
+  return defaultValueFieldName;
 }
 
 export default DsPanel;
