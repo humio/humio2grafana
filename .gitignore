@@ -33,6 +33,10 @@ profile.cov
 grafana
 .notouch
 
+
+# MacOS junk
+.DS_Store
+
 # Test artifacts
 /dist/test/
 
