@@ -29,69 +29,51 @@ class DsPanel {
 
     const responseList = await Promise.all(allQueryPromise);
 
-    const result = _.flatMap(responseList, (res, index) => {
-      const dt = res.data;
-      const timeseriesField = '_bucket';
-      const isTimechart = dt.metaData.extraData.timechart == 'true';
-      const isAggregate = dt.metaData.isAggregate;
-      const seriesField = dt.metaData.extraData.series;
-      const groupbyFields = dt.metaData.extraData.groupby_fields;
+    const result = _.flatMap(responseList, (res) => {
+      const data = res.data;
+      const isTimechart = data.metaData.extraData.timechart == 'true';
+      const seriesField = data.metaData.extraData.series;
+      const groupbyFields = data.metaData.extraData.groupby_fields;
 
-      const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupbyFields]);
-      const valueField = _.filter(
-        dt.metaData.fieldOrder,
-        f => !_.includes(valueFieldsToExclude, f)
-      )[0] || '_count';
+      const valueField = getValueFieldName(data);
 
       if (res.data.events.length === 0) {
         return [];
       } else if (seriesField) {
-        return this._composeTimechartData(seriesField, dt, valueField);
+        return this._composeMultiSeriesTimechart(data.events, seriesField, valueField);
       } else if (isTimechart) {
-        return [{
-          target: valueField,
-          datapoints: dt.events.map(ev => {
-            return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
-          }),
-        }];
+        return this._composeSingleSeriesTimechart(data.events, valueField);
       } else {
-        // NOTE: consider to be a barchart
-        return dt.events.map(ev => {
-          if (_.keys(ev).length > 1) {
-            return {
-              target: ev[groupbyFields],
-              datapoints: [
-                [parseFloat(ev[valueField]), '_' + ev[groupbyFields]],
-              ],
-            };
-          } else {
-            return {
-              target: valueField,
-              datapoints: [[parseFloat(ev[valueField]), valueField]],
-            };
-          }
-        });
+        return this._composeBarChart(data.events, groupbyFields, valueField)
       }
     });
 
     return {data: result};
   }
 
-  // NOTE: Multiple series timecharts
-  private _composeTimechartData(
+  private _composeSingleSeriesTimechart(events, valueField: string) {
+    return [{
+      target: valueField,
+      datapoints: events.map(event => {
+        return [parseFloat(event[valueField]), parseInt(event._bucket)];
+      }),
+    }];
+  }
+
+  private _composeMultiSeriesTimechart(
+    events: any,
     seriesField: string,
-    data: Object[],
     valueField: string,
   ): {target: string; datapoints: number[][]}[] {
     let series: Object = {};
     // multiple series
-    for (let i = 0; i < data['events'].length; i++) {
-      let ev = data['events'][i];
-      let point = [parseFloat(ev[valueField]), parseInt(ev._bucket)];
-      if (!series[ev[seriesField]]) {
-        series[ev[seriesField]] = [point];
+    for (let i = 0; i < events.length; i++) {
+      let event = events[i];
+      let point = [parseFloat(event[valueField]), parseInt(event._bucket)];
+      if (!series[event[seriesField]]) {
+        series[event[seriesField]] = [point];
       } else {
-        series[ev[seriesField]].push(point);
+        series[event[seriesField]].push(point);
       }
     }
     return _.keys(series).map(s => {
@@ -102,40 +84,52 @@ class DsPanel {
     });
   }
 
-  private _composeResult(
-    queryOptions: any,
-    r: any,
-    resFx: any,
-    errorCb: (errorTitle: string, errorBody: any) => void,
-  ) {
-    let currentTarget = queryOptions.targets[0];
-    if (
-      currentTarget.hasOwnProperty('type') &&
-      (currentTarget.type === 'timeserie' || currentTarget.type === 'table') &&
-      (r.data.hasOwnProperty('metaData') &&
-        r.data.metaData.hasOwnProperty('extraData') &&
-        r.data.metaData.extraData.timechart === 'true')
-    ) {
-      // NOTE: timechart
-      return resFx();
-    } else if (
-      !currentTarget.hasOwnProperty('type') &&
-      (r.data.hasOwnProperty('metaData') &&
-        r.data.metaData.isAggregate === true)
-    ) {
-      // NOTE: gauge
-      return resFx();
-    } else {
-      // NOTE: unsuported query for this type of panel
-      errorCb('alert-error', [
-        'Unsupported visualisation',
-        "can't visulize the query result on this panel.",
-      ]);
-      return {
-        data: [],
-      };
-    }
+  private _composeBarChart(events, groupbyFields, valueField) {
+    return events.map(event => {
+      if (_.keys(event).length > 1) {
+        return {
+          target: event[groupbyFields],
+          datapoints: [
+            [parseFloat(event[valueField]), '_' + event[groupbyFields]],
+          ],
+        };
+      } else {
+        return {
+          target: valueField,
+          datapoints: [[parseFloat(event[valueField]), valueField]],
+        };
+      }
+    });
   }
+}
+
+export const getValueFieldName = (responseData) => {
+  const timeseriesField = '_bucket';
+  const seriesField = responseData.metaData.extraData.series;
+  const groupbyFields = responseData.metaData.extraData.groupby_fields;
+  const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupbyFields]);
+  const defaultValueFieldName = '_count';
+
+  if (responseData.metaData.fieldOrder) {
+    const valueFieldNames = _.filter(
+      responseData.metaData.fieldOrder,
+      fieldName => !_.includes(valueFieldsToExclude, fieldName)
+    ); 
+    
+    return valueFieldNames[0] || defaultValueFieldName;
+  }
+
+  if (responseData.events.length > 0) {
+    const valueFieldNames = responseData.events.reduce((allFieldNames, event) => {
+      const valueFields = _.difference(Object.keys(event), valueFieldsToExclude);
+      
+      return [...valueFields, ...allFieldNames];
+    }, []);
+
+    return valueFieldNames[0] || defaultValueFieldName;
+  }
+
+  return defaultValueFieldName;
 }
 
 export default DsPanel;

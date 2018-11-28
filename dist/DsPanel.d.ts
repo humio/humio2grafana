@@ -11,7 +11,9 @@ declare class DsPanel {
             datapoints: Array<[number, number]>;
         }>;
     }>;
-    private _composeTimechartData;
-    private _composeResult;
+    private _composeSingleSeriesTimechart;
+    private _composeMultiSeriesTimechart;
+    private _composeBarChart;
 }
+export declare const getValueFieldName: (responseData: any) => any;
 export default DsPanel;

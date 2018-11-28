@@ -35,7 +35,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
             if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
         }
     };
-    var lodash_1, HumioQuery_1, DsPanel;
+    var lodash_1, HumioQuery_1, DsPanel, getValueFieldName;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
@@ -69,46 +69,23 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                                     return [4, Promise.all(allQueryPromise)];
                                 case 1:
                                     responseList = _a.sent();
-                                    result = lodash_1.default.flatMap(responseList, function (res, index) {
-                                        var dt = res.data;
-                                        var timeseriesField = '_bucket';
-                                        var isTimechart = dt.metaData.extraData.timechart == 'true';
-                                        var isAggregate = dt.metaData.isAggregate;
-                                        var seriesField = dt.metaData.extraData.series;
-                                        var groupbyFields = dt.metaData.extraData.groupby_fields;
-                                        var valueFieldsToExclude = lodash_1.default.flatten([timeseriesField, seriesField, groupbyFields]);
-                                        var valueField = lodash_1.default.filter(dt.metaData.fieldOrder, function (f) { return !lodash_1.default.includes(valueFieldsToExclude, f); })[0] || '_count';
+                                    result = lodash_1.default.flatMap(responseList, function (res) {
+                                        var data = res.data;
+                                        var isTimechart = data.metaData.extraData.timechart == 'true';
+                                        var seriesField = data.metaData.extraData.series;
+                                        var groupbyFields = data.metaData.extraData.groupby_fields;
+                                        var valueField = getValueFieldName(data);
                                         if (res.data.events.length === 0) {
                                             return [];
                                         }
                                         else if (seriesField) {
-                                            return _this._composeTimechartData(seriesField, dt, valueField);
+                                            return _this._composeMultiSeriesTimechart(data.events, seriesField, valueField);
                                         }
                                         else if (isTimechart) {
-                                            return [{
-                                                    target: valueField,
-                                                    datapoints: dt.events.map(function (ev) {
-                                                        return [parseFloat(ev[valueField]), parseInt(ev._bucket)];
-                                                    }),
-                                                }];
+                                            return _this._composeSingleSeriesTimechart(data.events, valueField);
                                         }
                                         else {
-                                            return dt.events.map(function (ev) {
-                                                if (lodash_1.default.keys(ev).length > 1) {
-                                                    return {
-                                                        target: ev[groupbyFields],
-                                                        datapoints: [
-                                                            [parseFloat(ev[valueField]), '_' + ev[groupbyFields]],
-                                                        ],
-                                                    };
-                                                }
-                                                else {
-                                                    return {
-                                                        target: valueField,
-                                                        datapoints: [[parseFloat(ev[valueField]), valueField]],
-                                                    };
-                                                }
-                                            });
+                                            return _this._composeBarChart(data.events, groupbyFields, valueField);
                                         }
                                     });
                                     return [2, { data: result }];
@@ -116,16 +93,24 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                         });
                     });
                 };
-                DsPanel.prototype._composeTimechartData = function (seriesField, data, valueField) {
+                DsPanel.prototype._composeSingleSeriesTimechart = function (events, valueField) {
+                    return [{
+                            target: valueField,
+                            datapoints: events.map(function (event) {
+                                return [parseFloat(event[valueField]), parseInt(event._bucket)];
+                            }),
+                        }];
+                };
+                DsPanel.prototype._composeMultiSeriesTimechart = function (events, seriesField, valueField) {
                     var series = {};
-                    for (var i = 0; i < data['events'].length; i++) {
-                        var ev = data['events'][i];
-                        var point = [parseFloat(ev[valueField]), parseInt(ev._bucket)];
-                        if (!series[ev[seriesField]]) {
-                            series[ev[seriesField]] = [point];
+                    for (var i = 0; i < events.length; i++) {
+                        var event_1 = events[i];
+                        var point = [parseFloat(event_1[valueField]), parseInt(event_1._bucket)];
+                        if (!series[event_1[seriesField]]) {
+                            series[event_1[seriesField]] = [point];
                         }
                         else {
-                            series[ev[seriesField]].push(point);
+                            series[event_1[seriesField]].push(point);
                         }
                     }
                     return lodash_1.default.keys(series).map(function (s) {
@@ -135,32 +120,45 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                         };
                     });
                 };
-                DsPanel.prototype._composeResult = function (queryOptions, r, resFx, errorCb) {
-                    var currentTarget = queryOptions.targets[0];
-                    if (currentTarget.hasOwnProperty('type') &&
-                        (currentTarget.type === 'timeserie' || currentTarget.type === 'table') &&
-                        (r.data.hasOwnProperty('metaData') &&
-                            r.data.metaData.hasOwnProperty('extraData') &&
-                            r.data.metaData.extraData.timechart === 'true')) {
-                        return resFx();
-                    }
-                    else if (!currentTarget.hasOwnProperty('type') &&
-                        (r.data.hasOwnProperty('metaData') &&
-                            r.data.metaData.isAggregate === true)) {
-                        return resFx();
-                    }
-                    else {
-                        errorCb('alert-error', [
-                            'Unsupported visualisation',
-                            "can't visulize the query result on this panel.",
-                        ]);
-                        return {
-                            data: [],
-                        };
-                    }
+                DsPanel.prototype._composeBarChart = function (events, groupbyFields, valueField) {
+                    return events.map(function (event) {
+                        if (lodash_1.default.keys(event).length > 1) {
+                            return {
+                                target: event[groupbyFields],
+                                datapoints: [
+                                    [parseFloat(event[valueField]), '_' + event[groupbyFields]],
+                                ],
+                            };
+                        }
+                        else {
+                            return {
+                                target: valueField,
+                                datapoints: [[parseFloat(event[valueField]), valueField]],
+                            };
+                        }
+                    });
                 };
                 return DsPanel;
             }());
+            exports_1("getValueFieldName", getValueFieldName = function (responseData) {
+                var timeseriesField = '_bucket';
+                var seriesField = responseData.metaData.extraData.series;
+                var groupbyFields = responseData.metaData.extraData.groupby_fields;
+                var valueFieldsToExclude = lodash_1.default.flatten([timeseriesField, seriesField, groupbyFields]);
+                var defaultValueFieldName = '_count';
+                if (responseData.metaData.fieldOrder) {
+                    var valueFieldNames = lodash_1.default.filter(responseData.metaData.fieldOrder, function (fieldName) { return !lodash_1.default.includes(valueFieldsToExclude, fieldName); });
+                    return valueFieldNames[0] || defaultValueFieldName;
+                }
+                if (responseData.events.length > 0) {
+                    var valueFieldNames = responseData.events.reduce(function (allFieldNames, event) {
+                        var valueFields = lodash_1.default.difference(Object.keys(event), valueFieldsToExclude);
+                        return valueFields.concat(allFieldNames);
+                    }, []);
+                    return valueFieldNames[0] || defaultValueFieldName;
+                }
+                return defaultValueFieldName;
+            });
             exports_1("default", DsPanel);
         }
     };
