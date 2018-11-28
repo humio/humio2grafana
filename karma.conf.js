@@ -1,7 +1,7 @@
 'use strict';
 module.exports = function(config) {
     config.set({
-      frameworks: ['systemjs', 'es6-shim', 'mocha', 'expect', 'sinon'],
+      frameworks: ['systemjs', 'es6-shim', 'mocha', 'expect'],
 
       files: [
         'specs/*specs.ts',

@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from './lib/common';
+import {describe, beforeEach, it, expect} from './lib/common';
 import { GenericDatasource } from '../src/datasource';
 import TemplateSrvStub from './lib/template_srv_stub';
 import Q from 'q';
