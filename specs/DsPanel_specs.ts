@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from './lib/common';
+import {describe, it, expect} from './lib/common';
 import { getValueFieldName } from '../src/DsPanel';
 
 const dataWithFieldOrder = {
