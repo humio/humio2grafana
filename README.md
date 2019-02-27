@@ -39,3 +39,23 @@ Example query:
 ```
 format("%s", field="client", as=ip) | ipLocation(ip) | groupby(ip.country)
 ```
+
+# Development
+
+Make sure that a local installation of Grafana is available. On macOS, follow the setup guide provided by Grafana: http://docs.grafana.org/installation/mac/.
+
+Install the depedencies with yarn:
+
+```
+yarn install
+```
+
+Install the humio2grafana plugin by symlink'ing the `dist` directory in the `/usr/local/var/lib/grafana/plugins` directory. E.g.:
+
+```bash
+cd /usr/local/var/lib/grafana/plugins
+ln -s ~/code/humio/humio2grafana/dist humio2grafana
+
+# restart grafana (needed every time the plugin is updated)
+brew services restart grafana
+```
