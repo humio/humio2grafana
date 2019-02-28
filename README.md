@@ -41,21 +41,48 @@ format("%s", field="client", as=ip) | ipLocation(ip) | groupby(ip.country)
 ```
 
 # Development
+Clone this repository and install its dependencies:
 
-Make sure that a local installation of Grafana is available. On macOS, follow the setup guide provided by Grafana: http://docs.grafana.org/installation/mac/.
-
-Install the depedencies with yarn:
-
-```
+```bash
+git clone git@github.com:humio/humio2grafana.git
+cd humio2grafana
 yarn install
 ```
 
-Install the humio2grafana plugin by symlink'ing the `dist` directory in the `/usr/local/var/lib/grafana/plugins` directory. E.g.:
+Build the plugin:
+```bash
+yarn run build
+```
+
+This will create a `dist` directory with the necessary files for the plugin.
+
+**Install and configure Grafana**
+This set of instructions assumes that the developer is using macOS. 
+
+Make sure that a local installation of Grafana is available. Follow the setup guide provided by Grafana: http://docs.grafana.org/installation/mac/. Installing through Homebrew is recommended.
+
+Grafana plugins are stored in `/usr/local/var/lib/grafana/plugins`. To install the plugin, simply copy the `dist` directory to the Grafana plugins directory:
+
+```
+cp -R dist `/usr/local/var/lib/grafana/plugins/humio2grafana`
+```
+
+Or create a symlink to avoid having to copy the `dist` directory every time a change has been made:
 
 ```bash
-cd /usr/local/var/lib/grafana/plugins
+cd /usr/local/var/lib/grafana/plugins/
 ln -s ~/code/humio/humio2grafana/dist humio2grafana
+```
 
-# restart grafana (needed every time the plugin is updated)
+**During development**
+A file watching script is available to build the plugin whenever a project file changes:
+
+```bash
+yarn run watch
+```
+
+In order for plugin changes to take effect, Grafana has to be manually restarted:
+
+```
 brew services restart grafana
 ```
