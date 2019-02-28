@@ -1,4 +1,4 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   require('load-grunt-tasks')(grunt);
 
   grunt.loadNpmTasks('grunt-contrib-clean');
@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       dist_statics: {
         expand: true,
         flatten: true,
-        src: ['src/plugin.json', 'LICENSE', 'README.md'],
+        src: ['src/plugin.json', 'LICENSE', 'src/README.md'],
         dest: 'dist/',
       },
     },
@@ -52,7 +52,7 @@ module.exports = function(grunt) {
             src: ['src/partials/annotations.editor.pug'],
             dest: 'dist/partials/annotations.editor.html',
           },
-          {src: ['src/partials/config.pug'], dest: 'dist/partials/config.html'},
+          { src: ['src/partials/config.pug'], dest: 'dist/partials/config.html' },
           {
             src: ['src/partials/query.editor.pug'],
             dest: 'dist/partials/query.editor.html',
