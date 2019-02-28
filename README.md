@@ -73,7 +73,7 @@ brew services restart grafana
 Grafana plugins are stored in `/usr/local/var/lib/grafana/plugins`. To install the plugin, simply copy the `dist` directory to the Grafana plugins directory:
 
 ```
-cp -R dist `/usr/local/var/lib/grafana/plugins/humio2grafana`
+cp -R dist /usr/local/var/lib/grafana/plugins/humio2grafana
 ```
 
 Or create a symlink to avoid having to copy the `dist` directory every time a change has been made:
