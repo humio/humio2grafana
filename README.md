@@ -84,6 +84,8 @@ ln -s ~/code/humio/humio2grafana/dist humio2grafana
 brew services restart grafana
 ```
 
+Configure the plugin's settings by following the instructions [provided above](#setting-up-humio-datasource).
+
 ### During development
 A file watching script is available to build the plugin whenever a project file changes:
 
