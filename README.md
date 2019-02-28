@@ -84,14 +84,7 @@ ln -s ~/code/humio/humio2grafana/dist humio2grafana
 brew services restart grafana
 ```
 
-#### Configure the plugin
-The plugin needs an API token to talk to Humio. In order to retrieve an API token, the Humio backend must be run in another mode than the default developer mode. For example, it can be run in onprem mode:
-
-```
-make run-login-static-onprem
-```
-
-Login with root:root and go to http://localhost:3000/humio/settings to retrieve an API token. Then follow then configuration instructions [provided above](#setting-up-humio-datasource).
+Configure the plugin by following the [instructions provided above](#setting-up-humio-datasource).
 
 ### During development
 A file watching script is available to build the plugin whenever a project file changes:
