@@ -59,8 +59,17 @@ This will create a `dist` directory with the necessary files for the plugin.
 ### Install and configure Grafana
 This set of instructions assumes that the developer is using macOS. 
 
-Make sure that a local installation of Grafana is available. Follow the setup guide provided by Grafana: http://docs.grafana.org/installation/mac/. Installing through Homebrew is recommended.
+#### Install Grafana
+Follow the setup guide provided by Grafana: http://docs.grafana.org/installation/mac/. Installing through Homebrew is recommended.
 
+#### Change Grafana's default port
+As a default Grafana runs on port 3000 which clashes with Humio's default port. Change this by uncommenting and modifying the `http_port` setting in `/usr/local/etc/grafana/grafana.ini`. Restart Grafana:
+
+```
+brew services restart grafana
+```
+
+#### Install the plugin
 Grafana plugins are stored in `/usr/local/var/lib/grafana/plugins`. To install the plugin, simply copy the `dist` directory to the Grafana plugins directory:
 
 ```
@@ -72,6 +81,7 @@ Or create a symlink to avoid having to copy the `dist` directory every time a ch
 ```bash
 cd /usr/local/var/lib/grafana/plugins/
 ln -s ~/code/humio/humio2grafana/dist humio2grafana
+brew services restart grafana
 ```
 
 ### During development
