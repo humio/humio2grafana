@@ -56,7 +56,7 @@ yarn run build
 
 This will create a `dist` directory with the necessary files for the plugin.
 
-**Install and configure Grafana**
+### Install and configure Grafana
 This set of instructions assumes that the developer is using macOS. 
 
 Make sure that a local installation of Grafana is available. Follow the setup guide provided by Grafana: http://docs.grafana.org/installation/mac/. Installing through Homebrew is recommended.
@@ -74,7 +74,7 @@ cd /usr/local/var/lib/grafana/plugins/
 ln -s ~/code/humio/humio2grafana/dist humio2grafana
 ```
 
-**During development**
+### During development
 A file watching script is available to build the plugin whenever a project file changes:
 
 ```bash
