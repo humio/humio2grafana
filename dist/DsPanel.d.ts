@@ -14,6 +14,8 @@ declare class DsPanel {
     private _composeSingleSeriesTimechart;
     private _composeMultiSeriesTimechart;
     private _composeBarChart;
+    private _composeTable;
+    private _isTableQuery;
 }
 export declare const getValueFieldName: (responseData: any) => any;
 export default DsPanel;
