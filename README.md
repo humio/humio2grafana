@@ -4,7 +4,7 @@ Grafana integration for Humio
 
 # Installing the plugin
 -   clone the repo
--   copy dist folder (or the whole repo) to /var/lib/grafana/data/plugins
+-   copy dist folder (or the whole repo) to /var/lib/grafana/plugins
 -   restart grafana
 
 # Setting up Humio datasource
