@@ -113,10 +113,10 @@ class DsPanel {
   }
 
     private _isTableQuery(target): boolean {
-    return typeof (target.humioQuery) === 'string'
-      // Check search string for 'table(*)'.
-      ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
-      : false;
+      return typeof (target.humioQuery) === 'string'
+        // Check search string for 'table(*)'.
+        ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
+        : false;
   }
 }
 
