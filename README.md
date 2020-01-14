@@ -13,7 +13,7 @@ Grafana integration for Humio
 -   click "add datasouce"
 -   select datasource type "humio2grafana"
 -   set datasource name, for example "Humio cloud"
--   set humio server address without trailing slash, for example https://cloud.humio.com
+-   set humio server address, for example `https://cloud.humio.com`
 -   set "Humio access token" to some active token
 -   click "Save & Test" button, you chould receive "success" message
 
@@ -79,8 +79,7 @@ cp -R dist /usr/local/var/lib/grafana/plugins/humio2grafana
 Or create a symlink to avoid having to copy the `dist` directory every time a change has been made:
 
 ```bash
-cd /usr/local/var/lib/grafana/plugins/
-ln -s ~/code/humio/humio2grafana/dist humio2grafana
+ln -s $(pwd)/dist /usr/local/var/lib/grafana/plugins/humio2grafana
 brew services restart grafana
 ```
 
