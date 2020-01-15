@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - '**'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [8, 10, 12]
+    env:
+      CI: true
+    steps:
+    - name: Checkout ${{ github.sha }}
+      uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm ci
+    - name: Build
+      run: npm run build
+    - name: Ensure no git changes after build (keep src and dist in sync)
+      run: |
+        git add .
+        NUMBER_OF_FILES_CHANGED=$(git diff --name-only HEAD | wc -l)
+        if [[ $NUMBER_OF_FILES_CHANGED -gt 0 ]]; then exit 1; fi
