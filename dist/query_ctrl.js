@@ -118,18 +118,17 @@ System.register(["app/plugins/sdk", "lodash", "./helper", "./css/query-editor.cs
                 GenericDatasourceQueryCtrl.prototype._getHumioDataspaces = function () {
                     if (this.datasource.url) {
                         var requestOpts = {
-                            method: 'GET',
-                            url: this.datasource.url + '/api/v1/dataspaces',
+                            method: 'POST',
+                            url: this.datasource.url + '/graphql',
                             headers: this.datasource.headers,
+                            data: { query: '{searchDomains{name}}' },
                         };
                         return this.datasource.dsAttrs.backendSrv
                             .datasourceRequest(requestOpts)
                             .then(function (r) {
-                            var res = r.data.map(function (ds) {
-                                return {
-                                    value: ds.name,
-                                    name: ds.name,
-                                };
+                            var res = r.data.data.searchDomains.map(function (_a) {
+                                var name = _a.name;
+                                return ({ value: name, name: name });
                             });
                             return lodash_1.default.sortBy(res, ['name']);
                         });
