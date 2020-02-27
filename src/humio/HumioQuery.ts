@@ -1,6 +1,6 @@
-import {QueryData, UpdateQueryData} from './Types/QueryData';
-import IDatasourceAtts from './Interfaces/IDatasourceAttrs';
-import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
+import {QueryData, UpdateQueryData} from '../Types/QueryData';
+import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
+import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import HumioHelper from './helper';
 import _ from 'lodash';
 

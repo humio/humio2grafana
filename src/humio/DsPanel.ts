@@ -1,8 +1,8 @@
-///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
+///<reference path="../../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 
 import _ from 'lodash';
-import IDatasourceAtts from './Interfaces/IDatasourceAttrs';
-import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
+import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
+import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import HumioQuery from './HumioQuery';
 
 class DsPanel {

@@ -1,6 +1,6 @@
 import {QueryCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
-import HumioHelper from './helper';
+import HumioHelper from './humio/helper';
 
 import './css/query-editor.css!';
 

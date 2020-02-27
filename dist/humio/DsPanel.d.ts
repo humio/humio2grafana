@@ -1,6 +1,6 @@
-/// <reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-import IDatasourceAtts from './Interfaces/IDatasourceAttrs';
-import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
+/// <reference path="../../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
+import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
+import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import HumioQuery from './HumioQuery';
 declare class DsPanel {
     queries: Map<number, HumioQuery>;

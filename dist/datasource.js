@@ -1,4 +1,4 @@
-System.register(["./DsPanelStorage"], function (exports_1, context_1) {
+System.register(["./humio/DsPanelStorage"], function (exports_1, context_1) {
     "use strict";
     var DsPanelStorage_1, GenericDatasource;
     var __moduleName = context_1 && context_1.id;
@@ -10,7 +10,7 @@ System.register(["./DsPanelStorage"], function (exports_1, context_1) {
         ],
         execute: function () {
             GenericDatasource = (function () {
-                function GenericDatasource(instanceSettings, $q, backendSrv, templateSrv, $location, $rootScope) {
+                function GenericDatasource(instanceSettings, $q, backendSrv, $location, $rootScope) {
                     this.type = instanceSettings.type;
                     this.url = instanceSettings.url
                         ? instanceSettings.url.replace(/\/$/, '')
@@ -23,7 +23,6 @@ System.register(["./DsPanelStorage"], function (exports_1, context_1) {
                         backendSrv: backendSrv,
                         $rootScope: $rootScope,
                     };
-                    this.templateSrv = templateSrv;
                     this.headers = {
                         'Content-Type': 'application/json',
                         Authorization: 'Bearer ' +
@@ -38,28 +37,21 @@ System.register(["./DsPanelStorage"], function (exports_1, context_1) {
                 GenericDatasource.prototype.query = function (options) {
                     var _this = this;
                     this.timeRange = options.range;
-                    if (options.targets.length === 0) {
-                        return this.dsAttrs.$q.resolve({
-                            data: [],
-                        });
-                    }
                     var panelId = options.panelId;
-                    var dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId);
-                    if (dsPanel) {
-                        var grafanaAttrs = {
-                            grafanaQueryOpts: options,
-                            errorCb: function (errorTitle, errorBody) {
-                                _this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
-                            },
-                            doRequest: this.doRequest,
-                        };
-                        return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
-                    }
-                    else {
+                    var dsPanel = this.dsPanelStorage.getOrCreatePanel(panelId);
+                    if (options.targets.length === 0 && !dsPanel) {
                         return this.dsAttrs.$q.resolve({
                             data: [],
                         });
                     }
+                    var grafanaAttrs = {
+                        grafanaQueryOpts: options,
+                        errorCb: function (errorTitle, errorBody) {
+                            _this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
+                        },
+                        doRequest: this.doRequest,
+                    };
+                    return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
                 };
                 GenericDatasource.prototype.testDatasource = function () {
                     return this.doRequest({

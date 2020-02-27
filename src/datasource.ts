@@ -1,7 +1,5 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-import HumioHelper from './helper';
-import DsPanel from './DsPanel';
-import DsPanelStorage from './DsPanelStorage';
+import DsPanelStorage from './humio/DsPanelStorage';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 
@@ -13,8 +11,6 @@ export class GenericDatasource {
 
   dsAttrs: IDatasourceAttrs;
 
-  templateSrv: any; // TODO: not sure if needed
-
   headers: any;
 
   dsPanelStorage: DsPanelStorage;
@@ -23,14 +19,7 @@ export class GenericDatasource {
   timeRange: any; // FIXME: used by parent controller
 
   /** @ngInject */
-  constructor(
-    instanceSettings,
-    $q,
-    backendSrv,
-    templateSrv,
-    $location,
-    $rootScope,
-  ) {
+  constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
     this.type = instanceSettings.type;
     this.url = instanceSettings.url
       ? instanceSettings.url.replace(/\/$/, '')
@@ -44,8 +33,6 @@ export class GenericDatasource {
       backendSrv: backendSrv,
       $rootScope: $rootScope,
     };
-
-    this.templateSrv = templateSrv;
 
     this.headers = {
       'Content-Type': 'application/json',
@@ -65,34 +52,23 @@ export class GenericDatasource {
 
   query(options) {
     this.timeRange = options.range;
-
-    // NOTE: if no tragests just return an empty result
-    if (options.targets.length === 0) {
-      return this.dsAttrs.$q.resolve({
-        data: [],
-      });
-    }
-
     let panelId = options.panelId;
+    let dsPanel = this.dsPanelStorage.getOrCreatePanel(panelId);
 
-    // TODO: take a look at the second argument
-    let dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId);
-
-    if (dsPanel) {
-      let grafanaAttrs: IGrafanaAttrs = {
-        grafanaQueryOpts: options,
-        errorCb: (errorTitle, errorBody) => {
-          this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
-        },
-        doRequest: this.doRequest,
-      };
-      return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
-    } else {
-      // TODO: handle the case
+    if (options.targets.length === 0 && !dsPanel) {
       return this.dsAttrs.$q.resolve({
         data: [],
       });
     }
+  
+    let grafanaAttrs: IGrafanaAttrs = {
+      grafanaQueryOpts: options,
+      errorCb: (errorTitle, errorBody) => {
+        this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
+      },
+      doRequest: this.doRequest,
+    };
+    return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
   }
 
   testDatasource() {
@@ -113,7 +89,7 @@ export class GenericDatasource {
   doRequest(options) {
     options.withCredentials = this.withCredentials;
     options.headers = this.headers;
-    options.url = this.url + options.url; // NOTE: adding base
+    options.url = this.url + options.url;
     return this.dsAttrs.backendSrv.datasourceRequest(options);
   }
 }

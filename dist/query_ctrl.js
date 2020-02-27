@@ -1,4 +1,4 @@
-System.register(["app/plugins/sdk", "lodash", "./helper", "./css/query-editor.css!"], function (exports_1, context_1) {
+System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-editor.css!"], function (exports_1, context_1) {
     "use strict";
     var __extends = (this && this.__extends) || (function () {
         var extendStatics = Object.setPrototypeOf ||

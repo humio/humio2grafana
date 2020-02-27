@@ -13,7 +13,7 @@ System.register(["./DsPanel"], function (exports_1, context_1) {
                 function DsPanelStorage() {
                     this.panels = new Map();
                 }
-                DsPanelStorage.prototype.getOrGreatePanel = function (panelId) {
+                DsPanelStorage.prototype.getOrCreatePanel = function (panelId) {
                     var panel = this.panels.get(panelId);
                     if (!panel) {
                         panel = new DsPanel_1.default();

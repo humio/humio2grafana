@@ -7,7 +7,7 @@ class DsPanelStorage {
     this.panels = new Map<string, DsPanel>();
   }
 
-  getOrGreatePanel(panelId: string): DsPanel {
+  getOrCreatePanel(panelId: string): DsPanel {
     let panel = this.panels.get(panelId);
     if (!panel) {
       panel = new DsPanel();
