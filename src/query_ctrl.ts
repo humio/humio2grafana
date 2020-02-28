@@ -1,16 +1,16 @@
 import {QueryCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
-import HumioHelper from './humio/helper';
+import HumioHelper from './humio/humio_helper';
 
 import './css/query-editor.css!';
 
-class GenericDatasourceQueryCtrl extends QueryCtrl {
+class HumioQueryCtrl extends QueryCtrl {
   public static templateUrl = 'partials/query.editor.html';
   $http: any;
   $scope: any;
   $q: any;
   $location: any;
-  host: string = '';
+  hostUrl: string = '';
   repositories: any[] = [];
   datasource: any;
   target: any;
@@ -35,12 +35,12 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
       url: '/api/datasources/' + this.datasource.id,
       method: 'GET',
     }).then(response => {
-      this.host = response.data.url;
+      this.hostUrl = response.data.url;
     });
   }
 
   getHumioLink() {
-    if (this.host === '') {
+    if (this.hostUrl === '') {
       return '#';
     } else {
       // NOTE: Settings for timechart widget
@@ -48,7 +48,7 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
         this.$location.search().hasOwnProperty('refresh') &&
         HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);
 
-      let start = '24h';
+      let start = undefined;
       let end = undefined;
 
       if (isLive) {
@@ -85,13 +85,7 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
         linkSettings['stp'] = 'y';
       }
 
-      return (
-        this.host +
-        '/' +
-        this.target.humioRepository +
-        '/search?' +
-        this._serializeQueryOpts(linkSettings)
-      );
+      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryOpts(linkSettings)}`
     }
   }
 
@@ -114,21 +108,17 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
 
   _getHumioRepositories() {
     if (this.datasource.url) {
-      let requestOptions = {
-        method: 'GET',
-        url: this.datasource.url + '/api/v1/dataspaces',
+      const requestOpts = {
+        method: 'POST',
+        url: this.datasource.url + '/graphql',
         headers: this.datasource.headers,
-      };
-      
-      return this.datasource.dsAttrs.backendSrv
-        .datasourceRequest(requestOptions)
-        .then(response => {
-          let res = response.data.map(datasource => {
-            return {
-              value: datasource.name,
-              name: datasource.name,
-            };
-          });
+        data: { query: '{searchDomains{name}}' },
+      }
+
+      return this.datasource.datasourceAttrs.backendSrv
+        .datasourceRequest(requestOpts)
+        .then(r => {
+          const res = r.data.data.searchDomains.map(({ name }) => ({ value: name, name }));
           return _.sortBy(res, ['name']);
         });
     } else {
@@ -137,4 +127,4 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
   }
 }
 
-export default GenericDatasourceQueryCtrl;
+export default HumioQueryCtrl;

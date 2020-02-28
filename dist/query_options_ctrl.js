@@ -1,17 +1,17 @@
 System.register([], function (exports_1, context_1) {
     "use strict";
-    var GenericQueryOptionsCtrl;
+    var HumioQueryOptionsCtrl;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [],
         execute: function () {
-            GenericQueryOptionsCtrl = (function () {
-                function GenericQueryOptionsCtrl() {
+            HumioQueryOptionsCtrl = (function () {
+                function HumioQueryOptionsCtrl() {
                 }
-                GenericQueryOptionsCtrl.templateUrl = "partials/query.options.html";
-                return GenericQueryOptionsCtrl;
+                HumioQueryOptionsCtrl.templateUrl = "partials/query.options.html";
+                return HumioQueryOptionsCtrl;
             }());
-            exports_1("default", GenericQueryOptionsCtrl);
+            exports_1("default", HumioQueryOptionsCtrl);
         }
     };
 });

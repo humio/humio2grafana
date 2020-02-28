@@ -144,4 +144,4 @@ System.register([], function (exports_1, context_1) {
         }
     };
 });
-//# sourceMappingURL=helper.js.map
+//# sourceMappingURL=humio_helper.js.map

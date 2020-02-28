@@ -3,9 +3,10 @@
 import _ from 'lodash';
 import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
-import HumioQuery from './HumioQuery';
+import HumioQuery from './humio_query';
+import ITarget from '../Interfaces/ITarget';
 
-class DsPanel {
+class Panel {
   queries: Map<number, HumioQuery>;
 
   constructor() {
@@ -15,9 +16,9 @@ class DsPanel {
   async update(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    targets: any[],
+    targets: ITarget[],
   ): Promise<{data: Array<{target: string, datapoints: Array<[number, number]>}>}> {
-    let allQueryPromise = targets.map((target: any, index: number) => {
+    let allQueryPromise = targets.map((target: ITarget, index: number) => {
       let query = this.queries.get(index);
       if (!query) {
         query = new HumioQuery(target.humioQuery);
@@ -131,4 +132,4 @@ export const getValueFieldName = (responseData) => {
   return defaultValueFieldName;
 }
 
-export default DsPanel;
+export default Panel;

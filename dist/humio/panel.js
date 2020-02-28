@@ -1,4 +1,4 @@
-System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
+System.register(["lodash", "./humio_query"], function (exports_1, context_1) {
     "use strict";
     var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
         return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,23 +35,23 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
             if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
         }
     };
-    var lodash_1, HumioQuery_1, DsPanel, getValueFieldName;
+    var lodash_1, humio_query_1, Panel, getValueFieldName;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
             function (lodash_1_1) {
                 lodash_1 = lodash_1_1;
             },
-            function (HumioQuery_1_1) {
-                HumioQuery_1 = HumioQuery_1_1;
+            function (humio_query_1_1) {
+                humio_query_1 = humio_query_1_1;
             }
         ],
         execute: function () {
-            DsPanel = (function () {
-                function DsPanel() {
+            Panel = (function () {
+                function Panel() {
                     this.queries = new Map();
                 }
-                DsPanel.prototype.update = function (dsAttrs, grafanaAttrs, targets) {
+                Panel.prototype.update = function (dsAttrs, grafanaAttrs, targets) {
                     return __awaiter(this, void 0, void 0, function () {
                         var allQueryPromise, responseList, result;
                         var _this = this;
@@ -61,7 +61,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                                     allQueryPromise = targets.map(function (target, index) {
                                         var query = _this.queries.get(index);
                                         if (!query) {
-                                            query = new HumioQuery_1.default(target.humioQuery);
+                                            query = new humio_query_1.default(target.humioQuery);
                                             _this.queries.set(index, query);
                                         }
                                         return query.composeQuery(dsAttrs, grafanaAttrs, target);
@@ -93,7 +93,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                         });
                     });
                 };
-                DsPanel.prototype._composeSingleSeriesTimechart = function (events, valueField) {
+                Panel.prototype._composeSingleSeriesTimechart = function (events, valueField) {
                     return [{
                             target: valueField,
                             datapoints: events.map(function (event) {
@@ -101,7 +101,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                             }),
                         }];
                 };
-                DsPanel.prototype._composeMultiSeriesTimechart = function (events, seriesField, valueField) {
+                Panel.prototype._composeMultiSeriesTimechart = function (events, seriesField, valueField) {
                     var series = {};
                     for (var i = 0; i < events.length; i++) {
                         var event_1 = events[i];
@@ -120,7 +120,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                         };
                     });
                 };
-                DsPanel.prototype._composeBarChart = function (events, groupbyFields, valueField) {
+                Panel.prototype._composeBarChart = function (events, groupbyFields, valueField) {
                     return events.map(function (event) {
                         if (lodash_1.default.keys(event).length > 1) {
                             return {
@@ -138,7 +138,7 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                         }
                     });
                 };
-                return DsPanel;
+                return Panel;
             }());
             exports_1("getValueFieldName", getValueFieldName = function (responseData) {
                 var timeseriesField = '_bucket';
@@ -159,8 +159,8 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                 }
                 return defaultValueFieldName;
             });
-            exports_1("default", DsPanel);
+            exports_1("default", Panel);
         }
     };
 });
-//# sourceMappingURL=DsPanel.js.map
+//# sourceMappingURL=panel.js.map

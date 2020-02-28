@@ -1,11 +1,12 @@
 /// <reference path="../../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
-import HumioQuery from './HumioQuery';
-declare class DsPanel {
+import HumioQuery from './humio_query';
+import ITarget from '../Interfaces/ITarget';
+declare class Panel {
     queries: Map<number, HumioQuery>;
     constructor();
-    update(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, targets: any[]): Promise<{
+    update(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, targets: ITarget[]): Promise<{
         data: Array<{
             target: string;
             datapoints: Array<[number, number]>;
@@ -16,4 +17,4 @@ declare class DsPanel {
     private _composeBarChart;
 }
 export declare const getValueFieldName: (responseData: any) => any;
-export default DsPanel;
+export default Panel;

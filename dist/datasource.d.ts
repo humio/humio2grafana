@@ -1,15 +1,13 @@
 /// <reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-import DsPanelStorage from './humio/DsPanelStorage';
+import PanelManager from './humio/panel_manager';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
-export declare class GenericDatasource {
-    type: string;
+export declare class HumioDatasource {
     url: string;
-    name: string;
     id: string;
-    dsAttrs: IDatasourceAttrs;
+    humioToken: string;
+    datasourceAttrs: IDatasourceAttrs;
     headers: any;
-    dsPanelStorage: DsPanelStorage;
-    withCredentials: boolean;
+    panelManager: PanelManager;
     timeRange: any;
     constructor(instanceSettings: any, $q: any, backendSrv: any, $location: any, $rootScope: any);
     query(options: any): any;

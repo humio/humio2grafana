@@ -1,4 +1,4 @@
-declare class GenericQueryOptionsCtrl {
+declare class HumioQueryOptionsCtrl {
     static templateUrl: string;
 }
-export default GenericQueryOptionsCtrl;
+export default HumioQueryOptionsCtrl;

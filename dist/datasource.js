@@ -1,59 +1,54 @@
-System.register(["./humio/DsPanelStorage"], function (exports_1, context_1) {
+System.register(["./humio/panel_manager"], function (exports_1, context_1) {
     "use strict";
-    var DsPanelStorage_1, GenericDatasource;
+    var panel_manager_1, HumioDatasource;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
-            function (DsPanelStorage_1_1) {
-                DsPanelStorage_1 = DsPanelStorage_1_1;
+            function (panel_manager_1_1) {
+                panel_manager_1 = panel_manager_1_1;
             }
         ],
         execute: function () {
-            GenericDatasource = (function () {
-                function GenericDatasource(instanceSettings, $q, backendSrv, $location, $rootScope) {
-                    this.type = instanceSettings.type;
-                    this.url = instanceSettings.url
-                        ? instanceSettings.url.replace(/\/$/, '')
-                        : '';
-                    this.name = instanceSettings.name;
+            HumioDatasource = (function () {
+                function HumioDatasource(instanceSettings, $q, backendSrv, $location, $rootScope) {
+                    this.url = instanceSettings.url;
                     this.id = instanceSettings.id;
-                    this.dsAttrs = {
+                    this.datasourceAttrs = {
                         $q: $q,
                         $location: $location,
                         backendSrv: backendSrv,
                         $rootScope: $rootScope,
                     };
+                    var humioToken = instanceSettings.jsonData ? instanceSettings.jsonData.humioToken || '' : '';
                     this.headers = {
                         'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' +
-                            (instanceSettings.jsonData
-                                ? instanceSettings.jsonData.humioToken || ''
-                                : ''),
+                        Authorization: 'Bearer ' + humioToken,
                     };
-                    this.dsPanelStorage = new DsPanelStorage_1.default();
+                    this.panelManager = new panel_manager_1.default();
                     this.timeRange = null;
                     this.doRequest = this.doRequest.bind(this);
                 }
-                GenericDatasource.prototype.query = function (options) {
+                HumioDatasource.prototype.query = function (options) {
                     var _this = this;
                     this.timeRange = options.range;
                     var panelId = options.panelId;
-                    var dsPanel = this.dsPanelStorage.getOrCreatePanel(panelId);
-                    if (options.targets.length === 0 && !dsPanel) {
-                        return this.dsAttrs.$q.resolve({
+                    var panel = this.panelManager.getOrCreatePanel(panelId);
+                    if (options.targets.length === 0 && !panel) {
+                        return this.datasourceAttrs.$q.resolve({
                             data: [],
                         });
                     }
+                    var errorCallback = function (errorTitle, errorBody) {
+                        _this.datasourceAttrs.$rootScope.appEvent(errorTitle, errorBody);
+                    };
                     var grafanaAttrs = {
                         grafanaQueryOpts: options,
-                        errorCb: function (errorTitle, errorBody) {
-                            _this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
-                        },
+                        errorCallback: errorCallback,
                         doRequest: this.doRequest,
                     };
-                    return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
+                    return panel.update(this.datasourceAttrs, grafanaAttrs, options.targets);
                 };
-                GenericDatasource.prototype.testDatasource = function () {
+                HumioDatasource.prototype.testDatasource = function () {
                     return this.doRequest({
                         url: '/api/v1/users/current',
                         method: 'GET',
@@ -67,15 +62,14 @@ System.register(["./humio/DsPanelStorage"], function (exports_1, context_1) {
                         }
                     });
                 };
-                GenericDatasource.prototype.doRequest = function (options) {
-                    options.withCredentials = this.withCredentials;
+                HumioDatasource.prototype.doRequest = function (options) {
                     options.headers = this.headers;
                     options.url = this.url + options.url;
-                    return this.dsAttrs.backendSrv.datasourceRequest(options);
+                    return this.datasourceAttrs.backendSrv.datasourceRequest(options);
                 };
-                return GenericDatasource;
+                return HumioDatasource;
             }());
-            exports_1("GenericDatasource", GenericDatasource);
+            exports_1("HumioDatasource", HumioDatasource);
         }
     };
 });

@@ -1,21 +1,21 @@
 import { QueryCtrl } from 'app/plugins/sdk';
 import './css/query-editor.css!';
-declare class GenericDatasourceQueryCtrl extends QueryCtrl {
+declare class HumioQueryCtrl extends QueryCtrl {
     static templateUrl: string;
     $http: any;
     $scope: any;
     $q: any;
     $location: any;
-    originalUrl: string;
-    dataspaces: any[];
+    hostUrl: string;
+    repositories: any[];
     datasource: any;
     target: any;
     panelCtrl: any;
-    constructor($scope: any, $injector: any, $http: any, $q: any, datasourceSrv: any, $location: any);
+    constructor($scope: any, $injector: any, $http: any, $q: any, $location: any);
     getHumioLink(): string;
     onChangeInternal(): void;
     showHumioLink(): boolean;
     _serializeQueryOpts(obj: any): string;
-    _getHumioDataspaces(): any;
+    _getHumioRepositories(): any;
 }
-export default GenericDatasourceQueryCtrl;
+export default HumioQueryCtrl;

@@ -1,11 +1,11 @@
-System.register(["./helper", "lodash"], function (exports_1, context_1) {
+System.register(["./humio_helper", "lodash"], function (exports_1, context_1) {
     "use strict";
-    var helper_1, lodash_1, HumioQuery;
+    var humio_helper_1, lodash_1, HumioQuery;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
-            function (helper_1_1) {
-                helper_1 = helper_1_1;
+            function (humio_helper_1_1) {
+                humio_helper_1 = humio_helper_1_1;
             },
             function (lodash_1_1) {
                 lodash_1 = lodash_1_1;
@@ -38,7 +38,7 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                     return new Promise(function (resolve) {
                         return grafanaAttrs
                             .doRequest({
-                            url: '/api/v1/dataspaces/' + target.humioDataspace + '/queryjobs',
+                            url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
                             data: _this.data,
                             method: 'POST',
                         })
@@ -83,7 +83,7 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                             return grafanaAttrs
                                 .doRequest({
                                 url: '/api/v1/dataspaces/' +
-                                    target.humioDataspace +
+                                    target.humioRepository +
                                     '/queryjobs/' +
                                     _this.queryId,
                                 method: 'GET',
@@ -108,7 +108,7 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                             return grafanaAttrs
                                 .doRequest({
                                 url: '/api/v1/dataspaces/' +
-                                    target.humioDataspace +
+                                    target.humioRepository +
                                     '/queryjobs/' +
                                     _this.queryId,
                                 method: 'DELETE',
@@ -127,8 +127,8 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                         ? dsAttrs.$location.search().refresh || null
                         : null;
                     var range = grafanaAttrs.grafanaQueryOpts.range;
-                    var isLive = refresh != null && helper_1.default.checkToDateNow(range.raw.to);
-                    if (target.humioDataspace) {
+                    var isLive = refresh != null && humio_helper_1.default.checkToDateNow(range.raw.to);
+                    if (target.humioRepository) {
                         if (isLive) {
                             return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
                         }
@@ -143,7 +143,7 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                 HumioQuery.prototype._composeLiveQuery = function (dsAttrs, grafanaAttrs, target) {
                     var _this = this;
                     var range = grafanaAttrs.grafanaQueryOpts.range;
-                    var start = helper_1.default.parseDateFrom(range.raw.from);
+                    var start = humio_helper_1.default.parseDateFrom(range.raw.from);
                     var queryUpdated = this.updateQueryData({
                         start: start,
                         isLive: true,
@@ -188,7 +188,7 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                             }
                             else {
                                 this.failCounter = 0;
-                                grafanaAttrs.errorCb('alert-error', [
+                                grafanaAttrs.errorCallback('alert-error', [
                                     'failed to create query',
                                     'tried 3 times',
                                 ]);
@@ -196,11 +196,11 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
                             }
                         }
                         case 400: {
-                            grafanaAttrs.errorCb('alert-error', ['bad query', err['data']]);
+                            grafanaAttrs.errorCallback('alert-error', ['bad query', err['data']]);
                             return Promise.resolve({ data: { events: [], done: true } });
                         }
                         default: {
-                            grafanaAttrs.errorCb('alert-error', err['data']);
+                            grafanaAttrs.errorCallback('alert-error', err['data']);
                             return Promise.resolve({ data: { events: [], done: true } });
                         }
                     }
@@ -211,4 +211,4 @@ System.register(["./helper", "lodash"], function (exports_1, context_1) {
         }
     };
 });
-//# sourceMappingURL=HumioQuery.js.map
+//# sourceMappingURL=humio_query.js.map

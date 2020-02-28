@@ -1,4 +1,4 @@
-System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-editor.css!"], function (exports_1, context_1) {
+System.register(["app/plugins/sdk", "lodash", "./humio/humio_helper", "./css/query-editor.css!"], function (exports_1, context_1) {
     "use strict";
     var __extends = (this && this.__extends) || (function () {
         var extendStatics = Object.setPrototypeOf ||
@@ -10,7 +10,7 @@ System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-edi
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
     })();
-    var sdk_1, lodash_1, helper_1, GenericDatasourceQueryCtrl;
+    var sdk_1, lodash_1, humio_helper_1, HumioQueryCtrl;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
@@ -20,47 +20,47 @@ System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-edi
             function (lodash_1_1) {
                 lodash_1 = lodash_1_1;
             },
-            function (helper_1_1) {
-                helper_1 = helper_1_1;
+            function (humio_helper_1_1) {
+                humio_helper_1 = humio_helper_1_1;
             },
             function (_1) {
             }
         ],
         execute: function () {
-            GenericDatasourceQueryCtrl = (function (_super) {
-                __extends(GenericDatasourceQueryCtrl, _super);
-                function GenericDatasourceQueryCtrl($scope, $injector, $http, $q, datasourceSrv, $location) {
+            HumioQueryCtrl = (function (_super) {
+                __extends(HumioQueryCtrl, _super);
+                function HumioQueryCtrl($scope, $injector, $http, $q, $location) {
                     var _this = _super.call(this, $scope, $injector) || this;
+                    _this.hostUrl = '';
+                    _this.repositories = [];
                     _this.$http = $http;
                     _this.$scope = $scope;
                     _this.$q = $q;
                     _this.$location = $location;
                     _this.target.humioQuery = _this.target.humioQuery || 'timechart()';
-                    _this.target.humioDataspace = _this.target.humioDataspace || undefined;
-                    _this.dataspaces = [];
-                    _this._getHumioDataspaces().then(function (r) {
-                        _this.dataspaces = r;
+                    _this.target.humioRepository = _this.target.humioRepository || undefined;
+                    _this._getHumioRepositories().then(function (repositories) {
+                        _this.repositories = repositories;
                     });
-                    _this.originalUrl = '';
                     $http({
                         url: '/api/datasources/' + _this.datasource.id,
                         method: 'GET',
-                    }).then(function (res) {
-                        _this.originalUrl = res.data.url;
+                    }).then(function (response) {
+                        _this.hostUrl = response.data.url;
                     });
                     return _this;
                 }
-                GenericDatasourceQueryCtrl.prototype.getHumioLink = function () {
-                    if (this.originalUrl === '') {
+                HumioQueryCtrl.prototype.getHumioLink = function () {
+                    if (this.hostUrl === '') {
                         return '#';
                     }
                     else {
                         var isLive = this.$location.search().hasOwnProperty('refresh') &&
-                            helper_1.default.checkToDateNow(this.datasource.timeRange.raw.to);
-                        var start = '24h';
+                            humio_helper_1.default.checkToDateNow(this.datasource.timeRange.raw.to);
+                        var start = undefined;
                         var end = undefined;
                         if (isLive) {
-                            start = helper_1.default.parseDateFrom(this.datasource.timeRange.raw.from);
+                            start = humio_helper_1.default.parseDateFrom(this.datasource.timeRange.raw.from);
                         }
                         else {
                             start = this.datasource.timeRange.from._d.getTime();
@@ -74,7 +74,7 @@ System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-edi
                         if (end) {
                             linkSettings['end'] = end;
                         }
-                        var widgetType = helper_1.default.getPanelType(this.target.humioQuery);
+                        var widgetType = humio_helper_1.default.getPanelType(this.target.humioQuery);
                         if (widgetType === 'time-chart') {
                             linkSettings['widgetType'] = widgetType;
                             linkSettings['legend'] = 'y';
@@ -90,46 +90,39 @@ System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-edi
                             linkSettings['sc'] = 'lin';
                             linkSettings['stp'] = 'y';
                         }
-                        return (this.originalUrl +
-                            '/' +
-                            this.target.humioDataspace +
-                            '/search?' +
-                            this._serializeQueryOpts(linkSettings));
+                        return this.hostUrl + "/" + this.target.humioRepository + "/search?" + this._serializeQueryOpts(linkSettings);
                     }
                 };
-                GenericDatasourceQueryCtrl.prototype.onChangeInternal = function () {
+                HumioQueryCtrl.prototype.onChangeInternal = function () {
                     this.panelCtrl.refresh();
                 };
-                GenericDatasourceQueryCtrl.prototype.showHumioLink = function () {
-                    if (this.datasource.timeRange) {
+                HumioQueryCtrl.prototype.showHumioLink = function () {
+                    if (this.datasource.timeRange)
                         return true;
-                    }
-                    else {
-                        return false;
-                    }
+                    else
+                        return true;
                 };
-                GenericDatasourceQueryCtrl.prototype._serializeQueryOpts = function (obj) {
+                HumioQueryCtrl.prototype._serializeQueryOpts = function (obj) {
                     var str = [];
                     for (var p in obj) {
                         str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
                     }
                     return str.join('&');
                 };
-                GenericDatasourceQueryCtrl.prototype._getHumioDataspaces = function () {
+                HumioQueryCtrl.prototype._getHumioRepositories = function () {
                     if (this.datasource.url) {
                         var requestOpts = {
-                            method: 'GET',
-                            url: this.datasource.url + '/api/v1/dataspaces',
+                            method: 'POST',
+                            url: this.datasource.url + '/graphql',
                             headers: this.datasource.headers,
+                            data: { query: '{searchDomains{name}}' },
                         };
-                        return this.datasource.dsAttrs.backendSrv
+                        return this.datasource.datasourceAttrs.backendSrv
                             .datasourceRequest(requestOpts)
                             .then(function (r) {
-                            var res = r.data.map(function (ds) {
-                                return {
-                                    value: ds.name,
-                                    name: ds.name,
-                                };
+                            var res = r.data.data.searchDomains.map(function (_a) {
+                                var name = _a.name;
+                                return ({ value: name, name: name });
                             });
                             return lodash_1.default.sortBy(res, ['name']);
                         });
@@ -138,10 +131,10 @@ System.register(["app/plugins/sdk", "lodash", "./humio/helper", "./css/query-edi
                         return this.$q.when([]);
                     }
                 };
-                GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
-                return GenericDatasourceQueryCtrl;
+                HumioQueryCtrl.templateUrl = 'partials/query.editor.html';
+                return HumioQueryCtrl;
             }(sdk_1.QueryCtrl));
-            exports_1("default", GenericDatasourceQueryCtrl);
+            exports_1("default", HumioQueryCtrl);
         }
     };
 });

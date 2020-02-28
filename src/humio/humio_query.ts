@@ -1,8 +1,9 @@
 import {QueryData, UpdateQueryData} from '../Types/QueryData';
 import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
-import HumioHelper from './helper';
+import HumioHelper from './humio_helper';
 import _ from 'lodash';
+import ITarget from '../Interfaces/ITarget';
 
 class HumioQuery {
   queryId: string;
@@ -38,12 +39,12 @@ class HumioQuery {
   init(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     return new Promise(resolve => {
       return grafanaAttrs
         .doRequest({
-          url: '/api/v1/dataspaces/' + target.humioDataspace + '/queryjobs',
+          url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
           data: this.data,
           method: 'POST',
         })
@@ -66,7 +67,7 @@ class HumioQuery {
   pollUntillDone(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     return new Promise(resolve => {
       let pollFx = () => {
@@ -93,7 +94,7 @@ class HumioQuery {
   poll(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       if (this.queryId) {
@@ -101,7 +102,7 @@ class HumioQuery {
           .doRequest({
             url:
               '/api/v1/dataspaces/' +
-              target.humioDataspace +
+              target.humioRepository +
               '/queryjobs/' +
               this.queryId,
             method: 'GET',
@@ -127,7 +128,7 @@ class HumioQuery {
   cancel(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     return new Promise(resolve => {
       if (this.queryId) {
@@ -135,7 +136,7 @@ class HumioQuery {
           .doRequest({
             url:
               '/api/v1/dataspaces/' +
-              target.humioDataspace +
+              target.humioRepository +
               '/queryjobs/' +
               this.queryId,
             method: 'DELETE',
@@ -153,7 +154,7 @@ class HumioQuery {
   composeQuery(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     let refresh = dsAttrs.$location
       ? dsAttrs.$location.search().refresh || null
@@ -161,7 +162,7 @@ class HumioQuery {
     let range = grafanaAttrs.grafanaQueryOpts.range;
 
     let isLive = refresh != null && HumioHelper.checkToDateNow(range.raw.to);
-    if (target.humioDataspace) {
+    if (target.humioRepository) {
       if (isLive) {
         return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
       } else {
@@ -175,7 +176,7 @@ class HumioQuery {
   private _composeLiveQuery(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     let range = grafanaAttrs.grafanaQueryOpts.range;
     let start = HumioHelper.parseDateFrom(range.raw.from);
@@ -198,7 +199,7 @@ class HumioQuery {
   private _composeStaticQuery(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
   ): Promise<any> {
     let range = grafanaAttrs.grafanaQueryOpts.range;
     let start = range.from._d.getTime();
@@ -224,7 +225,7 @@ class HumioQuery {
   private _handleErr(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
-    target: any,
+    target: ITarget,
     err: Object,
   ): Promise<any> {
     switch (err['status']) {
@@ -236,7 +237,7 @@ class HumioQuery {
           return this.composeQuery(dsAttrs, grafanaAttrs, target);
         } else {
           this.failCounter = 0;
-          grafanaAttrs.errorCb('alert-error', [
+          grafanaAttrs.errorCallback('alert-error', [
             'failed to create query',
             'tried 3 times',
           ]);
@@ -244,11 +245,11 @@ class HumioQuery {
         }
       }
       case 400: {
-        grafanaAttrs.errorCb('alert-error', ['bad query', err['data']]);
+        grafanaAttrs.errorCallback('alert-error', ['bad query', err['data']]);
         return Promise.resolve({data: {events: [], done: true}});
       }
       default: {
-        grafanaAttrs.errorCb('alert-error', err['data']);
+        grafanaAttrs.errorCallback('alert-error', err['data']);
         return Promise.resolve({data: {events: [], done: true}});
       }
     }

@@ -1,19 +1,18 @@
-import { GenericDatasource } from "./datasource";
+import { HumioDatasource } from "./datasource";
 
-import GenericDatasourceQueryCtrl from "./query_ctrl";
+import HumioQueryCtrl from "./query_ctrl";
 
 import HumioConfigCtrl from "./config_ctrl";
 
-import GenericQueryOptionsCtrl from "./query_options_ctrl";
+import HumioQueryOptionsCtrl from "./query_options_ctrl";
 
+import HumioAnnotationsQueryCtrl from "./annotations_query_ctrl";
 
-class GenericAnnotationsQueryCtrl {}
-GenericAnnotationsQueryCtrl["templateUrl"] = "partials/annotations.editor.html";
 
 export {
-  GenericDatasource as Datasource,
-  GenericDatasourceQueryCtrl as QueryCtrl,
+  HumioDatasource as Datasource,
+  HumioQueryCtrl as QueryCtrl,
   HumioConfigCtrl as ConfigCtrl,
-  GenericQueryOptionsCtrl as QueryOptionsCtrl,
-  GenericAnnotationsQueryCtrl as AnnotationsQueryCtrl,
+  HumioQueryOptionsCtrl as QueryOptionsCtrl,
+  HumioAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
