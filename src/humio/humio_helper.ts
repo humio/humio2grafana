@@ -9,9 +9,8 @@ class HumioHelper {
   }
 
   static getPanelType(queryStr: string) {
-    let buf = queryStr.split("|"); // getting last part in the pipe
-    let lastFx = buf[buf.length - 1];
-    if (lastFx.trim().match(/^timechart\(.*\)$/)) {
+    let lastFuncInPipeline = queryStr.split("|").pop().trim();
+    if (lastFuncInPipeline.match(/^timechart\(.*\)$/)) {
       return "time-chart";
     } else {
       return undefined;

@@ -1,4 +1,4 @@
-declare type QueryData = {
+declare type QueryDefinition = {
     queryString: string;
     timeZoneOffsetMinutes: number;
     showQueryEventDistribution: boolean;
@@ -6,7 +6,7 @@ declare type QueryData = {
     start: string;
     end?: string;
 };
-declare type UpdateQueryData = {
+declare type UpdatedQueryDefinition = {
     queryString?: string;
     timeZoneOffsetMinutes?: number;
     showQueryEventDistribution?: boolean;
@@ -14,4 +14,4 @@ declare type UpdateQueryData = {
     start?: string;
     end?: string;
 };
-export { QueryData as QueryData, UpdateQueryData as UpdateQueryData };
+export { QueryDefinition as QueryDefinition, UpdatedQueryDefinition as UpdatedQueryDefinition };

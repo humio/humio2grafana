@@ -1,5 +1,4 @@
 ///<reference path="../../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-
 import _ from 'lodash';
 import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
@@ -34,7 +33,6 @@ class Panel {
       const isTimechart = data.metaData.extraData.timechart == 'true';
       const seriesField = data.metaData.extraData.series;
       const groupbyFields = data.metaData.extraData.groupby_fields;
-
       const valueField = getValueFieldName(data);
 
       if (res.data.events.length === 0) {

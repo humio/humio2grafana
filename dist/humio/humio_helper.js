@@ -17,9 +17,8 @@ System.register([], function (exports_1, context_1) {
                     }
                 };
                 HumioHelper.getPanelType = function (queryStr) {
-                    var buf = queryStr.split("|");
-                    var lastFx = buf[buf.length - 1];
-                    if (lastFx.trim().match(/^timechart\(.*\)$/)) {
+                    var lastFuncInPipeline = queryStr.split("|").pop().trim();
+                    if (lastFuncInPipeline.match(/^timechart\(.*\)$/)) {
                         return "time-chart";
                     }
                     else {

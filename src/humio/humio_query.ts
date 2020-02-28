@@ -1,4 +1,4 @@
-import {QueryData, UpdateQueryData} from '../Types/QueryData';
+import {QueryDefinition, UpdatedQueryDefinition} from '../Types/QueryData';
 import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import HumioHelper from './humio_helper';
@@ -7,11 +7,11 @@ import ITarget from '../Interfaces/ITarget';
 
 class HumioQuery {
   queryId: string;
-  data: QueryData;
+  queryDefinition: QueryDefinition;
   failCounter: number;
 
   constructor(queryStr: string) {
-    this.data = {
+    this.queryDefinition = {
       queryString: queryStr,
       timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
       showQueryEventDistribution: false,
@@ -25,17 +25,6 @@ class HumioQuery {
     this._handleErr = this._handleErr.bind(this);
   }
 
-  // NOTE: returns true if data is updated
-  updateQueryData(newData: UpdateQueryData): boolean {
-    let oldData = _.clone(this.data);
-    _.assign(this.data, newData);
-    if (this.data.isLive && this.data.end) {
-      delete this.data.end;
-    }
-    return JSON.stringify(this.data) !== JSON.stringify(oldData);
-  }
-
-  // NOTE: manage query
   init(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
@@ -45,13 +34,13 @@ class HumioQuery {
       return grafanaAttrs
         .doRequest({
           url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
-          data: this.data,
+          data: this.queryDefinition,
           method: 'POST',
         })
         .then(
           res => {
             this.queryId = res['data'].id;
-            this.pollUntillDone(dsAttrs, grafanaAttrs, target).then(res => {
+            this.pollUntilDone(dsAttrs, grafanaAttrs, target).then(res => {
               resolve(res);
             });
           },
@@ -64,7 +53,7 @@ class HumioQuery {
     });
   }
 
-  pollUntillDone(
+  pollUntilDone(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
@@ -72,10 +61,9 @@ class HumioQuery {
     return new Promise(resolve => {
       let pollFx = () => {
         this.poll(dsAttrs, grafanaAttrs, target).then(res => {
-          // console.log("" + (res["data"].metaData.workDone / res["data"].metaData.totalWork * 100).toFixed(2) + "%");
           if (res['data'].done) {
             // NOTE: for static queries id no longer makes sense
-            if (!this.data.isLive) {
+            if (!this.queryDefinition.isLive) {
               this.queryId = null;
             }
             resolve(res);
@@ -150,76 +138,83 @@ class HumioQuery {
     });
   }
 
-  // NOTE: composing query
   composeQuery(
     dsAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
   ): Promise<any> {
+    if (!target.humioRepository) {
+      return Promise.resolve({data: {events: [], done: true}});
+    }
+
+    let isLive = this._queryIsLive(dsAttrs, grafanaAttrs)
+    let newQueryDefinition = isLive ?
+      this._makeLiveQueryDefinition(dsAttrs, grafanaAttrs, target.humioQuery) :
+      this._makeStaticQueryDefinition(dsAttrs, grafanaAttrs, target.humioQuery);
+
+    if (this._noQueryHasBeenExecutedYet() || this._queryDefinitionHasChanged(newQueryDefinition)) {
+      this._updateQueryDefinition(newQueryDefinition)
+      return this._startNewQuery(dsAttrs, grafanaAttrs, target)
+    } else {
+      return this.pollUntilDone(dsAttrs, grafanaAttrs, target);
+    }
+  }
+
+  private _noQueryHasBeenExecutedYet(){
+    return !this.queryId
+  }
+
+  private _startNewQuery(dsAttrs: IDatasourceAtts, 
+    grafanaAttrs: IGrafanaAttrs,
+    target: ITarget){
+      return this.cancel(dsAttrs, grafanaAttrs, target).then(() => {
+        return this.init(dsAttrs, grafanaAttrs, target);
+      });
+    }
+
+
+  private _updateQueryDefinition(newQueryDefinition :UpdatedQueryDefinition){
+    _.assign(this.queryDefinition, newQueryDefinition)
+    if (newQueryDefinition.isLive && this.queryDefinition.end) {
+      delete this.queryDefinition.end; // Grafana will throw errors if 'end' has been set on a live query
+    }
+  }
+
+  private _queryDefinitionHasChanged(newQueryDefinition : UpdatedQueryDefinition){
+    return JSON.stringify(this.queryDefinition) !== JSON.stringify(newQueryDefinition);
+  }
+
+  private _queryIsLive(dsAttrs: IDatasourceAtts,  grafanaAttrs: IGrafanaAttrs){
     let refresh = dsAttrs.$location
       ? dsAttrs.$location.search().refresh || null
       : null;
     let range = grafanaAttrs.grafanaQueryOpts.range;
 
-    let isLive = refresh != null && HumioHelper.checkToDateNow(range.raw.to);
-    if (target.humioRepository) {
-      if (isLive) {
-        return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
-      } else {
-        return this._composeStaticQuery(dsAttrs, grafanaAttrs, target);
-      }
-    } else {
-      return Promise.resolve({data: {events: [], done: true}});
-    }
+    return refresh != null && HumioHelper.checkToDateNow(range.raw.to);
   }
 
-  private _composeLiveQuery(
-    dsAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  private _makeLiveQueryDefinition(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, humioQuery){
     let range = grafanaAttrs.grafanaQueryOpts.range;
     let start = HumioHelper.parseDateFrom(range.raw.from);
-    // TODO: CONSIDER changing dataspace as well
-    let queryUpdated = this.updateQueryData({
-      start: start,
-      isLive: true,
-      queryString: target.humioQuery,
-    });
 
-    if (!this.queryId || queryUpdated) {
-      return this.cancel(dsAttrs, grafanaAttrs, target).then(() => {
-        return this.init(dsAttrs, grafanaAttrs, target);
-      });
-    } else {
-      return this.pollUntillDone(dsAttrs, grafanaAttrs, target);
-    }
+    return {
+      isLive: true,
+      queryString: humioQuery,
+      start: start,
+    };
   }
 
-  private _composeStaticQuery(
-    dsAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  private _makeStaticQueryDefinition(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, humioQuery){
     let range = grafanaAttrs.grafanaQueryOpts.range;
     let start = range.from._d.getTime();
     let end = range.to._d.getTime();
 
-    // TODO: CONSIDER changing dataspace as well
-    let queryUpdated = this.updateQueryData({
+    return {
+      isLive: false,
+      queryString: humioQuery,
       start: start,
       end: end,
-      isLive: false,
-      queryString: target.humioQuery,
-    });
-
-    if (this.queryId && !queryUpdated) {
-      return this.pollUntillDone(dsAttrs, grafanaAttrs, target);
-    } else {
-      return this.cancel(dsAttrs, grafanaAttrs, target).then(() => {
-        return this.init(dsAttrs, grafanaAttrs, target);
-      });
-    }
+    };
   }
 
   private _handleErr(

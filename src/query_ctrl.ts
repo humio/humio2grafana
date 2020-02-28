@@ -32,7 +32,7 @@ class HumioQueryCtrl extends QueryCtrl {
     });
 
     $http({
-      url: '/api/datasources/' + this.datasource.id,
+      url: '/api/datasources/' + this.datasource.id, 
       method: 'GET',
     }).then(response => {
       this.hostUrl = response.data.url;
@@ -43,7 +43,7 @@ class HumioQueryCtrl extends QueryCtrl {
     if (this.hostUrl === '') {
       return '#';
     } else {
-      // NOTE: Settings for timechart widget
+      // NOTE: Settings for timechart widget, add new case when adding a groupby widget
       let isLive =
         this.$location.search().hasOwnProperty('refresh') &&
         HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);

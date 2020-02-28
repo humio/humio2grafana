@@ -14,7 +14,7 @@ System.register(["./humio_helper", "lodash"], function (exports_1, context_1) {
         execute: function () {
             HumioQuery = (function () {
                 function HumioQuery(queryStr) {
-                    this.data = {
+                    this.queryDefinition = {
                         queryString: queryStr,
                         timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
                         showQueryEventDistribution: false,
@@ -25,26 +25,18 @@ System.register(["./humio_helper", "lodash"], function (exports_1, context_1) {
                     this.queryId = null;
                     this._handleErr = this._handleErr.bind(this);
                 }
-                HumioQuery.prototype.updateQueryData = function (newData) {
-                    var oldData = lodash_1.default.clone(this.data);
-                    lodash_1.default.assign(this.data, newData);
-                    if (this.data.isLive && this.data.end) {
-                        delete this.data.end;
-                    }
-                    return JSON.stringify(this.data) !== JSON.stringify(oldData);
-                };
                 HumioQuery.prototype.init = function (dsAttrs, grafanaAttrs, target) {
                     var _this = this;
                     return new Promise(function (resolve) {
                         return grafanaAttrs
                             .doRequest({
                             url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
-                            data: _this.data,
+                            data: _this.queryDefinition,
                             method: 'POST',
                         })
                             .then(function (res) {
                             _this.queryId = res['data'].id;
-                            _this.pollUntillDone(dsAttrs, grafanaAttrs, target).then(function (res) {
+                            _this.pollUntilDone(dsAttrs, grafanaAttrs, target).then(function (res) {
                                 resolve(res);
                             });
                         }, function (err) {
@@ -54,13 +46,13 @@ System.register(["./humio_helper", "lodash"], function (exports_1, context_1) {
                         });
                     });
                 };
-                HumioQuery.prototype.pollUntillDone = function (dsAttrs, grafanaAttrs, target) {
+                HumioQuery.prototype.pollUntilDone = function (dsAttrs, grafanaAttrs, target) {
                     var _this = this;
                     return new Promise(function (resolve) {
                         var pollFx = function () {
                             _this.poll(dsAttrs, grafanaAttrs, target).then(function (res) {
                                 if (res['data'].done) {
-                                    if (!_this.data.isLive) {
+                                    if (!_this.queryDefinition.isLive) {
                                         _this.queryId = null;
                                     }
                                     resolve(res);
@@ -123,60 +115,65 @@ System.register(["./humio_helper", "lodash"], function (exports_1, context_1) {
                     });
                 };
                 HumioQuery.prototype.composeQuery = function (dsAttrs, grafanaAttrs, target) {
+                    if (!target.humioRepository) {
+                        return Promise.resolve({ data: { events: [], done: true } });
+                    }
+                    var isLive = this._queryIsLive(dsAttrs, grafanaAttrs);
+                    var newQueryDefinition = isLive ?
+                        this._makeLiveQueryDefinition(dsAttrs, grafanaAttrs, target.humioQuery) :
+                        this._makeStaticQueryDefinition(dsAttrs, grafanaAttrs, target.humioQuery);
+                    if (this._noQueryHasBeenExecutedYet() || this._queryDefinitionHasChanged(newQueryDefinition)) {
+                        this._updateQueryDefinition(newQueryDefinition);
+                        return this._startNewQuery(dsAttrs, grafanaAttrs, target);
+                    }
+                    else {
+                        return this.pollUntilDone(dsAttrs, grafanaAttrs, target);
+                    }
+                };
+                HumioQuery.prototype._noQueryHasBeenExecutedYet = function () {
+                    return !this.queryId;
+                };
+                HumioQuery.prototype._startNewQuery = function (dsAttrs, grafanaAttrs, target) {
+                    var _this = this;
+                    return this.cancel(dsAttrs, grafanaAttrs, target).then(function () {
+                        return _this.init(dsAttrs, grafanaAttrs, target);
+                    });
+                };
+                HumioQuery.prototype._updateQueryDefinition = function (newQueryDefinition) {
+                    lodash_1.default.assign(this.queryDefinition, newQueryDefinition);
+                    if (newQueryDefinition.isLive && this.queryDefinition.end) {
+                        delete this.queryDefinition.end;
+                    }
+                };
+                HumioQuery.prototype._queryDefinitionHasChanged = function (newQueryDefinition) {
+                    return JSON.stringify(this.queryDefinition) !== JSON.stringify(newQueryDefinition);
+                };
+                HumioQuery.prototype._queryIsLive = function (dsAttrs, grafanaAttrs) {
                     var refresh = dsAttrs.$location
                         ? dsAttrs.$location.search().refresh || null
                         : null;
                     var range = grafanaAttrs.grafanaQueryOpts.range;
-                    var isLive = refresh != null && humio_helper_1.default.checkToDateNow(range.raw.to);
-                    if (target.humioRepository) {
-                        if (isLive) {
-                            return this._composeLiveQuery(dsAttrs, grafanaAttrs, target);
-                        }
-                        else {
-                            return this._composeStaticQuery(dsAttrs, grafanaAttrs, target);
-                        }
-                    }
-                    else {
-                        return Promise.resolve({ data: { events: [], done: true } });
-                    }
+                    return refresh != null && humio_helper_1.default.checkToDateNow(range.raw.to);
                 };
-                HumioQuery.prototype._composeLiveQuery = function (dsAttrs, grafanaAttrs, target) {
-                    var _this = this;
+                HumioQuery.prototype._makeLiveQueryDefinition = function (dsAttrs, grafanaAttrs, humioQuery) {
                     var range = grafanaAttrs.grafanaQueryOpts.range;
                     var start = humio_helper_1.default.parseDateFrom(range.raw.from);
-                    var queryUpdated = this.updateQueryData({
-                        start: start,
+                    return {
                         isLive: true,
-                        queryString: target.humioQuery,
-                    });
-                    if (!this.queryId || queryUpdated) {
-                        return this.cancel(dsAttrs, grafanaAttrs, target).then(function () {
-                            return _this.init(dsAttrs, grafanaAttrs, target);
-                        });
-                    }
-                    else {
-                        return this.pollUntillDone(dsAttrs, grafanaAttrs, target);
-                    }
+                        queryString: humioQuery,
+                        start: start,
+                    };
                 };
-                HumioQuery.prototype._composeStaticQuery = function (dsAttrs, grafanaAttrs, target) {
-                    var _this = this;
+                HumioQuery.prototype._makeStaticQueryDefinition = function (dsAttrs, grafanaAttrs, humioQuery) {
                     var range = grafanaAttrs.grafanaQueryOpts.range;
                     var start = range.from._d.getTime();
                     var end = range.to._d.getTime();
-                    var queryUpdated = this.updateQueryData({
+                    return {
+                        isLive: false,
+                        queryString: humioQuery,
                         start: start,
                         end: end,
-                        isLive: false,
-                        queryString: target.humioQuery,
-                    });
-                    if (this.queryId && !queryUpdated) {
-                        return this.pollUntillDone(dsAttrs, grafanaAttrs, target);
-                    }
-                    else {
-                        return this.cancel(dsAttrs, grafanaAttrs, target).then(function () {
-                            return _this.init(dsAttrs, grafanaAttrs, target);
-                        });
-                    }
+                    };
                 };
                 HumioQuery.prototype._handleErr = function (dsAttrs, grafanaAttrs, target, err) {
                     switch (err['status']) {
