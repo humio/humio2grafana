@@ -5,6 +5,7 @@ import ITarget from '../Interfaces/ITarget';
 import HumioHelper from './humio_helper';
 import _ from 'lodash';
 
+// TODO: Describe why query jobs are used rather than direct queries
 class HumioQuery {
   queryId: string;
   queryDefinition: QueryDefinition;
@@ -79,7 +80,7 @@ class HumioQuery {
     });
   }
 
-  poll( // TODO: Go to queries rather than queryjobs?
+  poll(
     datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
@@ -227,6 +228,7 @@ class HumioQuery {
     switch (err['status']) {
       case 404: {
         // NOTE: query not found - trying to recreate
+        // TODO: How to we get into the error callback?
         this.failCounter += 1;
         this.queryId = null;
         if (this.failCounter <= 3) {
