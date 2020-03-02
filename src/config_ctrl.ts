@@ -2,7 +2,6 @@ export class HumioConfigCtrl {
   public static templateUrl = "partials/config.html";
   current: any;
 
-  /** @ngInject */
   constructor() {
     this.current = this.current || {};
     this.current.jsonData = this.current.jsonData || {};

@@ -8,9 +8,9 @@ export class HumioDatasource {
   id: string;
   humioToken : string;
   datasourceAttrs: IDatasourceAttrs;
-  headers: any;
+  headers: any; // TODO: Give this a type?
   panelManager: PanelManager;
-  timeRange: any; // FIXME: used by parent controller
+  timeRange: any; // FIXME: used by parent controller 
 
   /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
@@ -31,16 +31,12 @@ export class HumioDatasource {
     };
 
     this.panelManager = new PanelManager();
-    this.timeRange = null;
+    this.timeRange = null; // TODO: Add default value
     this.doRequest = this.doRequest.bind(this);
   }
 
-  query(options) {
-    this.timeRange = options.range;
-    let panelId = options.panelId;
-    let panel = this.panelManager.getOrCreatePanel(panelId);
-
-    if (options.targets.length === 0 && !panel) {
+  query(options) { //TODO: Type?
+    if (options.targets.length === 0) {
       return this.datasourceAttrs.$q.resolve({
         data: [],
       });
@@ -55,12 +51,15 @@ export class HumioDatasource {
       doRequest: this.doRequest,
     };
 
+    this.timeRange = options.range; 
+    let panel = this.panelManager.getOrCreatePanel(options.panelId);
+
     return panel.update(this.datasourceAttrs, grafanaAttrs, options.targets);
   }
 
   testDatasource() {
     return this.doRequest({
-      url: '/api/v1/users/current',
+      url: '/api/v1/users/current', // TODO: Make a dictionary for endpoints and perform a check that ensures we only succeed on non-ingest tokens
       method: 'GET',
     }).then(response => {
       if (response.status === 200) {
@@ -73,7 +72,7 @@ export class HumioDatasource {
     });
   }
 
-  doRequest(options) {
+  doRequest(options) { //TODO: Type? Different from other 'options' in doc
     options.headers = this.headers;
     options.url = this.url + options.url;
     return this.datasourceAttrs.backendSrv.datasourceRequest(options);

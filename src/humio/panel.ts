@@ -12,11 +12,8 @@ class Panel {
     this.queries = new Map<number, HumioQuery>();
   }
 
-  async update(
-    datasourceAttrs: IDatasourceAttrs,
-    grafanaAttrs: IGrafanaAttrs,
-    targets: ITarget[],
-  ): Promise<{data: Array<{target: string, datapoints: Array<[number, number]>}>}> {
+  async update(datasourceAttrs: IDatasourceAttrs, grafanaAttrs: IGrafanaAttrs, targets: ITarget[]):
+   Promise<{data: Array<{target: string, datapoints: Array<[number, number]>}>}> {
     let allQueryPromise = targets.map((target: ITarget, index: number) => {
       let query = this.queries.get(index);
       if (!query) {
@@ -49,6 +46,7 @@ class Panel {
     return {data: result};
   }
 
+  //TODO: Mash together with the multi-series case?
   private _composeSingleSeriesTimechart(events, valueField: string) {
     return [{
       target: valueField,
@@ -111,7 +109,7 @@ export const getValueFieldName = (responseData) => {
   if (responseData.metaData.fieldOrder) {
     const valueFieldNames = _.filter(
       responseData.metaData.fieldOrder,
-      fieldName => !_.includes(valueFieldsToExclude, fieldName)
+      fieldName => !_.includes(valueFieldsToExclude, fieldName) // TODO: Figure out what this does?
     ); 
     
     return valueFieldNames[0] || defaultValueFieldName;
