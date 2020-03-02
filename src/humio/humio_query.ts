@@ -1,9 +1,9 @@
 import {QueryDefinition, UpdatedQueryDefinition} from '../Types/QueryData';
 import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
+import ITarget from '../Interfaces/ITarget';
 import HumioHelper from './humio_helper';
 import _ from 'lodash';
-import ITarget from '../Interfaces/ITarget';
 
 class HumioQuery {
   queryId: string;
@@ -26,7 +26,7 @@ class HumioQuery {
   }
 
   init(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
   ): Promise<any> {
@@ -40,12 +40,12 @@ class HumioQuery {
         .then(
           res => {
             this.queryId = res['data'].id;
-            this.pollUntilDone(dsAttrs, grafanaAttrs, target).then(res => {
+            this.pollUntilDone(datasourceAttrs, grafanaAttrs, target).then(res => {
               resolve(res);
             });
           },
           err => {
-            this._handleErr(dsAttrs, grafanaAttrs, target, err).then(res => {
+            this._handleErr(datasourceAttrs, grafanaAttrs, target, err).then(res => {
               resolve(res);
             });
           },
@@ -54,13 +54,13 @@ class HumioQuery {
   }
 
   pollUntilDone(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
   ): Promise<any> {
     return new Promise(resolve => {
       let pollFx = () => {
-        this.poll(dsAttrs, grafanaAttrs, target).then(res => {
+        this.poll(datasourceAttrs, grafanaAttrs, target).then(res => {
           if (res['data'].done) {
             // NOTE: for static queries id no longer makes sense
             if (!this.queryDefinition.isLive) {
@@ -80,7 +80,7 @@ class HumioQuery {
   }
 
   poll(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
   ): Promise<any> {
@@ -100,7 +100,7 @@ class HumioQuery {
               resolve(res);
             },
             err => {
-              return this._handleErr(dsAttrs, grafanaAttrs, target, err).then(
+              return this._handleErr(datasourceAttrs, grafanaAttrs, target, err).then(
                 res => {
                   reject(res);
                 },
@@ -114,7 +114,7 @@ class HumioQuery {
   }
 
   cancel(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
   ): Promise<any> {
@@ -139,7 +139,7 @@ class HumioQuery {
   }
 
   composeQuery(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
   ): Promise<any> {
@@ -147,16 +147,16 @@ class HumioQuery {
       return Promise.resolve({data: {events: [], done: true}});
     }
 
-    let isLive = this._queryIsLive(dsAttrs, grafanaAttrs)
+    let isLive = this._queryIsLive(datasourceAttrs, grafanaAttrs)
     let newQueryDefinition = isLive ?
-      this._makeLiveQueryDefinition(dsAttrs, grafanaAttrs, target.humioQuery) :
-      this._makeStaticQueryDefinition(dsAttrs, grafanaAttrs, target.humioQuery);
+      this._makeLiveQueryDefinition(datasourceAttrs, grafanaAttrs, target.humioQuery) :
+      this._makeStaticQueryDefinition(datasourceAttrs, grafanaAttrs, target.humioQuery);
 
     if (this._noQueryHasBeenExecutedYet() || this._queryDefinitionHasChanged(newQueryDefinition)) {
       this._updateQueryDefinition(newQueryDefinition)
-      return this._startNewQuery(dsAttrs, grafanaAttrs, target)
+      return this._startNewQuery(datasourceAttrs, grafanaAttrs, target)
     } else {
-      return this.pollUntilDone(dsAttrs, grafanaAttrs, target);
+      return this.pollUntilDone(datasourceAttrs, grafanaAttrs, target);
     }
   }
 
@@ -164,11 +164,11 @@ class HumioQuery {
     return !this.queryId
   }
 
-  private _startNewQuery(dsAttrs: IDatasourceAtts, 
+  private _startNewQuery(datasourceAttrs: IDatasourceAtts, 
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget){
-      return this.cancel(dsAttrs, grafanaAttrs, target).then(() => {
-        return this.init(dsAttrs, grafanaAttrs, target);
+      return this.cancel(datasourceAttrs, grafanaAttrs, target).then(() => {
+        return this.init(datasourceAttrs, grafanaAttrs, target);
       });
     }
 
@@ -184,16 +184,16 @@ class HumioQuery {
     return JSON.stringify(this.queryDefinition) !== JSON.stringify(newQueryDefinition);
   }
 
-  private _queryIsLive(dsAttrs: IDatasourceAtts,  grafanaAttrs: IGrafanaAttrs){
-    let refresh = dsAttrs.$location
-      ? dsAttrs.$location.search().refresh || null
+  private _queryIsLive(datasourceAttrs: IDatasourceAtts,  grafanaAttrs: IGrafanaAttrs){
+    let refresh = datasourceAttrs.$location
+      ? datasourceAttrs.$location.search().refresh || null
       : null;
     let range = grafanaAttrs.grafanaQueryOpts.range;
 
     return refresh != null && HumioHelper.checkToDateNow(range.raw.to);
   }
 
-  private _makeLiveQueryDefinition(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, humioQuery){
+  private _makeLiveQueryDefinition(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, humioQuery){
     let range = grafanaAttrs.grafanaQueryOpts.range;
     let start = HumioHelper.parseDateFrom(range.raw.from);
 
@@ -204,7 +204,7 @@ class HumioQuery {
     };
   }
 
-  private _makeStaticQueryDefinition(dsAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, humioQuery){
+  private _makeStaticQueryDefinition(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, humioQuery){
     let range = grafanaAttrs.grafanaQueryOpts.range;
     let start = range.from._d.getTime();
     let end = range.to._d.getTime();
@@ -218,7 +218,7 @@ class HumioQuery {
   }
 
   private _handleErr(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAtts,
     grafanaAttrs: IGrafanaAttrs,
     target: ITarget,
     err: Object,
@@ -229,7 +229,7 @@ class HumioQuery {
         this.failCounter += 1;
         this.queryId = null;
         if (this.failCounter <= 3) {
-          return this.composeQuery(dsAttrs, grafanaAttrs, target);
+          return this.composeQuery(datasourceAttrs, grafanaAttrs, target);
         } else {
           this.failCounter = 0;
           grafanaAttrs.errorCallback('alert-error', [

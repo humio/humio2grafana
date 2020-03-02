@@ -1,4 +1,3 @@
-
 interface IDatasourceAttrs {
   $q: any;
   $location: any;

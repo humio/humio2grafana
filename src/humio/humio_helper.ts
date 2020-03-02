@@ -1,4 +1,3 @@
-
 class HumioHelper {
   static checkToDateNow(toDateCheck: any) {
     if (typeof toDateCheck === "string") {

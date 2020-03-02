@@ -1,9 +1,9 @@
 ///<reference path="../../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 import _ from 'lodash';
-import IDatasourceAtts from '../Interfaces/IDatasourceAttrs';
+import IDatasourceAttrs from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
-import HumioQuery from './humio_query';
 import ITarget from '../Interfaces/ITarget';
+import HumioQuery from './humio_query';
 
 class Panel {
   queries: Map<number, HumioQuery>;
@@ -13,7 +13,7 @@ class Panel {
   }
 
   async update(
-    dsAttrs: IDatasourceAtts,
+    datasourceAttrs: IDatasourceAttrs,
     grafanaAttrs: IGrafanaAttrs,
     targets: ITarget[],
   ): Promise<{data: Array<{target: string, datapoints: Array<[number, number]>}>}> {
@@ -23,7 +23,7 @@ class Panel {
         query = new HumioQuery(target.humioQuery);
         this.queries.set(index, query);
       }
-      return query.composeQuery(dsAttrs, grafanaAttrs, target);
+      return query.composeQuery(datasourceAttrs, grafanaAttrs, target);
     });
 
     const responseList = await Promise.all(allQueryPromise);
