@@ -61,8 +61,8 @@ class HumioQueryCtrl extends QueryCtrl {
     if (this.hostUrl === '') {
       return '#';
     } else {
-      let linkSettings = this._createLinkSettings(this.target.humioQuery);
-      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(linkSettings)}`
+      let queryParams = this._createQueryParams();
+      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
     }
   }
 
@@ -103,50 +103,25 @@ class HumioQueryCtrl extends QueryCtrl {
       }); 
   }
 
-  _createLinkSettings(query){
-    // NOTE: Settings for timechart widget, add new case when adding a groupby widget
+  _createQueryParams(){
     let isLive =
-    this.$location.search().hasOwnProperty('refresh') &&
-    HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);
+      this.$location.search().hasOwnProperty('refresh') &&
+      HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);
 
-    let start = undefined;
-    let end = undefined;
-
-    if (isLive) {
-      start = HumioHelper.parseDateFrom(this.datasource.timeRange.raw.from);
-    } else {
-      start = this.datasource.timeRange.from._d.getTime();
-      end = this.datasource.timeRange.to._d.getTime();
-    }
-
-    let linkSettings = {
+    let queryParams =  {
       query: this.target.humioQuery,
       live: isLive,
-      start: start,
     };
 
-    if (end) {
-      linkSettings['end'] = end;
-    }
-
-    let widgetType = HumioHelper.getPanelType(query);
-    if (widgetType === 'time-chart') {
-      linkSettings['widgetType'] = widgetType;
-      linkSettings['legend'] = 'y';
-      linkSettings['lx'] = '';
-      linkSettings['ly'] = '';
-      linkSettings['mn'] = '';
-      linkSettings['mx'] = '';
-      linkSettings['op'] = '0.2';
-      linkSettings['p'] = 'a';
-      linkSettings['pl'] = '';
-      linkSettings['plY'] = '';
-      linkSettings['s'] = '';
-      linkSettings['sc'] = 'lin';
-      linkSettings['stp'] = 'y';
-    }
-
-    return linkSettings
+    if (isLive) {
+      queryParams['start'] = HumioHelper.parseDateFrom(this.datasource.timeRange.raw.from);
+      }
+    else {
+      queryParams['start'] = this.datasource.timeRange.from._d.getTime();
+      queryParams['end'] = this.datasource.timeRange.to._d.getTime();
+      }
+    
+    return queryParams;
   }
 }
 
