@@ -1,18 +1,34 @@
 import {QueryCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
 import HumioHelper from './humio/humio_helper';
+import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
+import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 
 import './css/query-editor.css!';
 
 class HumioQueryCtrl extends QueryCtrl {
   public static templateUrl = 'partials/query.editor.html';
-  $http: any; // TODO: Types?
+  $http: any;
   $scope: any;
   $q: any;
   $location: any;
   hostUrl: string = '';
   repositories: any[] = [];
-  datasource: any;
+  datasource: {
+    id: string,
+    url: string,
+    datasourceAttrs: IDatasourceAttrs,
+    headers: IDatasourceRequestHeaders,
+    timeRange: {
+      from: any, // Moment
+      to: any, // Moment
+      raw: {
+        from: string,
+        to: string
+      }
+    }
+  };
   target: any;
   panelCtrl: any;
 
@@ -72,7 +88,7 @@ class HumioQueryCtrl extends QueryCtrl {
       return this.$q.when([]);
     }
 
-    const requestOpts = { // TODO: Add Interface?
+    const requestOpts: IDatasourceRequestOptions = {
       method: 'POST',
       url: this.datasource.url + '/graphql',
       headers: this.datasource.headers,
@@ -87,7 +103,7 @@ class HumioQueryCtrl extends QueryCtrl {
       }); 
   }
 
-  _createLinkSettings(query: string){
+  _createLinkSettings(query){
     // NOTE: Settings for timechart widget, add new case when adding a groupby widget
     let isLive =
     this.$location.search().hasOwnProperty('refresh') &&

@@ -2,13 +2,14 @@
 import PanelManager from './humio/panel_manager';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 
 export class HumioDatasource {
   url: string;
   id: string;
   humioToken : string;
   datasourceAttrs: IDatasourceAttrs;
-  headers: any; // TODO: Give this a type?
+  headers: IDatasourceRequestHeaders;
   panelManager: PanelManager;
   timeRange: any; // FIXME: used by parent controller 
 
