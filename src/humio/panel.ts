@@ -83,19 +83,19 @@ class Panel {
     });
   }
 
-  private _composeBarChart(events, groupbyFields, valueField) {
-    return events.map(event => {
+  private _composeBarChart(events, groupByFields, valueField) {
+    return _.flatMap(events, (event) => {
+      const groupName = groupByFields.split(',').map(field => '[' + event[field.trim()] + ']').join(' ');
       if (_.keys(event).length > 1) {
         return {
-          target: event[groupbyFields],
-          datapoints: [
-            [parseFloat(event[valueField]), '_' + event[groupbyFields]],
-          ],
+          target: groupName,
+          datapoints: [[parseFloat(event[valueField])]],
         };
+        // Move to own function catching single value.
       } else {
         return {
-          target: valueField,
-          datapoints: [[parseFloat(event[valueField]), valueField]],
+          //target: valueField,
+          datapoints: [[parseFloat(event[valueField]), event[groupByFields]]],
         };
       }
     });
@@ -120,8 +120,13 @@ class Panel {
 export const getValueFieldName = (responseData) => {
   const timeseriesField = '_bucket';
   const seriesField = responseData.metaData.extraData.series;
-  const groupbyFields = responseData.metaData.extraData.groupby_fields;
-  const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupbyFields]);
+  const groupByFields = responseData.metaData.extraData.groupby_fields;
+  let groupByFieldsSplit = [];
+  if(groupByFields)
+  {
+    groupByFieldsSplit = groupByFields.split(',').map(field => field.trim());
+  }
+  const valueFieldsToExclude = _.flatten([timeseriesField, seriesField, groupByFieldsSplit]);
   const defaultValueFieldName = '_count';
 
   if (responseData.metaData.fieldOrder) {
