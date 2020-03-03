@@ -26,11 +26,7 @@ class HumioQuery {
     this._handleErr = this._handleErr.bind(this);
   }
 
-  init(
-    datasourceAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  init(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
     return new Promise(resolve => {
       return grafanaAttrs
         .doRequest({
