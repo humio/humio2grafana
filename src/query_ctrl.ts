@@ -4,6 +4,7 @@ import HumioHelper from './humio/humio_helper';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
+import ITarget from './Interfaces/ITarget';
 
 import './css/query-editor.css!';
 
@@ -29,7 +30,7 @@ class HumioQueryCtrl extends QueryCtrl {
       }
     }
   };
-  target: any;
+  target: ITarget;
   panelCtrl: any;
 
   /** @ngInject */

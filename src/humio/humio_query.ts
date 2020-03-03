@@ -50,11 +50,7 @@ class HumioQuery {
     });
   }
 
-  pollUntilDone(
-    datasourceAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  pollUntilDone(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
     return new Promise(resolve => {
       let pollFx = () => {
         this.poll(datasourceAttrs, grafanaAttrs, target).then(res => {
@@ -76,11 +72,7 @@ class HumioQuery {
     });
   }
 
-  poll(
-    datasourceAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  poll(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
     return new Promise((resolve, reject) => {
       if (this.queryId) {
         return grafanaAttrs
@@ -110,10 +102,7 @@ class HumioQuery {
     });
   }
 
-  cancel(
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  cancel(grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
     return new Promise(resolve => {
       if (this.queryId) {
         return grafanaAttrs
@@ -134,11 +123,7 @@ class HumioQuery {
     });
   }
 
-  composeQuery(
-    datasourceAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-  ): Promise<any> {
+  composeQuery(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
     if (!target.humioRepository) {
       return Promise.resolve({data: {events: [], done: true}});
     }
@@ -160,9 +145,7 @@ class HumioQuery {
     return !this.queryId
   }
 
-  private _startNewQuery(datasourceAttrs: IDatasourceAtts, 
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget){
+  private _startNewQuery(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget) {
       return this.cancel(grafanaAttrs, target).then(() => {
         return this.init(datasourceAttrs, grafanaAttrs, target);
       });
@@ -215,12 +198,7 @@ class HumioQuery {
     };
   }
 
-  private _handleErr(
-    datasourceAttrs: IDatasourceAtts,
-    grafanaAttrs: IGrafanaAttrs,
-    target: ITarget,
-    err: Object,
-  ): Promise<any> {
+  private _handleErr(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget, err: Object): Promise<any> {
     switch (err['status']) {
       case 404: {
         // NOTE: query not found - trying to recreate
