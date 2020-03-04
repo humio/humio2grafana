@@ -4,12 +4,8 @@ import IDatasourceAttrs from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import ITarget from '../Interfaces/ITarget';
 import HumioQuery from './humio_query';
-
-enum WidgetType {
-  timechart,
-  table,
-  untyped
-}
+import HumioHelper from './humio_helper';
+import { WidgetType } from '../Types/WidgetType';
 
 class Panel {
   queries: Map<number, HumioQuery>;
@@ -38,7 +34,7 @@ class Panel {
       }
 
       const valueField = getValueFieldName(data);
-      let widgetType = this._widgetType(data, targets[index]);
+      let widgetType = HumioHelper.widgetType(data, targets[index]);
 
       switch (widgetType) {
         case WidgetType.timechart: {
@@ -58,13 +54,6 @@ class Panel {
     });
     return {data: result};
   }
-
-  private _widgetType(data, target){
-    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
-    if (this._isTableQuery(target)) return WidgetType.table;
-    else return WidgetType.untyped;
-  }
-
 
   private _composeTimechart(events: any, seriesField: string, valueField: string): {target: string; datapoints: number[][]}[] {
     let series: Object = {};
@@ -94,13 +83,6 @@ class Panel {
     }];
   }
 
-    private _isTableQuery(target): boolean {
-    return typeof (target.humioQuery) === 'string'
-      // Check search string for 'table(*)'.
-      ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
-      : false;
-  }
-
   private _composeUntyped(data, valueField) {
     return _.flatMap(data.events, (event) => {
       const groupbyFields = data.metaData.extraData.groupby_fields;
@@ -116,7 +98,7 @@ class Panel {
       } else {
         return {
           target: valueField,
-          datapoints: [[parseFloat(event[valueField]), valueField]],
+          datapoints: [[parseFloat(event[valueField])]],
         }
       }
     });

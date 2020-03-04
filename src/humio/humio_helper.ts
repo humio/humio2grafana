@@ -1,4 +1,6 @@
-class HumioHelper {
+ import { WidgetType } from '../Types/WidgetType';
+ 
+ class HumioHelper {
   static checkToDateNow(toDateCheck: any) {
     if (typeof toDateCheck === "string") {
       return toDateCheck.match(/^(now[^-]|now$)/) != null;
@@ -7,13 +9,16 @@ class HumioHelper {
     }
   }
 
-  static getPanelType(queryStr: string) {
-    let lastFuncInPipeline = queryStr.split("|").pop().trim();
-    if (lastFuncInPipeline.match(/^timechart\(.*\)$/)) {
-      return "time-chart";
-    } else {
-      return undefined;
-    }
+  static widgetType(data, target){
+    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
+    if (this.isTableQuery(target)) return WidgetType.table;
+    else return WidgetType.untyped;
+  }
+
+  static isTableQuery(target): boolean {
+    return typeof (target.humioQuery) === 'string'
+      ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
+      : false;
   }
 
   // TODO: Try to compact this?
