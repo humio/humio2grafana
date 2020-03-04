@@ -5,6 +5,13 @@ import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import ITarget from '../Interfaces/ITarget';
 import HumioQuery from './humio_query';
 
+enum WidgetType {
+  timechart,
+  groupBy,
+  single,
+  table
+}
+
 class Panel {
   queries: Map<number, HumioQuery>;
 
@@ -25,43 +32,83 @@ class Panel {
 
     const queryResponses = await Promise.all(allQueryPromise);
 
-    const result = _.flatMap(queryResponses, (res, index) => {
+    const result = _.flatMap(queryResponses, (res) => {
       const data = res.data;
       if (res.data.events.length === 0) {
         return [];
       }
 
-      const isTable = this._isTableQuery(targets[index]);
-      const isTimechart = data.metaData.extraData.timechart == 'true';
-      const seriesField = data.metaData.extraData.series;
-      const groupbyFields = data.metaData.extraData.groupby_fields;
       const valueField = getValueFieldName(data);
 
-      if (isTable) {
-        return this._composeTable(data.events, data.metaData.fieldOrder);
-      } else if (seriesField) {
-        return this._composeMultiSeriesTimechart(data.events, seriesField, valueField);
-      } else if (isTimechart) {
-        return this._composeSingleSeriesTimechart(data.events, valueField);
-      } else {
-        return this._composeBarChart(data.events, groupbyFields, valueField)
+      let widgetType = this._widgetType(data)
+      if(widgetType == WidgetType.timechart){
+        let seriesField = data.metaData.extraData.series;
+          if(!seriesField){
+            seriesField = "placeholder"
+            data.events = data.events.map(event => {event[seriesField] = valueField; return event})
+          }
+          return this._composeTimechart(data.events, seriesField, valueField);
       }
-    });
+      else if(widgetType == WidgetType.groupBy){
+        const groupbyFields = data.metaData.extraData.groupby_fields;
+        return this._composeBarChart(data.events, groupbyFields, valueField);
+      }
+      else if(widgetType == WidgetType.single){
+        return [];
+      }
+      else if(widgetType == WidgetType.table){
+        return this._composeTable(data.events, data.metaData.fieldOrder);
+      }
+      else{
+        return {
+          target: "Unsupported Widget",
+          datapoints: [],
+        };
+      }
 
+
+      let temp = undefined
+      switch (widgetType){
+        case WidgetType.timechart:{
+          let seriesField = data.metaData.extraData.series;
+          if(!seriesField){
+            seriesField = "placeholder"
+            data.events = data.events.map(event => {event[seriesField] = valueField; return event})
+          }
+          temp = this._composeTimechart(data.events, seriesField, valueField);
+          break;
+        }
+        case WidgetType.groupBy:{
+          const groupbyFields = data.metaData.extraData.groupby_fields;
+          temp = this._composeBarChart(data.events, groupbyFields, valueField);
+          break;
+        }
+        case WidgetType.single:
+          temp = [];
+          break;
+        case WidgetType.table:
+          temp = this._composeTable(data.events, data.metaData.fieldOrder);
+          break;
+        default:
+            temp = {
+              target: "Unsupported Widget",
+              datapoints: [],
+            };
+      }
+      return temp
+    });
     return {data: result};
   }
 
-  //TODO: Mash together with the multi-series case?
-  private _composeSingleSeriesTimechart(events, valueField: string) {
-    return [{
-      target: valueField,
-      datapoints: events.map(event => {
-        return [parseFloat(event[valueField]), parseInt(event._bucket)];
-      }),
-    }];
+  private _widgetType(data){
+    if(data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
+    if(data.metaData.extraData.groupby_fields) return WidgetType.groupBy;
+    if(data.events.length === 1) return WidgetType.single;
+    else return WidgetType.table;
   }
 
-  private _composeMultiSeriesTimechart(
+
+  private _composeTimechart(
     events: any,
     seriesField: string,
     valueField: string,
