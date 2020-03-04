@@ -72,8 +72,8 @@ class HumioQueryCtrl extends QueryCtrl {
   }
 
   showHumioLink() {
-    if (this.datasource.timeRange) return true;
-    else return true;
+    if (this.datasource.timeRange && this.target.humioRepository) return true;
+    else return false;
   }
 
   _serializeQueryArgs(queryArgs) {

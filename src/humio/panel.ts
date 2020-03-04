@@ -23,19 +23,21 @@ class Panel {
       return query.composeQuery(datasourceAttrs, grafanaAttrs, target);
     });
 
-    const responseList = await Promise.all(allQueryPromise);
+    const queryResponses = await Promise.all(allQueryPromise);
 
-    const result = _.flatMap(responseList, (res, index) => {
+    const result = _.flatMap(queryResponses, (res, index) => {
       const data = res.data;
+      if (res.data.events.length === 0) {
+        return [];
+      }
+
       const isTable = this._isTableQuery(targets[index]);
       const isTimechart = data.metaData.extraData.timechart == 'true';
       const seriesField = data.metaData.extraData.series;
       const groupbyFields = data.metaData.extraData.groupby_fields;
       const valueField = getValueFieldName(data);
 
-      if (res.data.events.length === 0) {
-        return [];
-      } else if (isTable) {
+      if (isTable) {
         return this._composeTable(data.events, data.metaData.fieldOrder);
       } else if (seriesField) {
         return this._composeMultiSeriesTimechart(data.events, seriesField, valueField);
