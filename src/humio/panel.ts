@@ -7,9 +7,8 @@ import HumioQuery from './humio_query';
 
 enum WidgetType {
   timechart,
-  groupBy,
-  single,
-  table
+  table,
+  untyped
 }
 
 class Panel {
@@ -32,87 +31,42 @@ class Panel {
 
     const queryResponses = await Promise.all(allQueryPromise);
 
-    const result = _.flatMap(queryResponses, (res) => {
+    const result = _.flatMap(queryResponses, (res, index) => {
       const data = res.data;
       if (res.data.events.length === 0) {
         return [];
       }
 
       const valueField = getValueFieldName(data);
+      let widgetType = this._widgetType(data, targets[index]);
 
-      let widgetType = this._widgetType(data)
-      if(widgetType == WidgetType.timechart){
-        let seriesField = data.metaData.extraData.series;
-          if(!seriesField){
-            seriesField = "placeholder"
-            data.events = data.events.map(event => {event[seriesField] = valueField; return event})
-          }
-          return this._composeTimechart(data.events, seriesField, valueField);
-      }
-      else if(widgetType == WidgetType.groupBy){
-        const groupbyFields = data.metaData.extraData.groupby_fields;
-        return this._composeBarChart(data.events, groupbyFields, valueField);
-      }
-      else if(widgetType == WidgetType.single){
-        return [];
-      }
-      else if(widgetType == WidgetType.table){
-        return this._composeTable(data.events, data.metaData.fieldOrder);
-      }
-      else{
-        return {
-          target: "Unsupported Widget",
-          datapoints: [],
-        };
-      }
-
-
-      let temp = undefined
-      switch (widgetType){
-        case WidgetType.timechart:{
+      switch (widgetType) {
+        case WidgetType.timechart: {
           let seriesField = data.metaData.extraData.series;
           if(!seriesField){
-            seriesField = "placeholder"
-            data.events = data.events.map(event => {event[seriesField] = valueField; return event})
+            seriesField = "placeholder";
+            data.events = data.events.map(event => {event[seriesField] = valueField; return event});
           }
-          temp = this._composeTimechart(data.events, seriesField, valueField);
-          break;
+          return this._composeTimechart(data.events, seriesField, valueField);
         }
-        case WidgetType.groupBy:{
-          const groupbyFields = data.metaData.extraData.groupby_fields;
-          temp = this._composeBarChart(data.events, groupbyFields, valueField);
-          break;
-        }
-        case WidgetType.single:
-          temp = [];
-          break;
         case WidgetType.table:
-          temp = this._composeTable(data.events, data.metaData.fieldOrder);
-          break;
-        default:
-            temp = {
-              target: "Unsupported Widget",
-              datapoints: [],
-            };
+          return this._composeTable(data.events, data.metaData.fieldOrder);
+        default: {
+          return this._composeUntyped(data, valueField);
+        }
       }
-      return temp
     });
     return {data: result};
   }
 
-  private _widgetType(data){
-    if(data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
-    if(data.metaData.extraData.groupby_fields) return WidgetType.groupBy;
-    if(data.events.length === 1) return WidgetType.single;
-    else return WidgetType.table;
+  private _widgetType(data, target){
+    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
+    if (this._isTableQuery(target)) return WidgetType.table;
+    else return WidgetType.untyped;
   }
 
 
-  private _composeTimechart(
-    events: any,
-    seriesField: string,
-    valueField: string,
-  ): {target: string; datapoints: number[][]}[] {
+  private _composeTimechart(events: any, seriesField: string, valueField: string): {target: string; datapoints: number[][]}[] {
     let series: Object = {};
     // multiple series
     for (let i = 0; i < events.length; i++) {
@@ -132,24 +86,6 @@ class Panel {
     });
   }
 
-  private _composeBarChart(events, groupByFields, valueField) {
-    return _.flatMap(events, (event) => {
-      const groupName = groupByFields.split(',').map(field => '[' + event[field.trim()] + ']').join(' ');
-      if (_.keys(event).length > 1) {
-        return {
-          target: groupName,
-          datapoints: [[parseFloat(event[valueField])]],
-        };
-        // Move to own function catching single value.
-      } else {
-        return {
-          //target: valueField,
-          datapoints: [[parseFloat(event[valueField]), event[groupByFields]]],
-        };
-      }
-    });
-  }
-
   private _composeTable(rows: Array<object>, columns: Array<string>) {
     return [{
       columns: columns.map(column => { return { text: column } }),
@@ -163,6 +99,27 @@ class Panel {
       // Check search string for 'table(*)'.
       ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
       : false;
+  }
+
+  private _composeUntyped(data, valueField) {
+    return _.flatMap(data.events, (event) => {
+      const groupbyFields = data.metaData.extraData.groupby_fields;
+
+      if(groupbyFields) {
+        const groupName = groupbyFields.split(',').map(field => '[' + event[field.trim()] + ']').join(' ');
+        if (_.keys(event).length > 1) {
+          return {
+            target: groupName,
+            datapoints: [[parseFloat(event[valueField])]],
+          };
+        }
+      } else {
+        return {
+          target: valueField,
+          datapoints: [[parseFloat(event[valueField]), valueField]],
+        }
+      }
+    });
   }
 }
 
