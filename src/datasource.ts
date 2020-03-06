@@ -3,9 +3,10 @@ import PanelManager from './humio/panel_manager';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
+import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 
 /**
- * Describes an issue of a Humio data source instance registered to Grafana
+ * Describes an instance of a Humio data source registered to Grafana
  */
 export class HumioDatasource {
   url: string;
@@ -41,7 +42,7 @@ export class HumioDatasource {
 
   /**
    * Executes all queries registered to a panel, which uses this data source.
-   * Implicitly called by Grafana during a panel refresh 
+   * Implicitly called by Grafana during a panel refresh.
    */
   query(options) { //TODO: Type?
     if (options.targets.length === 0) {
@@ -67,24 +68,23 @@ export class HumioDatasource {
 
    /**
    * Tests connection to this data source given the registered url and token. 
-   * Implicitly called by Grafana when user clicks the "Save & Test" button during data source configuration
+   * Implicitly called by Grafana when user clicks the "Save & Test" button during data source configuration.
+   * The endpoint called doesn't really matter, except that it needs to forbid access through an ingest token,
+   * otherwise if the data source is configured with an ingest token, queries can't be used to populate dashboards.
    */
   testDatasource() {
-    return this._doRequest({
-      url: '/api/v1/users/current', // TODO: Make a dictionary for endpoints and perform a check that ensures we only succeed on non-ingest tokens
-      method: 'GET',
-    }).then(response => {
-      if (response.status === 200) {
-        return {
-          status: 'success',
-          message: 'Data source is working',
-          title: 'Success',
-        };
-      }
-    });
+    const requestOpts: IDatasourceRequestOptions = {
+      method: 'POST',
+      url: this.url + '/graphql',
+      headers: this.headers,
+      data: { query: '{runningQueries}' }, 
+    }
+
+    return this.datasourceAttrs.backendSrv
+      .datasourceRequest(requestOpts);
   }
 
-  _doRequest(options) { //TODO: Type? Different from other 'options' in doc
+  private _doRequest(options) { //TODO: Type? Different from other 'options' in doc
     options.headers = this.headers;
     options.url = this.url + options.url;
     return this.datasourceAttrs.backendSrv.datasourceRequest(options);

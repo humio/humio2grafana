@@ -9,14 +9,17 @@
     }
   }
 
-  static automaticPanelRefreshHasBeenActivated(datasourceAttrs){
-    return (datasourceAttrs.$location
-      ? datasourceAttrs.$location.search().refresh || null
-      : null) != null;
+  static queryIsLive($location, date){
+    return HumioHelper.automaticPanelRefreshHasBeenActivated($location) &&
+      HumioHelper.dateIsNow(date);
+  }
+
+  static automaticPanelRefreshHasBeenActivated($location){
+    return ($location ? $location.search().refresh || null : null) != null;
   }
 
   static widgetType(data, target){
-    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
+    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart;
     if (this.isTableQuery(target)) return WidgetType.table;
     else return WidgetType.untyped;
   }

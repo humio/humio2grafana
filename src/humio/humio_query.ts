@@ -34,7 +34,7 @@ class HumioQueryJob {
 
     const requestedQueryDefinition = this._getRequestedQueryDefinition(datasourceAttrs, grafanaAttrs, target);
     
-    if(!this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)){
+    if(this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)){
       return this._pollQueryJobUntilDone(datasourceAttrs, grafanaAttrs, target);
     }
     else{
@@ -46,15 +46,10 @@ class HumioQueryJob {
   }
 
   private _getRequestedQueryDefinition(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget){
-    let isLive = this._queryIsLive(datasourceAttrs, grafanaAttrs)
+    let isLive =  HumioHelper.queryIsLive(datasourceAttrs.$location, grafanaAttrs.grafanaQueryOpts.range.raw.to)
     return isLive ?
       this._makeLiveQueryDefinition(grafanaAttrs, target.humioQuery):
       this._makeStaticQueryDefinition(grafanaAttrs, target.humioQuery);
-  }
-
-  private _queryIsLive(datasourceAttrs: IDatasourceAtts,  grafanaAttrs: IGrafanaAttrs){
-    return HumioHelper.automaticPanelRefreshHasBeenActivated(datasourceAttrs) 
-            && HumioHelper.dateIsNow(grafanaAttrs.grafanaQueryOpts.range.raw.to);
   }
 
   private _makeLiveQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string){

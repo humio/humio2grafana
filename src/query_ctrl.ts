@@ -1,15 +1,14 @@
 import {QueryCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
 import HumioHelper from './humio/humio_helper';
-import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
-import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
+import IDatasource from './Interfaces/IDatasource';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import ITarget from './Interfaces/ITarget';
 
 import './css/query-editor.css!';
 
 /**
- * An instance of this class is created for each query registered to a Grafana panel
+ * Represents a query registered to a Grafana panel
  */
 class HumioQueryCtrl extends QueryCtrl {
   public static templateUrl = 'partials/query.editor.html';
@@ -19,20 +18,7 @@ class HumioQueryCtrl extends QueryCtrl {
   $location: any;
   hostUrl: string = '';
   repositories: any[] = [];
-  datasource: {
-    id: string,
-    url: string,
-    datasourceAttrs: IDatasourceAttrs,
-    headers: IDatasourceRequestHeaders,
-    timeRange: {
-      from: any, // Moment
-      to: any, // Moment
-      raw: {
-        from: string,
-        to: string
-      }
-    }
-  };
+  datasource: IDatasource;
   target: ITarget;
   panelCtrl: any;
 
@@ -47,17 +33,10 @@ class HumioQueryCtrl extends QueryCtrl {
 
     this.target.humioQuery = this.target.humioQuery || 'timechart()';
     this.target.humioRepository = this.target.humioRepository || undefined;
+    this.hostUrl = this.datasource.url;
 
     this._getHumioRepositories().then(repositories => {
       this.repositories = repositories;
-    });
-
-    // Calls Grafana's API to get the Url of the datasource
-    $http({
-      url: '/api/datasources/' + this.datasource.id,
-      method: 'GET',
-    }).then(response => {
-      this.hostUrl = response.data.url;
     });
   }
   
@@ -65,7 +44,7 @@ class HumioQueryCtrl extends QueryCtrl {
     if (this.hostUrl === '') {
       return '#';
     } else {
-      let queryParams = this._createQueryParams();
+      let queryParams = this._composeQueryArgs();
       return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
     }
   }
@@ -79,7 +58,7 @@ class HumioQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  _getHumioRepositories() {
+  private _getHumioRepositories() {
     if (!this.datasource.url) {
       return this.$q.when([]);
     }
@@ -99,10 +78,8 @@ class HumioQueryCtrl extends QueryCtrl {
       }); 
   }
 
-  _createQueryParams(){
-    let isLive =
-      this.$location.search().hasOwnProperty('refresh') &&
-      HumioHelper.dateIsNow(this.datasource.timeRange.raw.to);
+  private _composeQueryArgs(){
+    let isLive = HumioHelper.queryIsLive(this.$location, this.datasource.timeRange.raw.to);
 
     let queryParams =  {
       query: this.target.humioQuery,
@@ -120,7 +97,7 @@ class HumioQueryCtrl extends QueryCtrl {
     return queryParams;
   }
 
-  _serializeQueryArgs(queryArgs) {
+  private _serializeQueryArgs(queryArgs) {
     let str = [];
     for (let argument in queryArgs) {
       str.push(encodeURIComponent(argument) + '=' + encodeURIComponent(queryArgs[argument]));
