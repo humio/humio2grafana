@@ -97,8 +97,8 @@ class Panel {
         }
       } else {
         return {
-          target: valueField,
-          datapoints: [[parseFloat(event[valueField])]],
+          target: valueField[0],
+          datapoints: [[parseFloat(event[valueField[0]]), event[valueField[1]]]],
         }
       }
     });
@@ -133,7 +133,7 @@ export const getValueFieldName = (responseData) => {
       return [...valueFields, ...allFieldNames];
     }, []);
 
-    return valueFieldNames[0] || defaultValueFieldName;
+    return valueFieldNames || defaultValueFieldName;
   }
 
   return defaultValueFieldName;
