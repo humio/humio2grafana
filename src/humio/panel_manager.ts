@@ -1,5 +1,8 @@
 import Panel from "./panel";
 
+/**
+ * Manages and stores all the panels on a dashboard
+ */
 class PanelManager {
   panels: Map<string, Panel>;
 

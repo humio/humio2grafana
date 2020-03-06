@@ -3,56 +3,74 @@ import _ from 'lodash';
 import IDatasourceAttrs from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import ITarget from '../Interfaces/ITarget';
-import HumioQuery from './humio_query';
+import HumioQueryJob from './humio_query';
 import HumioHelper from './humio_helper';
 import { WidgetType } from '../Types/WidgetType';
 
+/**
+ * Keeps account of the different queryjobs running on a panel, and converts their output to Grafana readable data formats.
+ */
 class Panel {
-  queries: Map<number, HumioQuery>;
+  queries: Map<number, HumioQueryJob>;
 
   constructor() {
-    this.queries = new Map<number, HumioQuery>();
+    this.queries = new Map<number, HumioQueryJob>();
   }
 
   async update(datasourceAttrs: IDatasourceAttrs, grafanaAttrs: IGrafanaAttrs, targets: ITarget[]):
    Promise<{data: Array<{target: string, datapoints: Array<[number, number]>}>}> {
-    let allQueryPromise = targets.map((target: ITarget, index: number) => {
-      let query = this.queries.get(index);
+    const queryResponses = await this._executeAllQueries(datasourceAttrs, grafanaAttrs, targets)
+
+    const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
+      return this._convertHumioQueryResponseToGrafanaFormat(res.data, targets[index])
+    });
+    return {data: listOfGrafanaDataSeries};
+  }
+
+  private async _executeAllQueries(datasourceAttrs: IDatasourceAttrs, grafanaAttrs: IGrafanaAttrs, targets: ITarget[]){
+    let allQueryPromise = targets.map((target: ITarget, index: number) => 
+    {
+      let query = this._getOrCreateQueryJob(index, target.humioQuery);
+      return query.executeQuery(datasourceAttrs, grafanaAttrs, target);
+    });
+
+    return Promise.all(allQueryPromise);
+  }
+
+  private  _getOrCreateQueryJob(index, humioQuery){
+    let query = this.queries.get(index);
+
       if (!query) {
-        query = new HumioQuery(target.humioQuery);
+        query = new HumioQueryJob(humioQuery);
         this.queries.set(index, query);
       }
-      return query.composeQuery(datasourceAttrs, grafanaAttrs, target);
-    });
 
-    const queryResponses = await Promise.all(allQueryPromise);
+    return query;
+  }
 
-    const result = _.flatMap(queryResponses, (res, index) => {
-      const data = res.data;
-      if (res.data.events.length === 0) {
-        return [];
-      }
+  private _convertHumioQueryResponseToGrafanaFormat(humioQueryResult, target){
+    const valueField = getValueFieldName(humioQueryResult);
+    if (humioQueryResult.events.length === 0) {
+      return [];
+    }
+    
+    let widgetType = HumioHelper.widgetType(humioQueryResult, target);
 
-      const valueField = getValueFieldName(data);
-      let widgetType = HumioHelper.widgetType(data, targets[index]);
-
-      switch (widgetType) {
-        case WidgetType.timechart: {
-          let seriesField = data.metaData.extraData.series;
-          if(!seriesField){
-            seriesField = "placeholder";
-            data.events = data.events.map(event => {event[seriesField] = valueField; return event});
-          }
-          return this._composeTimechart(data.events, seriesField, valueField);
+    switch (widgetType) {
+      case WidgetType.timechart: {
+        let seriesField = humioQueryResult.metaData.extraData.series;
+        if(!seriesField){
+          seriesField = "placeholder";
+          humioQueryResult.events = humioQueryResult.events.map(event => {event[seriesField] = valueField; return event});
         }
-        case WidgetType.table:
-          return this._composeTable(data.events, data.metaData.fieldOrder);
-        default: {
-          return this._composeUntyped(data, valueField);
-        }
+        return this._composeTimechart(humioQueryResult.events, seriesField, valueField);
       }
-    });
-    return {data: result};
+      case WidgetType.table:
+        return this._composeTable(humioQueryResult.events, humioQueryResult.metaData.fieldOrder);
+      default: {
+        return this._composeUntyped(humioQueryResult, valueField);
+      }
+    }
   }
 
   private _composeTimechart(events: any, seriesField: string, valueField: string): {target: string; datapoints: number[][]}[] {

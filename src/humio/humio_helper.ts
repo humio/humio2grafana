@@ -1,12 +1,18 @@
  import { WidgetType } from '../Types/WidgetType';
  
  class HumioHelper {
-  static checkToDateNow(toDateCheck: any) {
+  static dateIsNow(toDateCheck: any) {
     if (typeof toDateCheck === "string") {
       return toDateCheck.match(/^(now[^-]|now$)/) != null;
     } else {
       return false;
     }
+  }
+
+  static automaticPanelRefreshHasBeenActivated(datasourceAttrs){
+    return (datasourceAttrs.$location
+      ? datasourceAttrs.$location.search().refresh || null
+      : null) != null;
   }
 
   static widgetType(data, target){

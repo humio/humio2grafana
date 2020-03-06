@@ -5,8 +5,10 @@ import ITarget from '../Interfaces/ITarget';
 import HumioHelper from './humio_helper';
 import _ from 'lodash';
 
-// TODO: Describe why query jobs are used rather than direct queries
-class HumioQuery {
+/**
+ * Manages a live Humio Query Job.
+ */ 
+class HumioQueryJob {
   queryId: string;
   queryDefinition: QueryDefinition;
   failCounter: number;
@@ -22,156 +24,37 @@ class HumioQuery {
 
     this.failCounter = 0;
     this.queryId = null;
-
     this._handleErr = this._handleErr.bind(this);
   }
 
-  init(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
-    return new Promise(resolve => {
-      return grafanaAttrs
-        .doRequest({
-          url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
-          data: this.queryDefinition,
-          method: 'POST',
-        })
-        .then(
-          res => {
-            this.queryId = res['data'].id;
-            this.pollUntilDone(datasourceAttrs, grafanaAttrs, target).then(res => {
-              resolve(res);
-            });
-          },
-          err => {
-            this._handleErr(datasourceAttrs, grafanaAttrs, target, err).then(res => {
-              resolve(res);
-            });
-          },
-        );
-    });
-  }
-
-  pollUntilDone(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
-    return new Promise(resolve => {
-      let pollFx = () => {
-        this.poll(datasourceAttrs, grafanaAttrs, target).then(res => {
-          if (res['data'].done) {
-            // NOTE: for static queries id no longer makes sense
-            if (!this.queryDefinition.isLive) {
-              this.queryId = null;
-            }
-            resolve(res);
-          } else {
-            var pollAfter = res['data']['metaData']['pollAfter'];
-            setTimeout(() => {
-              pollFx();
-            }, pollAfter);
-          }
-        });
-      };
-      pollFx();
-    });
-  }
-
-  poll(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (this.queryId) {
-        return grafanaAttrs
-          .doRequest({
-            url:
-              '/api/v1/dataspaces/' +
-              target.humioRepository +
-              '/queryjobs/' +
-              this.queryId,
-            method: 'GET',
-          })
-          .then(
-            res => {
-              resolve(res);
-            },
-            err => {
-              return this._handleErr(datasourceAttrs, grafanaAttrs, target, err).then(
-                res => {
-                  reject(res);
-                },
-              );
-            },
-          );
-      } else {
-        return Promise.resolve([]);
-      }
-    });
-  }
-
-  cancel(grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
-    return new Promise(resolve => {
-      if (this.queryId) {
-        return grafanaAttrs
-          .doRequest({
-            url:
-              '/api/v1/dataspaces/' +
-              target.humioRepository +
-              '/queryjobs/' +
-              this.queryId,
-            method: 'DELETE',
-          })
-          .then(() => {
-            return resolve({});
-          });
-      } else {
-        return resolve({});
-      }
-    });
-  }
-
-  composeQuery(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
-    if (!target.humioRepository) {
+  executeQuery(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
+    if(!target.humioRepository) {
       return Promise.resolve({data: {events: [], done: true}});
     }
 
+    const requestedQueryDefinition = this._getRequestedQueryDefinition(datasourceAttrs, grafanaAttrs, target);
+    
+    if(!this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)){
+      return this._pollQueryJobUntilDone(datasourceAttrs, grafanaAttrs, target);
+    }
+    else{
+      this._updateQueryDefinition(requestedQueryDefinition);
+      return this._cancelCurrentQueryJob(grafanaAttrs, target)
+        .then(() => {return this._initializeNewQueryJob(datasourceAttrs, grafanaAttrs, target)})
+        .then(() => {return this._pollQueryJobUntilDone(datasourceAttrs, grafanaAttrs, target)});
+    }
+  }
+
+  private _getRequestedQueryDefinition(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget){
     let isLive = this._queryIsLive(datasourceAttrs, grafanaAttrs)
-    let newQueryDefinition = isLive ?
-      this._makeLiveQueryDefinition(grafanaAttrs, target.humioQuery) :
+    return isLive ?
+      this._makeLiveQueryDefinition(grafanaAttrs, target.humioQuery):
       this._makeStaticQueryDefinition(grafanaAttrs, target.humioQuery);
-
-    if (this._noQueryHasBeenExecutedYet() || this._queryDefinitionHasChanged(newQueryDefinition)) {
-      this._updateQueryDefinition(newQueryDefinition)
-      return this._startNewQuery(datasourceAttrs, grafanaAttrs, target)
-    } else {
-      return this.pollUntilDone(datasourceAttrs, grafanaAttrs, target);
-    }
-  }
-
-  private _noQueryHasBeenExecutedYet(){
-    return !this.queryId
-  }
-
-  private _startNewQuery(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget) {
-      return this.cancel(grafanaAttrs, target).then(() => {
-        return this.init(datasourceAttrs, grafanaAttrs, target);
-      });
-    }
-
-
-  private _updateQueryDefinition(newQueryDefinition: UpdatedQueryDefinition){
-    _.assign(this.queryDefinition, newQueryDefinition)
-    if (newQueryDefinition.isLive && this.queryDefinition.end) {
-      delete this.queryDefinition.end; // Grafana will throw errors if 'end' has been set on a live query
-    }
-  }
-
-  private _queryDefinitionHasChanged(newQueryDefinition: UpdatedQueryDefinition){
-    let copy = {...this.queryDefinition}
-    _.assign(copy, newQueryDefinition);
-    return JSON.stringify(this.queryDefinition) !== JSON.stringify(copy);
   }
 
   private _queryIsLive(datasourceAttrs: IDatasourceAtts,  grafanaAttrs: IGrafanaAttrs){
-    let refresh = datasourceAttrs.$location
-      ? datasourceAttrs.$location.search().refresh || null
-      : null;
-    let range = grafanaAttrs.grafanaQueryOpts.range;
-
-    return refresh != null && HumioHelper.checkToDateNow(range.raw.to);
+    return HumioHelper.automaticPanelRefreshHasBeenActivated(datasourceAttrs) 
+            && HumioHelper.dateIsNow(grafanaAttrs.grafanaQueryOpts.range.raw.to);
   }
 
   private _makeLiveQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string){
@@ -197,18 +80,108 @@ class HumioQuery {
       end: end,
     };
   }
+  
+  private _queryDefinitionHasChanged(newQueryDefinition: UpdatedQueryDefinition){
+    let queryDefinitionCopy = {...this.queryDefinition};
+    _.assign(queryDefinitionCopy, newQueryDefinition);
+    return JSON.stringify(this.queryDefinition) !== JSON.stringify(queryDefinitionCopy);
+  }
+
+  private _updateQueryDefinition(newQueryDefinition: UpdatedQueryDefinition){
+    _.assign(this.queryDefinition, newQueryDefinition)
+    if (newQueryDefinition.isLive && this.queryDefinition.end) {
+      delete this.queryDefinition.end; // Grafana will throw errors if 'end' has been set on a live query
+    }
+  }
+
+  private _cancelCurrentQueryJob(grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
+    return new Promise(resolve => {
+      if (!this.queryId){
+        return resolve({});
+      } 
+      return grafanaAttrs
+          .doRequest({
+            url: `/api/v1/dataspaces/${target.humioRepository}/queryjobs/${this.queryId}`,
+            method: 'DELETE',
+          })
+          .then(() => {
+            return resolve({});
+          });
+    });
+  }
+
+  private _initializeNewQueryJob(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
+    return new Promise(resolve => {
+      return grafanaAttrs
+        .doRequest({
+          url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
+          method: 'POST',
+          data: this.queryDefinition,
+        })
+        .then(
+          res => {
+            this.queryId = res['data'].id;
+            return resolve({});
+          },
+          err => {
+            this._handleErr(datasourceAttrs, grafanaAttrs, target, err)
+              .then(res => {return resolve(res);});
+          },
+        );
+    });
+  }
+
+  private _pollQueryJobUntilDone(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
+    return new Promise(resolve => {
+      let recursivePollingFunc = () => {
+        this._pollQueryJobForNextBatch(datasourceAttrs, grafanaAttrs, target).then(res => {
+          if (res['data'].done) {
+            // Reset state if query is not live, as there is not reason to poll the old queryjob again
+            if (!this.queryDefinition.isLive) {
+              this.queryId = null;
+            }
+            resolve(res);
+          } else {
+            var waitTimeUntilNextPoll = res['data']['metaData']['pollAfter'];
+            setTimeout(() => {recursivePollingFunc();}, waitTimeUntilNextPoll); // If we don't wait the stated amount, Humio will return the same data again.
+          }
+        });
+      };
+      recursivePollingFunc();
+    });
+  }
+
+  private _pollQueryJobForNextBatch(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (!this.queryId) {
+        return Promise.resolve([]);
+      }
+
+      return grafanaAttrs
+        .doRequest({
+          url: `/api/v1/dataspaces/${target.humioRepository}/queryjobs/${this.queryId}`,
+          method: 'GET'})
+        .then(
+          res => {return resolve(res);},
+          err => {
+            return this._handleErr(datasourceAttrs, grafanaAttrs, target, err)
+              .then(res => {reject(res);});
+          },
+        ); 
+    }); 
+  }
 
   private _handleErr(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget, err: Object): Promise<any> {
     switch (err['status']) {
+      // Getting a 404 during a query, it is possible that our queryjob has expired.
+      // Thus we attempt to start the query process, where we will aquire a new queryjob.
       case 404: {
-        // NOTE: query not found - trying to recreate
-        // TODO: How to we get into the error callback?
         this.failCounter += 1;
         this.queryId = null;
         if (this.failCounter <= 3) {
-          return this.composeQuery(datasourceAttrs, grafanaAttrs, target);
+          return this.executeQuery(datasourceAttrs, grafanaAttrs, target);
         } else {
-          this.failCounter = 0;
+          this.failCounter = 0; 
           grafanaAttrs.errorCallback('alert-error', [
             'failed to create query',
             'tried 3 times',
@@ -228,4 +201,4 @@ class HumioQuery {
   }
 }
 
-export default HumioQuery;
+export default HumioQueryJob;

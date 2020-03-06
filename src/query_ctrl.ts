@@ -8,6 +8,9 @@ import ITarget from './Interfaces/ITarget';
 
 import './css/query-editor.css!';
 
+/**
+ * An instance of this class is created for each query registered to a Grafana panel
+ */
 class HumioQueryCtrl extends QueryCtrl {
   public static templateUrl = 'partials/query.editor.html';
   $http: any;
@@ -43,7 +46,7 @@ class HumioQueryCtrl extends QueryCtrl {
     this.$location = $location;
 
     this.target.humioQuery = this.target.humioQuery || 'timechart()';
-    this.target.humioRepository = this.target.humioRepository || undefined; // Throw exception?
+    this.target.humioRepository = this.target.humioRepository || undefined;
 
     this._getHumioRepositories().then(repositories => {
       this.repositories = repositories;
@@ -57,7 +60,7 @@ class HumioQueryCtrl extends QueryCtrl {
       this.hostUrl = response.data.url;
     });
   }
-
+  
   getHumioLink() {
     if (this.hostUrl === '') {
       return '#';
@@ -67,21 +70,13 @@ class HumioQueryCtrl extends QueryCtrl {
     }
   }
 
-  onChangeInternal() {
-    this.panelCtrl.refresh(); // Asks the panel to refresh data. 
-  }
-
   showHumioLink() {
     if (this.datasource.timeRange && this.target.humioRepository) return true;
     else return false;
   }
 
-  _serializeQueryArgs(queryArgs) {
-    let str = [];
-    for (let argument in queryArgs) {
-      str.push(encodeURIComponent(argument) + '=' + encodeURIComponent(queryArgs[argument]));
-    }
-    return str.join('&');
+  onChangeInternal() {
+    this.panelCtrl.refresh();
   }
 
   _getHumioRepositories() {
@@ -107,7 +102,7 @@ class HumioQueryCtrl extends QueryCtrl {
   _createQueryParams(){
     let isLive =
       this.$location.search().hasOwnProperty('refresh') &&
-      HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);
+      HumioHelper.dateIsNow(this.datasource.timeRange.raw.to);
 
     let queryParams =  {
       query: this.target.humioQuery,
@@ -123,6 +118,14 @@ class HumioQueryCtrl extends QueryCtrl {
       }
     
     return queryParams;
+  }
+
+  _serializeQueryArgs(queryArgs) {
+    let str = [];
+    for (let argument in queryArgs) {
+      str.push(encodeURIComponent(argument) + '=' + encodeURIComponent(queryArgs[argument]));
+    }
+    return str.join('&');
   }
 }
 
