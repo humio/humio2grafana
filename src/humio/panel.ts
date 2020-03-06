@@ -47,6 +47,8 @@ class Panel {
         }
         case WidgetType.table:
           return this._composeTable(data.events, data.metaData.fieldOrder);
+        case WidgetType.worldmap:
+          return this._composeTable(data.events, valueField); // The worldmap widget is also based on a table, howevever, with different inputs. 
         default: {
           return this._composeUntyped(data, valueField);
         }
@@ -82,23 +84,22 @@ class Panel {
       type: 'table'
     }];
   }
-
+      
   private _composeUntyped(data, valueField) {
     return _.flatMap(data.events, (event) => {
       const groupbyFields = data.metaData.extraData.groupby_fields;
-
       if(groupbyFields) {
         const groupName = groupbyFields.split(',').map(field => '[' + event[field.trim()] + ']').join(' ');
         if (_.keys(event).length > 1) {
           return {
             target: groupName,
-            datapoints: [[parseFloat(event[valueField])]],
+            datapoints: [[parseFloat(event[valueField[0]])]],
           };
         }
       } else {
         return {
           target: valueField[0],
-          datapoints: [[parseFloat(event[valueField[0]]), event[valueField[1]]]],
+          datapoints: [[parseFloat(event[valueField[0]])]],
         }
       }
     });
@@ -123,7 +124,7 @@ export const getValueFieldName = (responseData) => {
       fieldName => !_.includes(valueFieldsToExclude, fieldName) // TODO: Figure out what this does?
     ); 
     
-    return valueFieldNames[0] || defaultValueFieldName;
+    return valueFieldNames || defaultValueFieldName;
   }
 
   if (responseData.events.length > 0) {
