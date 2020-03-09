@@ -1,6 +1,7 @@
 enum WidgetType {
     timechart,
     table,
+    worldmap,
     untyped
 }
 

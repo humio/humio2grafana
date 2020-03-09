@@ -65,7 +65,7 @@ class QueryJobManager {
     if (humioQueryResult.events.length === 0) {
       return [];
     }
-    const valueField = getValueFieldName(humioQueryResult);
+    const valueFields = getValueFieldName(humioQueryResult);
     
     let widgetType = HumioHelper.widgetType(humioQueryResult, target);
 
@@ -74,14 +74,16 @@ class QueryJobManager {
         let seriesField = humioQueryResult.metaData.extraData.series;
         if(!seriesField){
           seriesField = "placeholder";
-          humioQueryResult.events = humioQueryResult.events.map(event => {event[seriesField] = valueField; return event});
+          humioQueryResult.events = humioQueryResult.events.map(event => {event[seriesField] = valueFields[0]; return event});
         }
-        return this._composeTimechart(humioQueryResult.events, seriesField, valueField);
+        return this._composeTimechart(humioQueryResult.events, seriesField, valueFields[0]);
       }
       case WidgetType.table:
         return this._composeTable(humioQueryResult.events, humioQueryResult.metaData.fieldOrder);
+      case WidgetType.worldmap:
+        return this._composeTable(humioQueryResult.events, valueFields); // The worldmap widget is also based on a table, howevever, with different inputs. 
       default: {
-        return this._composeUntyped(humioQueryResult, valueField);
+        return this._composeUntyped(humioQueryResult, valueFields[0]);
       }
     }
   }
@@ -113,11 +115,10 @@ class QueryJobManager {
       type: 'table'
     }];
   }
-
+      
   private _composeUntyped(data, valueField) {
     return _.flatMap(data.events, (event) => {
       const groupbyFields = data.metaData.extraData.groupby_fields;
-
       if(groupbyFields) {
         const groupName = groupbyFields.split(',').map(field => '[' + event[field.trim()] + ']').join(' ');
         if (_.keys(event).length > 1) {
@@ -154,7 +155,7 @@ export const getValueFieldName = (responseData) => {
       fieldName => !_.includes(valueFieldsToExclude, fieldName) // TODO: Figure out what this does?
     ); 
     
-    return valueFieldNames[0] || defaultValueFieldName;
+    return valueFieldNames || defaultValueFieldName;
   }
 
   if (responseData.events.length > 0) {
@@ -164,7 +165,7 @@ export const getValueFieldName = (responseData) => {
       return [...valueFields, ...allFieldNames];
     }, []);
 
-    return valueFieldNames[0] || defaultValueFieldName;
+    return valueFieldNames || defaultValueFieldName;
   }
 
   return defaultValueFieldName;

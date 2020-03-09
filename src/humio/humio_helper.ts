@@ -21,6 +21,7 @@
   static widgetType(data, target){
     if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart;
     if (this.isTableQuery(target)) return WidgetType.table;
+    if (data.metaData.extraData['ui:suggested-widget'] == 'world-map') return WidgetType.worldmap;
     else return WidgetType.untyped;
   }
 
