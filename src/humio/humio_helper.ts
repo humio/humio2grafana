@@ -1,7 +1,7 @@
  import { WidgetType } from '../Types/WidgetType';
  
  class HumioHelper {
-  static checkToDateNow(toDateCheck: any) {
+  static dateIsNow(toDateCheck: any) {
     if (typeof toDateCheck === "string") {
       return toDateCheck.match(/^(now[^-]|now$)/) != null;
     } else {
@@ -9,8 +9,17 @@
     }
   }
 
+  static queryIsLive($location, date){
+    return HumioHelper.automaticPanelRefreshHasBeenActivated($location) &&
+      HumioHelper.dateIsNow(date);
+  }
+
+  static automaticPanelRefreshHasBeenActivated($location){
+    return ($location ? $location.search().refresh || null : null) != null;
+  }
+
   static widgetType(data, target){
-    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart; // TODO: Should be 'True'?
+    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart;
     if (this.isTableQuery(target)) return WidgetType.table;
     if (data.metaData.extraData['ui:suggested-widget'] == 'world-map') return WidgetType.worldmap;
     else return WidgetType.untyped;
