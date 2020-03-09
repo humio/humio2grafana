@@ -33,7 +33,7 @@ class Panel {
         return [];
       }
 
-      const valueField = getValueFieldName(data);
+      const valueFields = getValueFieldName(data);
       let widgetType = HumioHelper.widgetType(data, targets[index]);
 
       switch (widgetType) {
@@ -41,16 +41,16 @@ class Panel {
           let seriesField = data.metaData.extraData.series;
           if(!seriesField){
             seriesField = "placeholder";
-            data.events = data.events.map(event => {event[seriesField] = valueField; return event});
+            data.events = data.events.map(event => {event[seriesField] = valueFields[0]; return event});
           }
-          return this._composeTimechart(data.events, seriesField, valueField);
+          return this._composeTimechart(data.events, seriesField, valueFields[0]);
         }
         case WidgetType.table:
           return this._composeTable(data.events, data.metaData.fieldOrder);
         case WidgetType.worldmap:
-          return this._composeTable(data.events, valueField); // The worldmap widget is also based on a table, howevever, with different inputs. 
+          return this._composeTable(data.events, valueFields); // The worldmap widget is also based on a table, howevever, with different inputs. 
         default: {
-          return this._composeUntyped(data, valueField);
+          return this._composeUntyped(data, valueFields[0]);
         }
       }
     });
@@ -93,13 +93,13 @@ class Panel {
         if (_.keys(event).length > 1) {
           return {
             target: groupName,
-            datapoints: [[parseFloat(event[valueField[0]])]],
+            datapoints: [[parseFloat(event[valueField])]],
           };
         }
       } else {
         return {
-          target: valueField[0],
-          datapoints: [[parseFloat(event[valueField[0]])]],
+          target: valueField,
+          datapoints: [[parseFloat(event[valueField])]],
         }
       }
     });
