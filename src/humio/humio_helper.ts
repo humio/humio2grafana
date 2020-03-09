@@ -31,7 +31,6 @@
       : false;
   }
 
-  // TODO: Try to compact this?
   static parseDateFrom(date: string) {
     switch (date) {
       case "now-2d":

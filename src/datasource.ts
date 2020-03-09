@@ -34,7 +34,7 @@ export class HumioDatasource {
       Authorization: 'Bearer ' + humioToken,
     };
 
-    this.timeRange = null; // TODO: Add default value?
+    this.timeRange = null;
     this._doRequest = this._doRequest.bind(this);
   }
 
@@ -42,7 +42,7 @@ export class HumioDatasource {
    * Executes all queries registered to a panel, which uses this data source.
    * Implicitly called by Grafana during a panel refresh.
    */
-  query(options) { //TODO: Type?
+  query(options) {
     if (options.targets.length === 0) {
       return this.datasourceAttrs.$q.resolve({
         data: [],
@@ -80,7 +80,7 @@ export class HumioDatasource {
       .datasourceRequest(requestOpts);
   }
 
-  private _doRequest(options) { //TODO: Type? Different from other 'options' in doc
+  private _doRequest(options) {
     options.headers = this.headers;
     options.url = this.url + options.url;
     return this.datasourceAttrs.backendSrv.datasourceRequest(options);

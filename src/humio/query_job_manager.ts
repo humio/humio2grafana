@@ -12,8 +12,12 @@ import { WidgetType } from '../Types/WidgetType';
  * and converts their output to Grafana readable data formats.
  */
 class QueryJobManager {
-  // Class related functionality used to handle manager instances
   static managers: Map<string, QueryJobManager> = new Map<string, QueryJobManager>();
+  queries: Map<number, QueryJob>;
+
+  constructor() {
+    this.queries = new Map<number, QueryJob>();
+  }
 
   static getOrCreateQueryJobManager(managerId: string): QueryJobManager {
     let manager = this.managers.get(managerId);
@@ -22,12 +26,6 @@ class QueryJobManager {
       this.managers.set(managerId, manager);
     }
     return manager;
-  }
-
-  queries: Map<number, QueryJob>;
-
-  constructor() {
-    this.queries = new Map<number, QueryJob>();
   }
 
   async update(datasourceAttrs: IDatasourceAttrs, grafanaAttrs: IGrafanaAttrs, targets: ITarget[]):
@@ -81,7 +79,7 @@ class QueryJobManager {
       case WidgetType.table:
         return this._composeTable(humioQueryResult.events, humioQueryResult.metaData.fieldOrder);
       case WidgetType.worldmap:
-        return this._composeTable(humioQueryResult.events, valueFields); // The worldmap widget is also based on a table, howevever, with different inputs. 
+        return this._composeTable(humioQueryResult.events, valueFields); // The worldmap widget is also based on a table, however, with different inputs. 
       default: {
         return this._composeUntyped(humioQueryResult, valueFields[0]);
       }
@@ -152,7 +150,7 @@ export const getValueFieldName = (responseData) => {
   if (responseData.metaData.fieldOrder) {
     const valueFieldNames = _.filter(
       responseData.metaData.fieldOrder,
-      fieldName => !_.includes(valueFieldsToExclude, fieldName) // TODO: Figure out what this does?
+      fieldName => !_.includes(valueFieldsToExclude, fieldName)
     ); 
     
     return valueFieldNames || defaultValueFieldName;

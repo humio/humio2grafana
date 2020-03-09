@@ -6,7 +6,7 @@ import HumioHelper from './humio_helper';
 import _ from 'lodash';
 
 /**
- * Manages a live Humio Query Job.
+ * Manages a Humio Query Job.
  */ 
 class QueryJob {
   queryId: string;
@@ -169,7 +169,7 @@ class QueryJob {
   private _handleErr(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget, err: Object): Promise<any> {
     switch (err['status']) {
       // Getting a 404 during a query, it is possible that our queryjob has expired.
-      // Thus we attempt to start the query process, where we will aquire a new queryjob.
+      // Thus we attempt to restart the query process, where we will aquire a new queryjob.
       case 404: {
         this.failCounter += 1;
         this.queryId = null;
