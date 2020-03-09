@@ -8,7 +8,8 @@ import ITarget from './Interfaces/ITarget';
 import './css/query-editor.css!';
 
 /**
- * Represents a query registered to a Grafana panel
+ * Represents a query widget registered to a Grafana panel,
+ * enabling visual costumization of the widget.
  */
 class HumioQueryCtrl extends QueryCtrl {
   public static templateUrl = 'partials/query.editor.html';

@@ -3,18 +3,31 @@ import _ from 'lodash';
 import IDatasourceAttrs from '../Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import ITarget from '../Interfaces/ITarget';
-import HumioQueryJob from './humio_query';
+import QueryJob from './query_job';
 import HumioHelper from './humio_helper';
 import { WidgetType } from '../Types/WidgetType';
 
 /**
- * Keeps account of the different queryjobs running on a panel, and converts their output to Grafana readable data formats.
+ * Keeps account of the different queryjobs running to populate a Grafana panel,
+ * and converts their output to Grafana readable data formats.
  */
-class Panel {
-  queries: Map<number, HumioQueryJob>;
+class QueryJobManager {
+  // Class related functionality used to handle manager instances
+  static managers: Map<string, QueryJobManager> = new Map<string, QueryJobManager>();
+
+  static getOrCreateQueryJobManager(managerId: string): QueryJobManager {
+    let manager = this.managers.get(managerId);
+    if (!manager) {
+      manager = new this();
+      this.managers.set(managerId, manager);
+    }
+    return manager;
+  }
+
+  queries: Map<number, QueryJob>;
 
   constructor() {
-    this.queries = new Map<number, HumioQueryJob>();
+    this.queries = new Map<number, QueryJob>();
   }
 
   async update(datasourceAttrs: IDatasourceAttrs, grafanaAttrs: IGrafanaAttrs, targets: ITarget[]):
@@ -41,7 +54,7 @@ class Panel {
     let query = this.queries.get(index);
 
       if (!query) {
-        query = new HumioQueryJob(humioQuery);
+        query = new QueryJob(humioQuery);
         this.queries.set(index, query);
       }
 
@@ -49,10 +62,10 @@ class Panel {
   }
 
   private _convertHumioQueryResponseToGrafanaFormat(humioQueryResult, target){
-    const valueField = getValueFieldName(humioQueryResult);
     if (humioQueryResult.events.length === 0) {
       return [];
     }
+    const valueField = getValueFieldName(humioQueryResult);
     
     let widgetType = HumioHelper.widgetType(humioQueryResult, target);
 
@@ -157,4 +170,4 @@ export const getValueFieldName = (responseData) => {
   return defaultValueFieldName;
 }
 
-export default Panel;
+export default QueryJobManager;

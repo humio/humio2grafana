@@ -8,7 +8,7 @@ import _ from 'lodash';
 /**
  * Manages a live Humio Query Job.
  */ 
-class HumioQueryJob {
+class QueryJob {
   queryId: string;
   queryDefinition: QueryDefinition;
   failCounter: number;
@@ -196,4 +196,4 @@ class HumioQueryJob {
   }
 }
 
-export default HumioQueryJob;
+export default QueryJob;
