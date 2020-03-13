@@ -77,7 +77,16 @@ export class HumioDatasource {
     }
 
     return this.datasourceAttrs.backendSrv
-      .datasourceRequest(requestOpts);
+      .datasourceRequest(requestOpts)
+        .then(response => {
+          if (response.status === 200) {
+            return {
+            status: 'success',
+            message: 'Data source is working',
+            title: 'Success',
+            };
+          }
+        });
   }
 
   private _doRequest(options) {
