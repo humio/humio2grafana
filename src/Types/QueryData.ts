@@ -1,5 +1,4 @@
-
-type QueryData = {
+type QueryDefinition = {
   queryString: string;
   timeZoneOffsetMinutes: number;
   showQueryEventDistribution: boolean;
@@ -8,7 +7,7 @@ type QueryData = {
   end?: string;
 };
 
-type UpdateQueryData = {
+type UpdatedQueryDefinition = {
   queryString?: string;
   timeZoneOffsetMinutes?: number;
   showQueryEventDistribution?: boolean;
@@ -18,6 +17,6 @@ type UpdateQueryData = {
 };
 
 export {
-  QueryData as QueryData,
-  UpdateQueryData as UpdateQueryData
+  QueryDefinition as QueryDefinition,
+  UpdatedQueryDefinition as UpdatedQueryDefinition
 };

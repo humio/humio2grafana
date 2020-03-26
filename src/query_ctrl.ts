@@ -1,26 +1,30 @@
 import {QueryCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
-import HumioHelper from './helper';
+import HumioHelper from './humio/humio_helper';
+import IDatasource from './Interfaces/IDatasource';
+import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
+import ITarget from './Interfaces/ITarget';
 
 import './css/query-editor.css!';
 
-class GenericDatasourceQueryCtrl extends QueryCtrl {
+/**
+ * Represents a query widget registered to a Grafana panel,
+ * enabling visual costumization of the widget.
+ */
+class HumioQueryCtrl extends QueryCtrl {
   public static templateUrl = 'partials/query.editor.html';
-
   $http: any;
   $scope: any;
   $q: any;
   $location: any;
-
-  originalUrl: string;
-
-  dataspaces: any[];
-  datasource: any;
-  target: any;
-
+  hostUrl: string = '';
+  repositories: any[] = [];
+  datasource: IDatasource;
+  target: ITarget;
   panelCtrl: any;
 
-  constructor($scope, $injector, $http, $q, datasourceSrv, $location) {
+  /** @ngInject */
+  constructor($scope, $injector, $http, $q, $location) {
     super($scope, $injector);
 
     this.$http = $http;
@@ -29,121 +33,78 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
     this.$location = $location;
 
     this.target.humioQuery = this.target.humioQuery || 'timechart()';
-    this.target.humioDataspace = this.target.humioDataspace || undefined;
+    this.target.humioRepository = this.target.humioRepository || undefined;
+    this.hostUrl = this.datasource.url;
 
-    this.dataspaces = [];
-    this._getHumioDataspaces().then(r => {
-      this.dataspaces = r;
-    });
-
-    this.originalUrl = '';
-    $http({
-      url: '/api/datasources/' + this.datasource.id,
-      method: 'GET',
-    }).then(res => {
-      this.originalUrl = res.data.url;
+    this._getHumioRepositories().then(repositories => {
+      this.repositories = repositories;
     });
   }
-
+  
   getHumioLink() {
-    if (this.originalUrl === '') {
+    if (this.hostUrl === '') {
       return '#';
     } else {
-      // NOTE: settings for timechart
-      let isLive =
-        this.$location.search().hasOwnProperty('refresh') &&
-        HumioHelper.checkToDateNow(this.datasource.timeRange.raw.to);
-
-      let start = '24h';
-      let end = undefined;
-
-      if (isLive) {
-        start = HumioHelper.parseDateFrom(this.datasource.timeRange.raw.from);
-      } else {
-        start = this.datasource.timeRange.from._d.getTime();
-        end = this.datasource.timeRange.to._d.getTime();
-      }
-
-      let linkSettings = {
-        query: this.target.humioQuery,
-        live: isLive,
-        start: start,
-      };
-
-      if (end) {
-        linkSettings['end'] = end;
-      }
-
-      let widgetType = HumioHelper.getPanelType(this.target.humioQuery);
-      if (widgetType === 'time-chart') {
-        linkSettings['widgetType'] = widgetType;
-        linkSettings['legend'] = 'y';
-        linkSettings['lx'] = '';
-        linkSettings['ly'] = '';
-        linkSettings['mn'] = '';
-        linkSettings['mx'] = '';
-        linkSettings['op'] = '0.2';
-        linkSettings['p'] = 'a';
-        linkSettings['pl'] = '';
-        linkSettings['plY'] = '';
-        linkSettings['s'] = '';
-        linkSettings['sc'] = 'lin';
-        linkSettings['stp'] = 'y';
-      }
-
-      return (
-        this.originalUrl +
-        '/' +
-        this.target.humioDataspace +
-        '/search?' +
-        this._serializeQueryOpts(linkSettings)
-      );
+      let queryParams = this._composeQueryArgs();
+      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
     }
-  }
-
-  onChangeInternal() {
-    this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 
   showHumioLink() {
-    if (this.datasource.timeRange) {
-      return true;
-    } else {
-      return false;
-    }
+    if (this.datasource.timeRange && this.target.humioRepository) return true;
+    else return false;
   }
 
-  _serializeQueryOpts(obj) {
+  onChangeInternal() {
+    this.panelCtrl.refresh();
+  }
+
+  private _getHumioRepositories() {
+    if (!this.datasource.url) {
+      return this.$q.when([]);
+    }
+
+    const requestOpts: IDatasourceRequestOptions = {
+      method: 'POST',
+      url: this.datasource.url + '/graphql',
+      headers: this.datasource.headers,
+      data: { query: '{searchDomains{name}}' },
+    }
+
+    return this.datasource.datasourceAttrs.backendSrv
+      .datasourceRequest(requestOpts)
+      .then(response => {
+        const searchDomainNames = response.data.data.searchDomains.map(({ name }) => ({ value: name, name }));
+        return _.sortBy(searchDomainNames, ['name']);
+      }); 
+  }
+
+  private _composeQueryArgs(){
+    let isLive = HumioHelper.queryIsLive(this.$location, this.datasource.timeRange.raw.to);
+
+    let queryParams =  {
+      query: this.target.humioQuery,
+      live: isLive,
+    };
+
+    if (isLive) {
+      queryParams['start'] = HumioHelper.parseDateFrom(this.datasource.timeRange.raw.from);
+      }
+    else {
+      queryParams['start'] = this.datasource.timeRange.from._d.getTime();
+      queryParams['end'] = this.datasource.timeRange.to._d.getTime();
+      }
+    
+    return queryParams;
+  }
+
+  private _serializeQueryArgs(queryArgs) {
     let str = [];
-    for (let p in obj) {
-      str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+    for (let argument in queryArgs) {
+      str.push(encodeURIComponent(argument) + '=' + encodeURIComponent(queryArgs[argument]));
     }
     return str.join('&');
   }
-
-  _getHumioDataspaces() {
-    if (this.datasource.url) {
-      let requestOpts = {
-        method: 'GET',
-        url: this.datasource.url + '/api/v1/dataspaces',
-        headers: this.datasource.headers,
-      };
-
-      return this.datasource.dsAttrs.backendSrv
-        .datasourceRequest(requestOpts)
-        .then(r => {
-          let res = r.data.map(ds => {
-            return {
-              value: ds.name,
-              name: ds.name,
-            };
-          });
-          return _.sortBy(res, ['name']);
-        });
-    } else {
-      return this.$q.when([]);
-    }
-  }
 }
 
-export default GenericDatasourceQueryCtrl;
+export default HumioQueryCtrl;
