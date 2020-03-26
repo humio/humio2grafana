@@ -1,7 +1,7 @@
 # Contributing to this repository
 At Humio we welcome contributions from our users and customers.
 
-For all contributions to this repository (software, bug fixes, configuration changes, documentation, or any other materials), we emphasize that this happens under GitHubs general Terms of Service and the [license](LICENSE.md) of this repository.
+For all contributions to this repository (software, bug fixes, configuration changes, documentation, or any other materials), we emphasize that this happens under GitHubs general Terms of Service and the [license](LICENSE) of this repository.
 
 ## Contributing as an individual
 If you are contributing as an individual you must make sure to adhere to:
