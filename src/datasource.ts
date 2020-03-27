@@ -1,5 +1,6 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
