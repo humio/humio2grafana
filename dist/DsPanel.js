@@ -69,14 +69,18 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                                     return [4, Promise.all(allQueryPromise)];
                                 case 1:
                                     responseList = _a.sent();
-                                    result = lodash_1.default.flatMap(responseList, function (res) {
+                                    result = lodash_1.default.flatMap(responseList, function (res, index) {
                                         var data = res.data;
+                                        var isTable = _this._isTableQuery(targets[index]);
                                         var isTimechart = data.metaData.extraData.timechart == 'true';
                                         var seriesField = data.metaData.extraData.series;
                                         var groupbyFields = data.metaData.extraData.groupby_fields;
                                         var valueField = getValueFieldName(data);
                                         if (res.data.events.length === 0) {
                                             return [];
+                                        }
+                                        else if (isTable) {
+                                            return _this._composeTable(data.events, data.metaData.fieldOrder);
                                         }
                                         else if (seriesField) {
                                             return _this._composeMultiSeriesTimechart(data.events, seriesField, valueField);
@@ -137,6 +141,18 @@ System.register(["lodash", "./HumioQuery"], function (exports_1, context_1) {
                             };
                         }
                     });
+                };
+                DsPanel.prototype._composeTable = function (rows, columns) {
+                    return [{
+                            columns: columns.map(function (column) { return { text: column }; }),
+                            rows: rows.map(function (row) { return columns.map(function (column) { return row[column]; }); }),
+                            type: 'table'
+                        }];
+                };
+                DsPanel.prototype._isTableQuery = function (target) {
+                    return typeof (target.humioQuery) === 'string'
+                        ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
+                        : false;
                 };
                 return DsPanel;
             }());

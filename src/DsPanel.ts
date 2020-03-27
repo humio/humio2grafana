@@ -28,8 +28,9 @@ class DsPanel {
 
     const responseList = await Promise.all(allQueryPromise);
 
-    const result = _.flatMap(responseList, (res) => {
+    const result = _.flatMap(responseList, (res, index) => {
       const data = res.data;
+      const isTable = this._isTableQuery(targets[index]);
       const isTimechart = data.metaData.extraData.timechart == 'true';
       const seriesField = data.metaData.extraData.series;
       const groupbyFields = data.metaData.extraData.groupby_fields;
@@ -38,6 +39,8 @@ class DsPanel {
 
       if (res.data.events.length === 0) {
         return [];
+      } else if (isTable) {
+        return this._composeTable(data.events, data.metaData.fieldOrder);
       } else if (seriesField) {
         return this._composeMultiSeriesTimechart(data.events, seriesField, valueField);
       } else if (isTimechart) {
@@ -99,6 +102,21 @@ class DsPanel {
         };
       }
     });
+  }
+
+  private _composeTable(rows: Array<object>, columns: Array<string>) {
+    return [{
+      columns: columns.map(column => { return { text: column } }),
+      rows: rows.map(row => columns.map(column => row[column])),
+      type: 'table'
+    }];
+  }
+
+    private _isTableQuery(target): boolean {
+      return typeof (target.humioQuery) === 'string'
+        // Check search string for 'table(*)'.
+        ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
+        : false;
   }
 }
 
