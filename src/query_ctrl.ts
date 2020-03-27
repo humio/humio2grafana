@@ -1,6 +1,9 @@
 import {QueryCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
 import HumioHelper from './helper';
+import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
+import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 
 import './css/query-editor.css!';
 
@@ -15,7 +18,20 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
   originalUrl: string;
 
   dataspaces: any[];
-  datasource: any;
+  datasource: {
+    id: string,
+    url: string,
+    dsAttrs: IDatasourceAttrs,
+    headers: IDatasourceRequestHeaders,
+    timeRange: {
+      from: any, // Moment
+      to: any, // Moment
+      raw: {
+        from: string,
+        to: string
+      }
+    }
+  };
   target: any;
 
   panelCtrl: any;
@@ -123,21 +139,17 @@ class GenericDatasourceQueryCtrl extends QueryCtrl {
 
   _getHumioDataspaces() {
     if (this.datasource.url) {
-      let requestOpts = {
-        method: 'GET',
-        url: this.datasource.url + '/api/v1/dataspaces',
+      const requestOpts: IDatasourceRequestOptions = {
+        method: 'POST',
+        url: this.datasource.url + '/graphql',
         headers: this.datasource.headers,
-      };
+        data: { query: '{searchDomains{name}}' },
+      }
 
       return this.datasource.dsAttrs.backendSrv
         .datasourceRequest(requestOpts)
         .then(r => {
-          let res = r.data.map(ds => {
-            return {
-              value: ds.name,
-              name: ds.name,
-            };
-          });
+          const res = r.data.data.searchDomains.map(({ name }) => ({ value: name, name }));
           return _.sortBy(res, ['name']);
         });
     } else {

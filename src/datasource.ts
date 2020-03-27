@@ -1,8 +1,7 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-import HumioHelper from './helper';
-import DsPanel from './DsPanel';
 import DsPanelStorage from './DsPanelStorage';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 
 export class GenericDatasource {
@@ -15,7 +14,7 @@ export class GenericDatasource {
 
   templateSrv: any; // TODO: not sure if needed
 
-  headers: any;
+  headers: IDatasourceRequestHeaders;
 
   dsPanelStorage: DsPanelStorage;
   withCredentials: boolean;
