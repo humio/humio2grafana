@@ -34,7 +34,14 @@ class HumioQueryCtrl extends QueryCtrl {
 
     this.target.humioQuery = this.target.humioQuery || 'timechart()';
     this.target.humioRepository = this.target.humioRepository || undefined;
-    this.hostUrl = this.datasource.url;
+
+    this.hostUrl = '';
+    $http({
+      url: '/api/datasources/' + this.datasource.id,
+      method: 'GET',
+    }).then(res => {
+      this.hostUrl = res.data.url;
+    });
 
     this._getHumioRepositories().then(repositories => {
       this.repositories = repositories;
@@ -46,7 +53,7 @@ class HumioQueryCtrl extends QueryCtrl {
       return '#';
     } else {
       let queryParams = this._composeQueryArgs();
-      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
+      return `${this.hostUrl}${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
     }
   }
 

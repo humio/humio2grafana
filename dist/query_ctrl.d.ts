@@ -1,36 +1,24 @@
 import { QueryCtrl } from 'app/plugins/sdk';
-import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
-import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
+import IDatasource from './Interfaces/IDatasource';
+import ITarget from './Interfaces/ITarget';
 import './css/query-editor.css!';
-declare class GenericDatasourceQueryCtrl extends QueryCtrl {
+declare class HumioQueryCtrl extends QueryCtrl {
     static templateUrl: string;
     $http: any;
     $scope: any;
     $q: any;
     $location: any;
-    originalUrl: string;
-    dataspaces: any[];
-    datasource: {
-        id: string;
-        url: string;
-        dsAttrs: IDatasourceAttrs;
-        headers: IDatasourceRequestHeaders;
-        timeRange: {
-            from: any;
-            to: any;
-            raw: {
-                from: string;
-                to: string;
-            };
-        };
-    };
-    target: any;
+    hostUrl: string;
+    repositories: any[];
+    datasource: IDatasource;
+    target: ITarget;
     panelCtrl: any;
-    constructor($scope: any, $injector: any, $http: any, $q: any, datasourceSrv: any, $location: any);
+    constructor($scope: any, $injector: any, $http: any, $q: any, $location: any);
     getHumioLink(): string;
-    onChangeInternal(): void;
     showHumioLink(): boolean;
-    _serializeQueryOpts(obj: any): string;
-    _getHumioDataspaces(): any;
+    onChangeInternal(): void;
+    private _getHumioRepositories;
+    private _composeQueryArgs;
+    private _serializeQueryArgs;
 }
-export default GenericDatasourceQueryCtrl;
+export default HumioQueryCtrl;
