@@ -1,6 +1,7 @@
-
-class HumioHelper {
-  static checkToDateNow(toDateCheck: any) {
+ import { WidgetType } from '../Types/WidgetType';
+ 
+ class HumioHelper {
+  static dateIsNow(toDateCheck: any) {
     if (typeof toDateCheck === "string") {
       return toDateCheck.match(/^(now[^-]|now$)/) != null;
     } else {
@@ -8,17 +9,29 @@ class HumioHelper {
     }
   }
 
-  static getPanelType(queryStr: string) {
-    let buf = queryStr.split("|"); // getting last part in the pipe
-    let lastFx = buf[buf.length - 1];
-    if (lastFx.trim().match(/^timechart\(.*\)$/)) {
-      return "time-chart";
-    } else {
-      return undefined;
-    }
+  static queryIsLive($location, date){
+    return HumioHelper.automaticPanelRefreshHasBeenActivated($location) &&
+      HumioHelper.dateIsNow(date);
   }
 
-  static parseDateFrom(date) {
+  static automaticPanelRefreshHasBeenActivated($location){
+    return ($location ? $location.search().refresh || null : null) != null;
+  }
+
+  static widgetType(data, target){
+    if (data.metaData.extraData.timechart == 'true') return WidgetType.timechart;
+    if (this.isTableQuery(target)) return WidgetType.table;
+    if (data.metaData.extraData['ui:suggested-widget'] == 'world-map') return WidgetType.worldmap;
+    else return WidgetType.untyped;
+  }
+
+  static isTableQuery(target): boolean {
+    return typeof (target.humioQuery) === 'string'
+      ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
+      : false;
+  }
+
+  static parseDateFrom(date: string) {
     switch (date) {
       case "now-2d":
         {

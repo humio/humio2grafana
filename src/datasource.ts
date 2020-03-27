@@ -1,118 +1,97 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
-import DsPanelStorage from './DsPanelStorage';
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
+import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
+import QueryJobManager from './humio/query_job_manager';
 
-export class GenericDatasource {
-  type: string;
+/**
+ * Describes an instance of a Humio data source registered to Grafana
+ */
+export class HumioDatasource {
   url: string;
-  name: string;
   id: string;
-
-  dsAttrs: IDatasourceAttrs;
-
-  templateSrv: any; // TODO: not sure if needed
-
+  humioToken : string;
+  datasourceAttrs: IDatasourceAttrs;
   headers: IDatasourceRequestHeaders;
-
-  dsPanelStorage: DsPanelStorage;
-  withCredentials: boolean;
-
-  timeRange: any; // FIXME: used by parent controller
+  timeRange: any;
 
   /** @ngInject */
-  constructor(
-    instanceSettings,
-    $q,
-    backendSrv,
-    templateSrv,
-    $location,
-    $rootScope,
-  ) {
-    this.type = instanceSettings.type;
-    this.url = instanceSettings.url
-      ? instanceSettings.url.replace(/\/$/, '')
-      : '';
-    this.name = instanceSettings.name;
+  constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
+    this.url = instanceSettings.url;
     this.id = instanceSettings.id;
-
-    this.dsAttrs = {
+    
+    this.datasourceAttrs = {
       $q: $q,
       $location: $location,
       backendSrv: backendSrv,
       $rootScope: $rootScope,
     };
 
-    this.templateSrv = templateSrv;
-
+    let humioToken = instanceSettings.jsonData ? instanceSettings.jsonData.humioToken || ''  : ''
     this.headers = {
       'Content-Type': 'application/json',
-      Authorization:
-        'Bearer ' +
-        (instanceSettings.jsonData
-          ? instanceSettings.jsonData.humioToken || ''
-          : ''),
+      Authorization: 'Bearer ' + humioToken,
     };
 
-    this.dsPanelStorage = new DsPanelStorage();
-
     this.timeRange = null;
-
-    this.doRequest = this.doRequest.bind(this);
+    this._doRequest = this._doRequest.bind(this);
   }
 
+  /**
+   * Executes all queries registered to a panel, which uses this data source.
+   * Implicitly called by Grafana during a panel refresh.
+   */
   query(options) {
-    this.timeRange = options.range;
-
-    // NOTE: if no tragests just return an empty result
     if (options.targets.length === 0) {
-      return this.dsAttrs.$q.resolve({
+      return this.datasourceAttrs.$q.resolve({
         data: [],
       });
     }
+    
+    let errorCallback = (errorTitle, errorBody) => {
+      this.datasourceAttrs.$rootScope.appEvent(errorTitle, errorBody);
+     }
+    let grafanaAttrs: IGrafanaAttrs = {
+      grafanaQueryOpts: options,
+      errorCallback: errorCallback,
+      doRequest: this._doRequest,
+    };
 
-    let panelId = options.panelId;
+    this.timeRange = options.range; 
+    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId);
 
-    // TODO: take a look at the second argument
-    let dsPanel = this.dsPanelStorage.getOrGreatePanel(panelId);
-
-    if (dsPanel) {
-      let grafanaAttrs: IGrafanaAttrs = {
-        grafanaQueryOpts: options,
-        errorCb: (errorTitle, errorBody) => {
-          this.dsAttrs.$rootScope.appEvent(errorTitle, errorBody);
-        },
-        doRequest: this.doRequest,
-      };
-      return dsPanel.update(this.dsAttrs, grafanaAttrs, options.targets);
-    } else {
-      // TODO: handle the case
-      return this.dsAttrs.$q.resolve({
-        data: [],
-      });
-    }
+    return queryJobManager.update(this.datasourceAttrs, grafanaAttrs, options.targets);
   }
 
+   /**
+   * Tests connection to this data source given the registered url and token. 
+   * Implicitly called by Grafana when user clicks the "Save & Test" button during data source configuration.
+   */
   testDatasource() {
-    return this.doRequest({
-      url: '/api/v1/users/current',
-      method: 'GET',
-    }).then(response => {
-      if (response.status === 200) {
-        return {
-          status: 'success',
-          message: 'Data source is working',
-          title: 'Success',
-        };
-      }
-    });
+    const requestOpts: IDatasourceRequestOptions = {
+      method: 'POST',
+      url: this.url + '/graphql',
+      headers: this.headers,
+      data: { query: '{currentUser{id}}' }, 
+    }
+
+    return this.datasourceAttrs.backendSrv
+      .datasourceRequest(requestOpts)
+        .then(response => {
+          if (response.status === 200) {
+            return {
+            status: 'success',
+            message: 'Data source is working',
+            title: 'Success',
+            };
+          }
+        });
   }
 
-  doRequest(options) {
-    options.withCredentials = this.withCredentials;
+  private _doRequest(options) {
     options.headers = this.headers;
-    options.url = this.url + options.url; // NOTE: adding base
-    return this.dsAttrs.backendSrv.datasourceRequest(options);
+    options.url = this.url + options.url;
+    return this.datasourceAttrs.backendSrv.datasourceRequest(options);
   }
 }

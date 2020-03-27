@@ -67,7 +67,7 @@ module.exports = function (grunt) {
 
     ts: {
       build: {
-        src: ['src/*.ts', 'src/**/*.ts', '!**/*.d.ts'],
+        src: ['src/*.ts', 'src/**/*.ts', '!**/*.d.ts', 'src/humio/*.ts', 'src/humio/**/*.ts', '!**/humio/*.d.ts'],
         dest: 'dist',
         tsconfig: './tsconfig.json',
       },
