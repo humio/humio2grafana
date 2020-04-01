@@ -6,7 +6,7 @@
   "scripts": {
     "build": "grunt",
     "watch": "grunt watch",
-    "test": "./node_modules/karma/bin/karma start"
+    "test": "node_modules/karma/bin/karma start"
   },
   "homepage": "https://github.com/humio/humio2grafana#readme",
   "keywords": [
@@ -46,6 +46,7 @@
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-read-json": "^1.1.0",
     "karma-systemjs": "^0.16.0",
+    "karma-cli": "^2.0.0",
     "load-grunt-tasks": "^3.5.2",
     "mocha": "^5.0.0",
     "plugin-typescript": "^7.1.0",
