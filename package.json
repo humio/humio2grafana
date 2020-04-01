@@ -6,7 +6,7 @@
   "scripts": {
     "build": "grunt",
     "watch": "grunt watch",
-    "test": "node_modules/karma/bin/karma start"
+    "test": "./node_modules/karma/bin/karma start"
   },
   "homepage": "https://github.com/humio/humio2grafana#readme",
   "keywords": [
