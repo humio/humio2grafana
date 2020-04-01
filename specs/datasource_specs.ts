@@ -8,53 +8,50 @@ var testResp = readJSON('specs/assets/test_response.json');
 var testRespMultipleDS = readJSON('specs/assets/test_response_multiple_series.json');
 var testRespSimpleGauge = readJSON('specs/assets/test_response_simple_gauge.json');
 
+function mockApiCallsForQueryJobs(ctx, expected_payload){
+  ctx.backendSrv.datasourceRequest = (request) => {
+    // Mocking out API call for creating a query job
+    if (request.url === "https://cloud.humio.com/api/v1/dataspaces/humio/queryjobs") {
+      return ctx.$q.resolve({
+        _request: request,
+        data: {id: "wZXe96fINr7ZktsEvb4utIp2"}
+      });
+    // Mocking out API call for polling data from an existing query job
+    } else {
+      return ctx.$q.resolve({
+        _request: request,
+        data: expected_payload
+      });
+    }
+  };
+}
+
 describe('HumioDatasource', function() {
   this.time
   let ctx: any = {
     backendSrv: {},
   };
 
+  // Sets up the HumopDatasource used by all tests.
   beforeEach(function() {
     ctx.$q = Q;
     ctx.instanceSettings = {url: "https://cloud.humio.com", id:1};
     ctx.$location = { search() {return true }}
+    // $rootScope has not been mocked, may create issues when tests need to use it.  
     ctx.ds = new HumioDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.$location, {});
-    
   });
 
-  describe('Testing empty targets', () => {
-    it('should return an empty array when no targets are set', (done) => {
-      ctx.ds.query({targets: []}).then((result) => {
-        expect(result.data).to.have.length(0);
-        done();
-      }).catch(done);
+  describe('Testing no targets', () => {
+    it('should return an empty array when no targets are set', async () => {
+      let result = await ctx.ds.query({targets: []});
+      expect(result.data).to.have.length(0);
+      })
     });
-  });
   
-  // Testing response for timecharting a single series
-  // ctx has been injected into the HumioDataSource object to make calls to Humio,
-  // these API calls are mocked out for our tests. 
-  describe('Testing timechart response', () => {
-    beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (request) => {
-        // Mocking out API call for creating a query job
-        if (request.url === "https://cloud.humio.com/api/v1/dataspaces/humio/queryjobs") {
-          // NOTE: creating new query
-          return ctx.$q.resolve({
-            _request: request,
-            data: {id: "wZXe96fINr7ZktsEvb4utIp2"}
-          });
-        // Mocking out API call for polling data from a query job
-        } else {
-          return ctx.$q.resolve({
-            _request: request,
-            data: testResp // Expected payload of response
-          });
-        }
-      };
-    });
+  describe('Testing response for a timechart() query with a single series', () => {
+    beforeEach(() => mockApiCallsForQueryJobs(ctx, testResp));
 
-    it('should return the server results when a target is set', async () => {
+    it('should return a single time series readable by Grafana', async () => {
       let result = await ctx.ds.query({
         targets: [
           {
@@ -80,26 +77,10 @@ describe('HumioDatasource', function() {
     });
   });
 
-  describe("Testing multiple series", () => {
-    // NOTE: timechart, multiple series
-    beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (request) => {
-        if (request.url === "https://cloud.humio.com/api/v1/dataspaces/humio/queryjobs") {
-          // NOTE: creating new query
-          return ctx.$q.resolve({
-            _request: request,
-            data: {id: "wZXe96fINr7ZktsEvb4utIp2"}
-          });
-        } else {
-          return ctx.$q.resolve({
-            _request: request,
-            data: testRespMultipleDS
-          });
-        }
-      };
-    });
+  describe("Testing response for a timechart() query with multiple series", () => {
+    beforeEach(() => mockApiCallsForQueryJobs(ctx, testRespMultipleDS));
 
-    it('should return the server results when a target is set, and multiple series are returned', async () => {
+    it('should return multiple time series readable by Grafana', async () => {
       var result = await ctx.ds.query({
         targets: [
           {
@@ -126,25 +107,9 @@ describe('HumioDatasource', function() {
     });
   });
   
-  describe("Testing simple gauge", () => {
-    // NOTE: simple gauge
-    beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (request) => {
-        if (request.url === "https://cloud.humio.com/api/v1/dataspaces/humio/queryjobs") {
-          // NOTE: creating new query
-          return ctx.$q.resolve({
-            _request: request,
-            data: {id: "wZXe96fINr7ZktsEvb4utIp2"}
-          });
-        } else {
-          return ctx.$q.resolve({
-            _request: request,
-            data: testRespSimpleGauge
-          });
-        }
-      };
-    });
-    it('should return the server results when a target is set for simple gauge visualisation', async () => {
+  describe("Testing response for a query count() query", () => {
+    beforeEach(() => mockApiCallsForQueryJobs(ctx, testRespSimpleGauge));
+    it('should return a single data point in a format readable by Grafana', async () => {
       var result = await ctx.ds.query({
         targets: [
           {
