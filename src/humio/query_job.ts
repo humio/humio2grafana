@@ -33,7 +33,7 @@ class QueryJob {
     }
 
     const requestedQueryDefinition = this._getRequestedQueryDefinition(datasourceAttrs, grafanaAttrs, target);
-    
+
     if(this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)){
       return this._pollQueryJobUntilDone(datasourceAttrs, grafanaAttrs, target);
     }
@@ -149,7 +149,7 @@ class QueryJob {
   private _pollQueryJobForNextBatch(datasourceAttrs: IDatasourceAtts, grafanaAttrs: IGrafanaAttrs, target: ITarget): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.queryId) {
-        return Promise.resolve([]);
+        return resolve({data: {events: [], done: true}});
       }
 
       return grafanaAttrs

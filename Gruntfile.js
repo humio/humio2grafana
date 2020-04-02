@@ -46,7 +46,6 @@ module.exports = function (grunt) {
             debug: false,
           },
         },
-        // TODO: temporary file by file solution
         files: [
           {
             src: ['src/partials/annotations.editor.pug'],

@@ -60,7 +60,7 @@ export class HumioDatasource {
 
     this.timeRange = options.range; 
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId);
-
+    
     return queryJobManager.update(this.datasourceAttrs, grafanaAttrs, options.targets);
   }
 
