@@ -33,7 +33,7 @@ We also encourage you to separate unrelated contributions into different pull re
     * MacOS: /usr/local/var/lib/grafana/data/plugins
     * Windows: C:\Program Files\GrafanaLabs\grafana\data\plugins
 
-    If you have multiple plugins, rename the folder to `humio2grafana` to not cause a naming conflict.
+    If you have multiple plugins, rename the copied folder to `humio2grafana` to not cause a naming conflict.
 
     If you do not want to copy future builds symlink the local `dist` folder into the plugins directory. On Unix systems the symlink can be created in the following manner:
     ```bash
@@ -56,7 +56,6 @@ We also encourage you to separate unrelated contributions into different pull re
 
 ### Sidenote: Running Humio Locally Alongside Grafana
 Both Grafana and Humio use port 3000 as their default TCP port. This results in clashes when attempting to run them on the same system. To change Grafana's default port find the `grafana.ini` file, location depending on OS,and modify its `http_port` field. Then restart Grafana to apply the change.
-
 
 ## Running Tests locally
 The tests are made to be run by the `karma` test runner. To run the local tests:
@@ -81,7 +80,7 @@ All test code can be found in the `specs` folder. API calls to Humio are mocked 
 When you have made your changes locally, or you want feedback on a work in progress, you're almost ready to make a pull request. Before doing so however, please go through the following checklist:
 
 1. Write new test cases if the old ones do not cover your new code.   
-2. Run the tests locally and see that they pass
+2. Run the tests locally and check that they pass
 3. Add yourself to ``AUTHORS.md``.
 
 When you've been through the the checklist, push your final changes to your development branch on GitHub.
