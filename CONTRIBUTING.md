@@ -78,35 +78,15 @@ The tests are made to be run by the `karma` test runner. To run the local tests:
 All test code can be found in the `specs` folder. API calls to Humio are mocked out, so tests run determinsitically and offline.
 
 ## Making A Pull Request
-When you have made your changes locally, or you want feedback on a work in progress, you're almost ready to make a pull request.
+When you have made your changes locally, or you want feedback on a work in progress, you're almost ready to make a pull request. Before doing so however, please go through the following checklist:
 
-Before you submit your pull request please go through the following check list.
-
-1. Write new test cases if the old ones do not cover your new code.
-2. Bump the version of the project according to [semantic versioning](https://semver.org/). 
-    
-    If you have made a bug fix:
-    ```bash
-    npm version patch
-    ```
-
-    If you have added a feature:
-    ```bash
-    npm version minor
-    ```
-
-    If you want to create a breaking change that requires a bump of the major version, please contact the maintainers so we can agree on a direction.
-    
-4. Add a note to ``CHANGELOG.md`` under the new version, which describes your contribution. Be thorough and add each of the following sections to your entry if applicable:
-    * Added
-    * Changed
-    * Removed
-
-5. Add yourself to ``AUTHORS.md``.
+1. Write new test cases if the old ones do not cover your new code.   
+2. Run the tests locally and see that they pass
+3. Add yourself to ``AUTHORS.md``.
 
 When you've been through the the checklist, push your final changes to your development branch on GitHub.
-Afterwards, use the GitHub interface to create a pull request to the official repository.
 
+Congratulations! Your branch is now ready to be included submitted as a pull requests. Got to [humio2grafana](https://github.com/humio/humio2grafana) and use the pull request feature to submit your contribution for review.
 
 Terms of Service For Contributors
 =================================
