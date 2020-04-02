@@ -39,7 +39,7 @@ We also encourage you to separate unrelated contributions into different pull re
     ```bash
     ln -s $(pwd)/dist {grafana-plugins-directory}/humio2grafana
     ```
-6. Restart Grafana to apply your plugin. You should now be ready to implement your changes.
+6. Restart Grafana to apply the plugin. It should not be accessible from Grafana, and you are now ready to implement your changes.
 
 7. If you want, you can activate the `watch` feature to automatically build the plugin, when you change the source code.
     ```bash
@@ -64,11 +64,13 @@ The tests are made to be run by the `karma` test runner. To run the local tests:
     ```bash
     npm install -g karma-cli
     ```
-2. Run tests a single time
+2. Run tests.
+    
+    Either a single time:
     ```bash
     karma start --single-run
     ```
-    Or run tests at each change to code:
+    Or run tests continously at each change to the code:
     ```bash
     karma start
     ```
@@ -78,17 +80,29 @@ All test code can be found in the `specs` folder. API calls to Humio are mocked 
 ## Making A Pull Request
 When you have made your changes locally, or you want feedback on a work in progress, you're almost ready to make a pull request.
 
-If you have changed part of the codebase in your pull request, please go through this other checklist instead:
+Before you submit your pull request please go through the following check list.
 
 1. Write new test cases if the old ones do not cover your new code.
-2.
-3. Bump the version of the project by using bump2version. Use `patch` for bug fixes and `minor` for new features::
-
-    pip install bump2version
-    bump2version {patch or minor}
+2. Bump the version of the project according to [semantic versioning](https://semver.org/). 
     
-4. Add a note to ``CHANGELOG.rst`` under the new version, which describes your contribution.
-5. Add yourself to ``AUTHORS.rst``.
+    If you have made a bug fix:
+    ```bash
+    npm version patch
+    ```
+
+    If you have added a feature:
+    ```bash
+    npm version minor
+    ```
+
+    If you want to create a breaking change that requires a bump of the major version, please contact the maintainers so we can agree on a direction.
+    
+4. Add a note to ``CHANGELOG.md`` under the new version, which describes your contribution. Be thorough and add each of the following sections to your entry if applicable:
+    * Added
+    * Changed
+    * Removed
+
+5. Add yourself to ``AUTHORS.md``.
 
 When you've been through the the checklist, push your final changes to your development branch on GitHub.
 Afterwards, use the GitHub interface to create a pull request to the official repository.
