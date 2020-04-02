@@ -1,26 +1,31 @@
 # Humio2Grafana
-This document will help you contribute to this repo. If you're merely interested in using the plugin, please see the official [documentation](https://docs.humio.com/integrations/other/grafana/) for instructions on installation and usage.
+This repository hosts code for the Humio plugin for Grafana. Full documentation can be found in the official [humio docs](https://docs.humio.com/integrations/other/grafana/).
+
+
+## Vision
+The vision for the Humio Grafana plugin, is to create a plugin for Grafana, which allows users to create Grafana panels that pull data from Humio. It should be possible for users to write pure Humio queries in Grafana to populate their panels. Development seeks to keep the plugin up to date with both Grafana and Humio as they evolve. 
+
+## Governance
+This project is maintained by employees at Humio ApS.
+As a general rule, only employees at Humio can become maintainers and have commit privileges to this repository.
+Therefore, if you want to contribute to the project, which we very much encourage, you must first fork the repository.
+Maintainers will have the final say on accepting or rejecting pull requests.
+As a rule of thumb, pull requests will be accepted if:
  
-Before contributing please read our [contributors’ guidelines](CONTRIBUTING.md). We very much encourage that you add issues and pull requests to this repo as the need arises.
+   * The contribution fits with the project's vision
+   * All automated tests have passed
+   * The contribution is of a quality comparable to the rest of the project
  
+The maintainers will attempt to react to issues and pull requests quickly, but their ability to do so can vary.
+If you haven't heard back from a maintainer within 7 days of creating an issue or making a pull request, please feel free to ping them on the relevant post.
+
+Maintainers will also be in charge of both versioning and publishing future releases of the project. This includes adding versioning tags and adding to the changelog file.
  
-## Setting Up Your Development Environment
-To setup your development environment, you must install the plugin as described in the [documentation](https://docs.humio.com/integrations/other/grafana/).
+The active maintainers involved with this project include:
+  
+   * [Alexander Brandborg](https://github.com/AlexanderBrandborg)
+   * [Suzanna Volkov](https://github.com/Suzanna-Volkov)
+
  
-Now, each time you make a change to the code, you need to:
-1. Rebuild the `dist` folder
-2. Copy it to the Grafana plugin folder
-3. Restart the Grafana service
- 
-To make this a bit easier, a "watch" script has been created, which rebuilds `dist` at each change to the code base. Activate it by running:
-```bash
-yarn run watch
-```
- 
-In addition, you can symlink the `dist` folder into the Grafana plugin folder, to avoid having to copy it manually after each build. On Unix systems this can be done by entering the command:
-```bash
-ln -s $(pwd)/dist {grafana-install-path}/plugins/humio2grafana
-```
- 
-## Running Humio and Grafana on the Same System
-Both Grafana and Humio use port 3000 as their default TCP port. This results in clashes when attempting to run them on the same system. To change Grafana's default port find the `grafana.ini` file, location depending on OS, and modify its `http_port` field. Then restart Grafana to apply the change.
+## Installation & Usage
+For installation and  usage of the plugin please see our [documentation](https://docs.humio.com/integrations/other/grafana/).
