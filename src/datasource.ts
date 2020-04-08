@@ -79,13 +79,27 @@ export class HumioDatasource {
     return this.datasourceAttrs.backendSrv
       .datasourceRequest(requestOpts)
         .then(response => {
-          if (response.status === 200) {
+          if (response.data.data != null) {
             return {
             status: 'success',
             message: 'Data source is working',
             title: 'Success',
             };
           }
+          else { // This case is reached if no Authorization was given, which still yields a 200 at the endpoint
+            return {
+              status: "error",
+              message: response.data.errors[0].message,
+              title: "Error"
+            };
+          }
+        },
+        err => { 
+          return {
+            status: "error",
+            message: err.statusText,
+            title: "Error"
+          };
         });
   }
 
