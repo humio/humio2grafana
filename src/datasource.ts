@@ -77,7 +77,7 @@ export class HumioDatasource {
     }
 
     return this.datasourceAttrs.backendSrv
-      .datasourceRequest(requestOpts)
+      .datasourceRequest({url: this.url + "/humio/graphql", method: "POST", data: { query: '{currentUser{id}}' }})
         .then(response => {
           if (response.data.data != null) {
             return {
@@ -104,8 +104,7 @@ export class HumioDatasource {
   }
 
   private _doRequest(options) {
-    options.headers = this.headers;
-    options.url = this.url + options.url;
+    options.url = this.url + "/humio" + options.url;
     return this.datasourceAttrs.backendSrv.datasourceRequest(options);
   }
 }

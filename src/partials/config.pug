@@ -1,4 +1,7 @@
-datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com")
-h5 Humio access token
+h5 Humio Url
 .gf-form
-  input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
+  input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.baseUrl', placeholder="https://cloud.humio.com")
+
+h5 Humio Access Token
+.gf-form
+  input.gf-form-input(type="text", ng-model='ctrl.current.secureJsonData.humioToken', placeholder="")

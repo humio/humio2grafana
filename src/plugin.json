@@ -22,6 +22,15 @@
     "version": "1.0.5",
     "updated": "2018-11-28"
   },
+  "routes": [{
+    "path": "humio",
+    "method": "*",
+    "url": "{{.JsonData.baseUrl}}",
+    "headers": [
+      {"name": "Authorization", "content": "Bearer {{.SecureJsonData.humioToken}}"},
+      {"name": "Content-Type", "content" : "application/json"}
+    ]
+  }],
   "dependencies": {
     "grafanaVersion": "5.x.x",
     "plugins": [ ]

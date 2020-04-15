@@ -5,7 +5,9 @@ export class HumioConfigCtrl {
   constructor() {
     this.current = this.current || {};
     this.current.jsonData = this.current.jsonData || {};
-    this.current.jsonData.humioToken = this.current.jsonData.humioToken || "";
+    this.current.jsonData.baseUrl = this.current.url || "";
+    this.current.secureJsonData = this.current.secureJsonData || {};
+    this.current.secureJsonData.humioToken = this.current.secureJsonData.humioToken || "";
   }
 }
 

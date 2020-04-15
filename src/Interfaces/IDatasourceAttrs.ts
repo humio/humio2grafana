@@ -4,7 +4,7 @@ interface IDatasourceAttrs {
   $q: any;
   $location: any;
   backendSrv: {
-    datasourceRequest: (options: IDatasourceRequestOptions) => Promise<{
+    datasourceRequest: (options: any) => Promise<{
         data: any;
         [key: string]: any;
     }>;

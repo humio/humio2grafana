@@ -32,8 +32,8 @@ class HumioQueryCtrl extends QueryCtrl {
     this.$q = $q;
     this.$location = $location;
 
-    this.target.humioQuery = this.target.humioQuery || 'timechart()';
-    this.target.humioRepository = this.target.humioRepository || undefined;
+    this.target.humioQuery = this.target.humioQuery || undefined;
+    this.target.humioRepository = this.target.humioRepository || "";
 
     this.hostUrl = '';
     $http({
@@ -71,10 +71,9 @@ class HumioQueryCtrl extends QueryCtrl {
       return this.$q.when([]);
     }
 
-    const requestOpts: IDatasourceRequestOptions = {
+    const requestOpts: any = {
       method: 'POST',
-      url: this.datasource.url + '/graphql',
-      headers: this.datasource.headers,
+      url: this.datasource.url + "/humio/graphql",
       data: { query: '{searchDomains{name}}' },
     }
 
