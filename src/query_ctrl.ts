@@ -32,7 +32,7 @@ class HumioQueryCtrl extends QueryCtrl {
     this.$q = $q;
     this.$location = $location;
 
-    this.target.humioQuery = this.target.humioQuery || undefined;
+    this.target.humioQuery = this.target.humioQuery || 'timechart()';
     this.target.humioRepository = this.target.humioRepository || "";
 
     this.hostUrl = '';
