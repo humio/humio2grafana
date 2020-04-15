@@ -40,7 +40,7 @@ class HumioQueryCtrl extends QueryCtrl {
       url: '/api/datasources/' + this.datasource.id,
       method: 'GET',
     }).then(res => {
-      this.hostUrl = res.data.url;
+      this.hostUrl = res.data.jsonData.baseUrl;
     });
 
     this._getHumioRepositories().then(repositories => {
