@@ -41,6 +41,10 @@ class HumioQueryCtrl extends QueryCtrl {
       method: 'GET',
     }).then(res => {
       this.hostUrl = res.data.jsonData.baseUrl;
+      // Trim off the last / if it exists. Otherwise later url concatinations will be incorrect.
+      if(this.hostUrl[this.hostUrl.length - 1] === "/"){
+        this.hostUrl = this.hostUrl.substring(0, this.hostUrl.length - 1);
+      }
     });
 
     this._getHumioRepositories().then(repositories => {
@@ -53,7 +57,7 @@ class HumioQueryCtrl extends QueryCtrl {
       return '#';
     } else {
       let queryParams = this._composeQueryArgs();
-      return `${this.hostUrl}${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
+      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
     }
   }
 
