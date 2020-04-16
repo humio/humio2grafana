@@ -67,13 +67,13 @@ class HumioQueryCtrl extends QueryCtrl {
   }
 
   private _getHumioRepositories() {
-    if (!this.datasource.url) {
+    if (!this.datasource.proxy_url) {
       return this.$q.when([]);
     }
 
-    const requestOpts: any = {
+    const requestOpts: IDatasourceRequestOptions = {
       method: 'POST',
-      url: this.datasource.url + "/humio/graphql",
+      url: this.datasource.proxy_url + "/humio/graphql",
       data: { query: '{searchDomains{name}}' },
     }
 

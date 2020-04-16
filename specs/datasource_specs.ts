@@ -11,7 +11,7 @@ var testRespSimpleGauge = readJSON('specs/assets/test_response_simple_gauge.json
 function mockApiCallsForQueryJobs(ctx, expected_payload){
   ctx.backendSrv.datasourceRequest = (request) => {
     // Mocking out API call for creating a query job
-    if (request.url === "https://cloud.humio.com/api/v1/dataspaces/humio/queryjobs") {
+    if (request.url === "http://localhost:4000/api/datasources/proxy/1/humio/api/v1/dataspaces/humio/queryjobs") {
       return ctx.$q.resolve({
         _request: request,
         data: {id: "wZXe96fINr7ZktsEvb4utIp2"}
@@ -32,10 +32,10 @@ describe('HumioDatasource', function() {
     backendSrv: {},
   };
 
-  // Sets up the HumopDatasource used by all tests.
+  // Sets up the HumoiDatasource used by all tests.
   beforeEach(function() {
     ctx.$q = Q;
-    ctx.instanceSettings = {url: "https://cloud.humio.com", id:1};
+    ctx.instanceSettings = {url: "http://localhost:4000/api/datasources/proxy/1", id:1};
     ctx.$location = { search() {return true }}
     // $rootScope has not been mocked, may create issues when tests need to use it.  
     ctx.ds = new HumioDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.$location, {});

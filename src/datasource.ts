@@ -1,6 +1,5 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
-import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import QueryJobManager from './humio/query_job_manager';
@@ -9,16 +8,14 @@ import QueryJobManager from './humio/query_job_manager';
  * Describes an instance of a Humio data source registered to Grafana
  */
 export class HumioDatasource {
-  url: string;
+  proxy_url: string;
   id: string;
-  humioToken : string;
   datasourceAttrs: IDatasourceAttrs;
-  headers: IDatasourceRequestHeaders;
   timeRange: any;
 
   /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
-    this.url = instanceSettings.url;
+    this.proxy_url = instanceSettings.url;
     this.id = instanceSettings.id;
     
     this.datasourceAttrs = {
@@ -26,12 +23,6 @@ export class HumioDatasource {
       $location: $location,
       backendSrv: backendSrv,
       $rootScope: $rootScope,
-    };
-
-    let humioToken = instanceSettings.jsonData ? instanceSettings.jsonData.humioToken || ''  : ''
-    this.headers = {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + humioToken,
     };
 
     this.timeRange = null;
@@ -60,7 +51,7 @@ export class HumioDatasource {
 
     this.timeRange = options.range; 
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId);
-    
+
     return queryJobManager.update(this.datasourceAttrs, grafanaAttrs, options.targets);
   }
 
@@ -70,14 +61,13 @@ export class HumioDatasource {
    */
   testDatasource() {
     const requestOpts: IDatasourceRequestOptions = {
-      method: 'POST',
-      url: this.url + '/graphql',
-      headers: this.headers,
-      data: { query: '{currentUser{id}}' }, 
+      url: this.proxy_url + "/humio/graphql",
+      method: "POST",
+      data: { query: '{currentUser{id}}' } 
     }
 
     return this.datasourceAttrs.backendSrv
-      .datasourceRequest({url: this.url + "/humio/graphql", method: "POST", data: { query: '{currentUser{id}}' }})
+      .datasourceRequest(requestOpts)
         .then(response => {
           if (response.data.data != null) {
             return {
@@ -104,7 +94,7 @@ export class HumioDatasource {
   }
 
   private _doRequest(options) {
-    options.url = this.url + "/humio" + options.url;
+    options.url = this.proxy_url + "/humio" + options.url;
     return this.datasourceAttrs.backendSrv.datasourceRequest(options);
   }
 }
