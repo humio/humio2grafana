@@ -4,4 +4,6 @@ h5 Humio Url
 
 h5 Humio Access Token
 .gf-form
-  input.gf-form-input(type="text", ng-model='ctrl.current.secureJsonData.humioToken')
+  input.gf-form-input(type="text",   tooltip="Grafana Proxy deletes fo",  ng-model='ctrl.current.secureJsonData.humioToken')
+
+p Once the datasource is saved the contents of the 'Humio Access Token' field will be hidden. The datasource will continue to use the submitted token until it is changed. 
