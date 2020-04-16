@@ -42,7 +42,8 @@ class QueryJobManager {
     let allQueryPromise = targets.map((target: ITarget, index: number) => 
     {
       let query = this._getOrCreateQueryJob(index, target.humioQuery);
-      return query.executeQuery(datasourceAttrs, grafanaAttrs, target);
+      let res = query.executeQuery(datasourceAttrs, grafanaAttrs, target);
+      return res;
     });
 
     return Promise.all(allQueryPromise);

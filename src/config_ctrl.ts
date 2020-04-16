@@ -5,7 +5,7 @@ export class HumioConfigCtrl {
   constructor() {
     this.current = this.current || {};
     this.current.jsonData = this.current.jsonData || {};
-    this.current.jsonData.humioToken = this.current.jsonData.humioToken || "";
+    this.current.jsonData.baseUrl = this.current.jsonData.baseUrl || "";
   }
 }
 

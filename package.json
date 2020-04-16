@@ -1,6 +1,6 @@
 {
   "name": "humio2grafana",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "Humio datasouce for grafana",
   "main": "dist/module",
   "scripts": {

@@ -33,14 +33,18 @@ class HumioQueryCtrl extends QueryCtrl {
     this.$location = $location;
 
     this.target.humioQuery = this.target.humioQuery || 'timechart()';
-    this.target.humioRepository = this.target.humioRepository || undefined;
+    this.target.humioRepository = this.target.humioRepository || "";
 
     this.hostUrl = '';
     $http({
       url: '/api/datasources/' + this.datasource.id,
       method: 'GET',
     }).then(res => {
-      this.hostUrl = res.data.url;
+      this.hostUrl = res.data.jsonData.baseUrl;
+      // Trim off the last / if it exists. Otherwise later url concatinations will be incorrect.
+      if(this.hostUrl[this.hostUrl.length - 1] === "/"){
+        this.hostUrl = this.hostUrl.substring(0, this.hostUrl.length - 1);
+      }
     });
 
     this._getHumioRepositories().then(repositories => {
@@ -53,7 +57,7 @@ class HumioQueryCtrl extends QueryCtrl {
       return '#';
     } else {
       let queryParams = this._composeQueryArgs();
-      return `${this.hostUrl}${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
+      return `${this.hostUrl}/${this.target.humioRepository}/search?${this._serializeQueryArgs(queryParams)}`
     }
   }
 
@@ -67,14 +71,13 @@ class HumioQueryCtrl extends QueryCtrl {
   }
 
   private _getHumioRepositories() {
-    if (!this.datasource.url) {
+    if (!this.datasource.proxy_url) {
       return this.$q.when([]);
     }
 
     const requestOpts: IDatasourceRequestOptions = {
       method: 'POST',
-      url: this.datasource.url + '/graphql',
-      headers: this.datasource.headers,
+      url: this.datasource.proxy_url + "/humio/graphql",
       data: { query: '{searchDomains{name}}' },
     }
 
