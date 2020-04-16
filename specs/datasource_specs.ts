@@ -32,7 +32,7 @@ describe('HumioDatasource', function() {
     backendSrv: {},
   };
 
-  // Sets up the HumoiDatasource used by all tests.
+  // Sets up the HumioDatasource used by all tests.
   beforeEach(function() {
     ctx.$q = Q;
     ctx.instanceSettings = {url: "http://localhost:4000/api/datasources/proxy/1", id:1};
