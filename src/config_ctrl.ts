@@ -6,6 +6,9 @@ export class HumioConfigCtrl {
     this.current = this.current || {};
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.baseUrl = this.current.jsonData.baseUrl || "";
+    this.current.jsonData.tokenAuth = this.current.jsonData.tokenAuth || false;
+
+
   }
 }
 

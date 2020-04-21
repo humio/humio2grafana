@@ -23,12 +23,25 @@ div#encrypted Encrypted Tokens
 div#regular Regular
   datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com")
 
+  h5 Humio access token
+  .gf-form
+    input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
+
 
 script.
   var x = document.getElementById("encrypted");
   var y = document.getElementById("regular");
-  x.style.display = "block";
-  y.style.display = "none";
+  var test = document.getElementById("test");
+  console.log(test);
+
+  if(test.checked){
+    x.style.display = "block";
+    y.style.display = "none";
+  }
+  else{
+    x.style.display = "none";
+    y.style.display = "block";
+    }
 
   function clickme() {
   var x = document.getElementById("encrypted");

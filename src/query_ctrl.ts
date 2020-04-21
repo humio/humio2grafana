@@ -75,10 +75,23 @@ class HumioQueryCtrl extends QueryCtrl {
       return this.$q.when([]);
     }
 
-    const requestOpts: IDatasourceRequestOptions = {
-      method: 'POST',
-      url: this.datasource.proxy_url + "/humio/graphql",
-      data: { query: '{searchDomains{name}}' },
+    let requestOpts : IDatasourceRequestOptions;
+
+    if(this.datasource.tokenAuth){
+      requestOpts = {
+        method: 'POST',
+        url: this.datasource.proxy_url + "/humio/graphql",
+        data: { query: '{searchDomains{name}}' },
+      }
+    }
+    else
+    {
+      requestOpts = {
+        method: 'POST',
+        url: this.datasource.proxy_url + '/graphql',
+        headers: this.datasource.headers,
+        data: { query: '{searchDomains{name}}' }, 
+      }
     }
 
     return this.datasource.datasourceAttrs.backendSrv
