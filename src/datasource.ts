@@ -72,21 +72,19 @@ export class HumioDatasource {
    * Implicitly called by Grafana when user clicks the "Save & Test" button during data source configuration.
    */
   testDatasource() {
-    let requestOpts : IDatasourceRequestOptions;
+    let requestOpts : IDatasourceRequestOptions = 
+    {
+      url: this.proxy_url,
+      method: "POST",
+      data: { query: '{currentUser{id}}' } 
+    };
+
     if(this.tokenAuth){
-      requestOpts = {
-        url: this.proxy_url + "/humio/graphql",
-        method: "POST",
-        data: { query: '{currentUser{id}}' } 
-      }
+      requestOpts.url += "/humio/graphql";
     }
     else{
-      requestOpts = {
-        method: 'POST',
-        url: this.proxy_url + '/graphql',
-        headers: this.headers,
-        data: { query: '{currentUser{id}}' }, 
-      }
+      requestOpts.url += '/graphql';
+      requestOpts.headers = this.headers;
     }
 
     return this.datasourceAttrs.backendSrv

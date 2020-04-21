@@ -1,15 +1,32 @@
+p With this plugin you may authenticate using two overall strategies. Pick the strategy you want to use using the toggle below.
 
+
+// TODO: Graphic, doesn't always follow.
 .gf-form-group
   .gf-form-inline
     .gf-form-switch-container-react
-      label.gf-form.gf-form-switch-container(for="test") 
+      label.gf-form.gf-form-switch-container(for="auth_strategy") 
         .gf-form-label.pointer Authentication Strategy
         .gf-form-switch
-          input#test(type="checkbox" ng-model="ctrl.current.jsonData.tokenAuth" onclick='clickme()')
+          input#auth_strategy(type="checkbox" ng-model="ctrl.current.jsonData.tokenAuth" onclick='switchAuthStrategy()')
           span.gf-form-switch__slider
 
+div#no_token 
+  h3 Authenticate Without API Tokens 
+  p This authentication strategy allows you to authenticate without an API token. It's commonly used for Oauth based authentication.
 
-div#encrypted Encrypted Tokens 
+  datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com")
+
+  h5 Humio access token
+  .gf-form
+    input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
+
+div#token 
+  h3 Authenticate With Encrypted API Tokens 
+  p This authentication strategy allows you to authenticate with a personal API token. 
+  p Note that the token is encrypted and stored on Grafana's backend, so you can't access it via the browser after entry. br
+    This also means that all requests to Humio will be proxied through the Grafana server instance.
+
   h5 Humio Url
   .gf-form
     input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.baseUrl', placeholder="https://cloud.humio.com")
@@ -20,37 +37,22 @@ div#encrypted Encrypted Tokens
 
   p Once the datasource is saved the contents of the 'Humio Access Token' field will be hidden. The datasource will continue to use the submitted token until it is changed. 
 
-div#regular Regular
-  datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com")
-
-  h5 Humio access token
-  .gf-form
-    input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
-
 
 script.
-  var x = document.getElementById("encrypted");
-  var y = document.getElementById("regular");
-  var test = document.getElementById("test");
-  console.log(test);
+  function switchAuthStrategy() {
+    var non_token_elements = document.getElementById("no_token");
+    var token_elements = document.getElementById("token");
+    var authenticate_with_tokens = document.getElementById("auth_strategy").checked;
+    console.log(authenticate_with_tokens);
 
-  if(test.checked){
-    x.style.display = "block";
-    y.style.display = "none";
-  }
-  else{
-    x.style.display = "none";
-    y.style.display = "block";
+    if(authenticate_with_tokens){
+      token_elements.style.display = "block";
+      non_token_elements.style.display = "none";
     }
-
-  function clickme() {
-  var x = document.getElementById("encrypted");
-  var y = document.getElementById("regular");
-  if (x.style.display === "none") {
-    x.style.display = "block";
-    y.style.display = "none";
-  } else {
-    x.style.display = "none";
-    y.style.display = "block";
-  }
+    else{
+      token_elements.style.display = "none";
+      non_token_elements.style.display = "block";
+    }
   } 
+
+  switchAuthStrategy();
