@@ -12,11 +12,13 @@ export class HumioDatasource {
   id: string;
   datasourceAttrs: IDatasourceAttrs;
   timeRange: any;
+  tokenAuth: false;
 
   /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
     this.proxy_url = instanceSettings.url;
     this.id = instanceSettings.id;
+    this.tokenAuth = instanceSettings.jsonData.tokenAuth;
     
     this.datasourceAttrs = {
       $q: $q,

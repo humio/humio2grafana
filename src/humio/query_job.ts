@@ -139,7 +139,7 @@ class QueryJob {
             resolve(res);
           } else {
             var waitTimeUntilNextPoll = res['data']['metaData']['pollAfter'];
-            setTimeout(() => {recursivePollingFunc();}, 40220); // If we don't wait the stated amount, Humio will return the same data again.
+            setTimeout(() => {recursivePollingFunc();}, waitTimeUntilNextPoll); // If we don't wait the stated amount, Humio will return the same data again.
           }
         });
       };
