@@ -34,6 +34,7 @@ class QueryJob {
 
     const requestedQueryDefinition = this._getRequestedQueryDefinition(datasourceAttrs, grafanaAttrs, target);
 
+    // Executing the same live query again
     if(this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)){
       return this._pollQueryJobUntilDone(datasourceAttrs, grafanaAttrs, target);
     }
@@ -138,7 +139,7 @@ class QueryJob {
             resolve(res);
           } else {
             var waitTimeUntilNextPoll = res['data']['metaData']['pollAfter'];
-            setTimeout(() => {recursivePollingFunc();}, waitTimeUntilNextPoll); // If we don't wait the stated amount, Humio will return the same data again.
+            setTimeout(() => {recursivePollingFunc();}, 40220); // If we don't wait the stated amount, Humio will return the same data again.
           }
         });
       };
