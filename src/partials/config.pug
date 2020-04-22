@@ -1,4 +1,4 @@
-p With this plugin you may authenticate using two overall strategies. Pick the strategy you want to use using the toggle below.
+p With this plugin you may authenticate using one of two overall strategies. Pick the strategy you want to use using the toggle below.
 
 
 // TODO: Graphic, doesn't always follow.
@@ -8,10 +8,10 @@ p With this plugin you may authenticate using two overall strategies. Pick the s
       label.gf-form.gf-form-switch-container(for="auth_strategy") 
         .gf-form-label.pointer Authentication Strategy
         .gf-form-switch
-          input#auth_strategy(type="checkbox" ng-model="ctrl.current.jsonData.tokenAuth" onclick='switchAuthStrategy()')
+          input#auth_strategy(type="checkbox" ng-model="ctrl.current.jsonData.tokenAuth" onchange="switchAuthStrategy()")  
           span.gf-form-switch__slider
 
-div#no_token 
+div#no_token(ng-show="!ctrl.current.jsonData.tokenAuth")
   h3 Authenticate Without API Tokens 
   p This authentication strategy allows you to authenticate without an API token. It's commonly used for Oauth based authentication.
 
@@ -21,11 +21,10 @@ div#no_token
   .gf-form
     input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
 
-div#token 
+div#token(ng-show="ctrl.current.jsonData.tokenAuth")
   h3 Authenticate With Encrypted API Tokens 
   p This authentication strategy allows you to authenticate with a personal API token. 
-  p Note that the token is encrypted and stored on Grafana's backend, so you can't access it via the browser after entry. br
-    This also means that all requests to Humio will be proxied through the Grafana server instance.
+  p Note that the token is encrypted and stored on Grafana's backend, so you can't access it via the browser after entry. This also means that all requests to Humio will be proxied through the Grafana server instance.
 
   h5 Humio Url
   .gf-form
@@ -43,7 +42,7 @@ script.
     var non_token_elements = document.getElementById("no_token");
     var token_elements = document.getElementById("token");
     var authenticate_with_tokens = document.getElementById("auth_strategy").checked;
-    console.log(authenticate_with_tokens);
+    console.log(document.getElementById("auth_strategy"));
 
     if(authenticate_with_tokens){
       token_elements.style.display = "block";
@@ -54,5 +53,3 @@ script.
       non_token_elements.style.display = "block";
     }
   } 
-
-  switchAuthStrategy();
