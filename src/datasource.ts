@@ -2,6 +2,7 @@
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import QueryJobManager from './humio/query_job_manager';
 
 /**
@@ -12,15 +13,15 @@ export class HumioDatasource {
   id: string;
   datasourceAttrs: IDatasourceAttrs;
   timeRange: any;
-  tokenAuth: false;
+  authenticateWithAToken: false;
   humioToken : string;
-  headers: any; // TODO: Request Headers again
+  headers: IDatasourceRequestHeaders;
 
   /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
     this.proxy_url = instanceSettings.url;
     this.id = instanceSettings.id;
-    this.tokenAuth = instanceSettings.jsonData.tokenAuth;
+    this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
     
     let humioToken = instanceSettings.jsonData ? instanceSettings.jsonData.humioToken || ''  : ''
     this.headers = {
@@ -37,8 +38,6 @@ export class HumioDatasource {
 
     this.timeRange = null;
     this._doRequest = this._doRequest.bind(this);
-
-
   }
 
   /**
@@ -79,7 +78,7 @@ export class HumioDatasource {
       data: { query: '{currentUser{id}}' } 
     };
 
-    if(this.tokenAuth){
+    if(this.authenticateWithAToken){
       requestOpts.url += "/humio/graphql";
     }
     else{
@@ -116,7 +115,7 @@ export class HumioDatasource {
 
   private _doRequest(options) {
     
-    if(!this.tokenAuth){
+    if(!this.authenticateWithAToken){
       options.headers = this.headers;
       options.url = this.proxy_url + options.url;
     }

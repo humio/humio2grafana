@@ -81,7 +81,7 @@ class HumioQueryCtrl extends QueryCtrl {
       data: { query: '{searchDomains{name}}' }
     };
 
-    if(this.datasource.tokenAuth){
+    if(this.datasource.authenticateWithAToken){
       requestOpts.url += "/humio/graphql"
     }
     else

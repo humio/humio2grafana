@@ -8,10 +8,10 @@ p With this plugin you may authenticate using one of two overall strategies. Pic
       label.gf-form.gf-form-switch-container(for="auth_strategy") 
         .gf-form-label.pointer Authentication Strategy
         .gf-form-switch
-          input#auth_strategy(type="checkbox" ng-model="ctrl.current.jsonData.tokenAuth" onchange="switchAuthStrategy()")  
+          input#auth_strategy(type="checkbox" ng-model="ctrl.current.jsonData.authenticateWithAToken" onchange="switchAuthStrategy()")  
           span.gf-form-switch__slider
 
-div#no_token(ng-show="!ctrl.current.jsonData.tokenAuth")
+div#no_token(ng-show="!ctrl.current.jsonData.authenticateWithAToken")
   h3 Authenticate Without API Tokens 
   p This authentication strategy allows you to authenticate without an API token. It's commonly used for Oauth based authentication.
 
@@ -21,7 +21,7 @@ div#no_token(ng-show="!ctrl.current.jsonData.tokenAuth")
   .gf-form
     input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
 
-div#token(ng-show="ctrl.current.jsonData.tokenAuth")
+div#token(ng-show="ctrl.current.jsonData.authenticateWithAToken")
   h3 Authenticate With Encrypted API Tokens 
   p This authentication strategy allows you to authenticate with a personal API token. 
   p Note that the token is encrypted and stored on Grafana's backend, so you can't access it via the browser after entry. This also means that all requests to Humio will be proxied through the Grafana server instance.

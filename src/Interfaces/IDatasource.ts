@@ -5,7 +5,7 @@ interface IDatasource {
     id: string,
     proxy_url: string,
     datasourceAttrs: IDatasourceAttrs,
-    tokenAuth: any,
+    authenticateWithAToken: boolean,
     headers: any,
     timeRange: {
       from: any, // Moment
