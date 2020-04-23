@@ -17,10 +17,6 @@ div#no_token(ng-show="!ctrl.current.jsonData.authenticateWithAToken")
 
   datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com")
 
-  h5 Humio access token
-  .gf-form
-    input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.humioToken', placeholder="")
-
 div#token(ng-show="ctrl.current.jsonData.authenticateWithAToken")
   h3 Authenticate With Encrypted API Tokens 
   p This authentication strategy allows you to authenticate with a personal API token. 

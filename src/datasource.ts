@@ -23,10 +23,8 @@ export class HumioDatasource {
     this.id = instanceSettings.id;
     this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
     
-    let humioToken = instanceSettings.jsonData ? instanceSettings.jsonData.humioToken || ''  : ''
     this.headers = {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + humioToken,
+      'Content-Type': 'application/json'
     };
     
     this.datasourceAttrs = {
