@@ -21,7 +21,7 @@ export class HumioDatasource {
   constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
     this.proxy_url = instanceSettings.url;
     this.id = instanceSettings.id;
-    this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
+    this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithAToken;
     
     this.headers = {
       'Content-Type': 'application/json'
