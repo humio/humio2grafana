@@ -35,7 +35,7 @@ describe('HumioDatasource', function() {
   // Sets up the HumioDatasource used by all tests.
   beforeEach(function() {
     ctx.$q = Q;
-    ctx.instanceSettings = {url: "http://localhost:4000/api/datasources/proxy/1", id:1};
+    ctx.instanceSettings = {url: "http://localhost:4000/api/datasources/proxy/1", id:1, jsonData: {authenticateWithAToken : true}};
     ctx.$location = { search() {return true }}
     // $rootScope has not been mocked, may create issues when tests need to use it.  
     ctx.ds = new HumioDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.$location, {});

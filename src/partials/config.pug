@@ -1,9 +1,33 @@
-h5 Humio Url
-.gf-form
-  input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.baseUrl', placeholder="https://cloud.humio.com")
+p With this plugin you may authenticate using one of two overall strategies. Pick the strategy you want to use using the toggle below.
 
-h5 Humio Access Token
-.gf-form
-  input.gf-form-input(type="text",   tooltip="Grafana Proxy deletes fo",  ng-model='ctrl.current.secureJsonData.humioToken')
 
-p Once the datasource is saved the contents of the 'Humio Access Token' field will be hidden. The datasource will continue to use the submitted token until it is changed. 
+// TODO: Graphic, doesn't always follow.
+.gf-form-group
+  .gf-form-inline
+    .gf-form-switch-container-react
+      label.gf-form.gf-form-switch-container(for="auth_strategy") 
+        .gf-form-label.pointer Authentication Strategy
+        .gf-form-switch
+          input#auth_strategy(type="checkbox" ng-model="ctrl.current.jsonData.authenticateWithAToken")  
+          span.gf-form-switch__slider
+
+div#no_token(ng-show="!ctrl.current.jsonData.authenticateWithAToken")
+  h3 Authenticate Without API Tokens 
+  p This authentication strategy allows you to authenticate without an API token. It's commonly used for Oauth based authentication.
+
+  datasource-http-settings(current="ctrl.current", suggest-url="https://cloud.humio.com")
+
+div#token(ng-show="ctrl.current.jsonData.authenticateWithAToken")
+  h3 Authenticate With Encrypted API Tokens 
+  p This authentication strategy allows you to authenticate with a personal API token. 
+  p Note that the token is encrypted and stored on Grafana's backend, so you can't access it via the browser after entry. This also means that all requests to Humio will be proxied through the Grafana server instance.
+
+  h5 Humio Url
+  .gf-form
+    input.gf-form-input(type="text", ng-model='ctrl.current.jsonData.baseUrl', placeholder="https://cloud.humio.com")
+
+  h5 Humio Access Token
+  .gf-form
+    input.gf-form-input(type="text",  ng-model='ctrl.current.secureJsonData.humioToken')
+
+  p Once the datasource is saved the contents of the 'Humio Access Token' field will be hidden. The datasource will continue to use the submitted token until it is changed. 

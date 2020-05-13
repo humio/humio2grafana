@@ -2,6 +2,7 @@
 import IDatasourceAttrs from './Interfaces/IDatasourceAttrs';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
+import IDatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import QueryJobManager from './humio/query_job_manager';
 
 /**
@@ -12,11 +13,19 @@ export class HumioDatasource {
   id: string;
   datasourceAttrs: IDatasourceAttrs;
   timeRange: any;
+  authenticateWithAToken: false;
+  humioToken : string;
+  headers: IDatasourceRequestHeaders;
 
   /** @ngInject */
   constructor(instanceSettings, $q, backendSrv, $location, $rootScope) {
     this.proxy_url = instanceSettings.url;
     this.id = instanceSettings.id;
+    this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithAToken;
+    
+    this.headers = {
+      'Content-Type': 'application/json'
+    };
     
     this.datasourceAttrs = {
       $q: $q,
@@ -60,10 +69,19 @@ export class HumioDatasource {
    * Implicitly called by Grafana when user clicks the "Save & Test" button during data source configuration.
    */
   testDatasource() {
-    const requestOpts: IDatasourceRequestOptions = {
-      url: this.proxy_url + "/humio/graphql",
+    let requestOpts : IDatasourceRequestOptions = 
+    {
+      url: this.proxy_url,
       method: "POST",
       data: { query: '{currentUser{id}}' } 
+    };
+
+    if(this.authenticateWithAToken){
+      requestOpts.url += "/humio/graphql";
+    }
+    else{
+      requestOpts.url += '/graphql';
+      requestOpts.headers = this.headers;
     }
 
     return this.datasourceAttrs.backendSrv
@@ -94,7 +112,15 @@ export class HumioDatasource {
   }
 
   private _doRequest(options) {
-    options.url = this.proxy_url + "/humio" + options.url;
+    
+    if(!this.authenticateWithAToken){
+      options.headers = this.headers;
+      options.url = this.proxy_url + options.url;
+    }
+    else{
+      options.url = this.proxy_url + "/humio" + options.url;
+    }
+
     return this.datasourceAttrs.backendSrv.datasourceRequest(options);
   }
 }

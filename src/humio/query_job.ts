@@ -34,6 +34,7 @@ class QueryJob {
 
     const requestedQueryDefinition = this._getRequestedQueryDefinition(datasourceAttrs, grafanaAttrs, target);
 
+    // Executing the same live query again
     if(this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)){
       return this._pollQueryJobUntilDone(datasourceAttrs, grafanaAttrs, target);
     }
