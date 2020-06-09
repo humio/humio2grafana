@@ -1,0 +1,22 @@
+{
+    "id": "humio2grafana-datasource",
+    "name": "Humio",
+    "type": "datasource",
+    "metrics": true,
+  
+    "info": {
+      "description": "A Grafana datasource for Humio",
+      "author": {
+        "name": "Humio apps",
+        "url": "https://humio.com"
+      },
+      "keywords": [],
+      "version": "3.0.0",
+      "updated": "2020-07-xx"
+    },
+  
+    "dependencies": {
+      "grafanaVersion": "7.x.x",
+      "plugins": []
+    }
+  }
