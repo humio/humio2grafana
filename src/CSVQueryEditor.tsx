@@ -5,13 +5,14 @@ import { Select, QueryField } from '@grafana/ui';
 import { HumioDataSource, CSVQuery } from './CSVDataSource';
 import { HumioOptions } from './types';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
+import HumioHelper from './humio/humio_helper';
 
 type Props = QueryEditorProps<HumioDataSource, CSVQuery, HumioOptions>;
 
 interface State {
   repositories: any;
-  selected?: string;
   datasource: HumioDataSource;
+  hostUrl: string;
 }
 
 export class QueryEditor extends PureComponent<Props, State> {
@@ -20,8 +21,8 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     this.state = {
       repositories: [],
-      selected: props.query.humioRepository,
       datasource: props.datasource,
+      hostUrl: '',
     };
   }
 
@@ -38,14 +39,29 @@ export class QueryEditor extends PureComponent<Props, State> {
     getBackendSrv()
       .datasourceRequest(requestOpts)
       .then(res => {
-        let searchDomainNames = res.data.data.searchDomains.map((name: string) => ({
+        let searchDomainNames = res.data.data.searchDomains.map(({ name }: { name: string }) => ({
           label: name,
           value: name,
         }));
 
         this.setState({
-          repositories: searchDomainNames, // Should be sorted
-          selected: searchDomainNames[0], // What if the result is empty?
+          repositories: searchDomainNames, // TODO: Should be sorted
+        });
+      });
+
+    fetch('/api/datasources/' + this.state.datasource.id)
+      .then(res => res.json())
+      .then((res: any) => {
+        console.log(res);
+        let url = res.url;
+        console.log(this.state.datasource);
+        // Trim off the last / if it exists. Otherwise later url concatinations will be incorrect.
+        if (url[url.length - 1] === '/') {
+          url = url.substring(0, url.length - 1);
+        }
+
+        this.setState({
+          hostUrl: url,
         });
       });
   }
@@ -76,9 +92,52 @@ export class QueryEditor extends PureComponent<Props, State> {
     }
   };
 
+  private _composeQueryArgs() {
+    let isLive = HumioHelper.queryIsLive(location, this.state.datasource.timeRange.raw.to);
+
+    var queryParams: { [k: string]: any } = { query: this.props.query.humioQuery, live: isLive };
+
+    if (isLive) {
+      queryParams['start'] = HumioHelper.parseDateFrom(this.state.datasource.timeRange.raw.from);
+    } else {
+      queryParams['start'] = this.state.datasource.timeRange.from._d.getTime();
+      queryParams['end'] = this.state.datasource.timeRange.to._d.getTime();
+    }
+
+    return queryParams;
+  }
+
+  private _serializeQueryArgs(queryArgs: any) {
+    let str = [];
+    for (let argument in queryArgs) {
+      str.push(encodeURIComponent(argument) + '=' + encodeURIComponent(queryArgs[argument]));
+    }
+    return str.join('&');
+  }
+
+  getHumioLink() {
+    if (this.state.hostUrl === '') {
+      return '#';
+    } else {
+      let queryParams = this._composeQueryArgs();
+      return `${this.state.hostUrl}/${this.props.query.humioRepository}/search?${this._serializeQueryArgs(
+        queryParams
+      )}`;
+    }
+  }
+
+  renderHumioLink() {
+    if (this.state.datasource.timeRange && this.props.query.humioRepository) {
+      return <a href={this.getHumioLink()}> Open query in Humio </a>;
+    } else {
+      return <div></div>;
+    }
+  }
+
   render() {
     return (
       <div className="query-editor-row" can-collapse="true">
+        {this.renderHumioLink()}
         <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
           <QueryField
             query={this.props.query.humioQuery}
