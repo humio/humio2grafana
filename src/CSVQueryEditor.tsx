@@ -6,6 +6,7 @@ import { HumioDataSource, CSVQuery } from './CSVDataSource';
 import { HumioOptions } from './types';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import HumioHelper from './humio/humio_helper';
+import _ from 'lodash';
 
 type Props = QueryEditorProps<HumioDataSource, CSVQuery, HumioOptions>;
 
@@ -29,12 +30,10 @@ export class QueryEditor extends PureComponent<Props, State> {
   componentDidMount() {
     let requestOpts: IDatasourceRequestOptions = {
       method: 'POST',
-      url: this.state.datasource.proxy_url,
+      url: this.state.datasource.graphql_endpoint,
       data: { query: '{searchDomains{name}}' },
+      headers: this.state.datasource.headers,
     };
-
-    requestOpts.url += '/graphql';
-    requestOpts.headers = this.state.datasource.headers;
 
     getBackendSrv()
       .datasourceRequest(requestOpts)
@@ -45,7 +44,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         }));
 
         this.setState({
-          repositories: searchDomainNames, // TODO: Should be sorted
+          repositories: _.sortBy(searchDomainNames, ['label']),
         });
       });
 

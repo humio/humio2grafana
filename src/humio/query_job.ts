@@ -53,16 +53,6 @@ class QueryJob {
   }
 
   private _doRequest(options: IDatasourceRequestOptions, headers: DatasourceRequestHeaders, proxy_url: string) {
-    /*
-    if(!this.authenticateWithAToken){
-      options.headers = this.headers;
-      options.url = this.proxy_url + options.url;
-    }
-    else{
-      options.url = this.proxy_url + "/humio" + options.url;
-    }
-    */
-
     options.headers = headers;
     options.url = proxy_url + options.url;
 

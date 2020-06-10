@@ -11,9 +11,22 @@
         "url": "https://humio.com"
       },
       "keywords": [],
+      "logos": {
+        "small": "img/humio_logo.svg",
+        "large": "img/humio_logo.svg"
+      },
       "version": "3.0.0",
       "updated": "2020-07-xx"
     },
+    "routes": [{
+      "path": "humio",
+      "method": "*",
+      "url": "{{.JsonData.baseUrl}}",
+      "headers": [
+        {"name": "Authorization", "content": "Bearer {{.SecureJsonData.humioToken}}"},
+        {"name": "Content-Type", "content" : "application/json"}
+      ]
+    }],
   
     "dependencies": {
       "grafanaVersion": "7.x.x",

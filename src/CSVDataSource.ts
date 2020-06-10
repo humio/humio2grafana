@@ -22,31 +22,45 @@ export interface CSVQuery extends DataQuery {
 
 export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
   proxy_url: string;
+  graphql_endpoint: string;
+  rest_endpoint: string;
   id: number;
   timeRange: any;
-  //authenticateWithAToken: false;
-  //humioToken : string;
+  authenticateWithAToken: boolean;
   headers: DatasourceRequestHeaders;
 
   constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>) {
     super(instanceSettings);
 
-    instanceSettings.jsonData.humioToken;
+    this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
 
     if (instanceSettings.url === undefined) {
-      this.proxy_url = 'https://cloud.humio.com/';
+      this.proxy_url = '';
     } else {
       this.proxy_url = instanceSettings.url;
     }
 
-    console.log(this.proxy_url);
+    if (this.authenticateWithAToken) {
+      this.graphql_endpoint = this.proxy_url + '/humio/graphql';
+      this.rest_endpoint = this.proxy_url + '/humio';
+    } else {
+      this.graphql_endpoint = this.proxy_url + '/graphql';
+      this.rest_endpoint = this.proxy_url;
+    }
+
     this.id = instanceSettings.id;
     //this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithAToken;
 
-    this.headers = {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + instanceSettings.jsonData.humioToken,
-    };
+    if (this.authenticateWithAToken) {
+      this.headers = {
+        'Content-Type': 'application/json',
+      };
+    } else {
+      this.headers = {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + instanceSettings.jsonData.humioToken,
+      };
+    }
   }
 
   query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {
@@ -60,14 +74,12 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
     let errorCallback = (errorTitle: any, errorBody: any) => {
       alertError;
-
-      //AppEvent(errorTitle, errorBody);
     };
     let grafanaAttrs: IGrafanaAttrs = {
       grafanaQueryOpts: options,
       errorCallback: errorCallback,
       headers: this.headers,
-      proxy_url: this.proxy_url,
+      proxy_url: this.rest_endpoint,
     };
 
     this.timeRange = options.range;
@@ -78,13 +90,11 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
   testDatasource() {
     let requestOpts: IDatasourceRequestOptions = {
-      url: this.proxy_url,
+      url: this.graphql_endpoint,
       method: 'POST',
       data: { query: '{currentUser{id}}' },
       headers: this.headers,
     };
-
-    requestOpts.url += '/graphql';
 
     return getBackendSrv()
       .datasourceRequest(requestOpts)
