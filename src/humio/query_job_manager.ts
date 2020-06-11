@@ -99,7 +99,7 @@ class QueryJobManager {
     // multiple series
     for (let i = 0; i < events.length; i++) {
       let event = events[i];
-      let point = [parseFloat(event[valueField]), parseInt(event._bucket, 10)]; // TODO: Check radix
+      let point = [parseFloat(event[valueField]), parseInt(event._bucket, 10)];
       if (!series[event[seriesField]]) {
         series[event[seriesField]] = [point];
       } else {
@@ -129,29 +129,19 @@ class QueryJobManager {
   private _composeUntyped(data: any, valueField: any) {
     return _.flatMap(data.events, event => {
       const groupbyFields = data.metaData.extraData.groupby_fields;
-      if (groupbyFields) {
-        const groupName = groupbyFields
-          .split(',')
-          .map((field: string) => '[' + event[field.trim()] + ']')
-          .join(' ');
-        if (_.keys(event).length > 1) {
-          return {
-            target: groupName,
-            datapoints: [[parseFloat(event[valueField])]],
-          };
-        } else {
-          return {
-            target: valueField,
-            datapoints: [[parseFloat(event[valueField])]],
-          }; // TODO: This just copies the below to make the linter hap hap HAPPY
-        }
-      } else {
-        return {
-          target: valueField,
-          datapoints: [[parseFloat(event[valueField])]],
-        };
-      }
+      let targetName = groupbyFields ? this._createGroupByName(groupbyFields, event) : valueField;
+      return {
+        target: targetName,
+        datapoints: [[parseFloat(event[valueField])]],
+      };
     });
+  }
+
+  private _createGroupByName(groupbyFields: any, event: any) {
+    return groupbyFields
+      .split(',')
+      .map((field: string) => '[' + event[field.trim()] + ']')
+      .join(' ');
   }
 }
 
