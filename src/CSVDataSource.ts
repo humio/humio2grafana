@@ -10,8 +10,9 @@ import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, MetricFindValue } from '@grafana/data';
 import { HumioOptions } from './types';
+//import {ge} from '@grafana/runtime'
 
 const { alertError } = AppEvents;
 
@@ -61,6 +62,33 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
         Authorization: 'Bearer ' + instanceSettings.jsonData.humioToken,
       };
     }
+  }
+
+  // Can't quite find a type for options that fits.
+  metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
+    // TODO: Figure out how to get out a time range.
+    //let timeRange = options.range.raw;
+    //console.log(timeRange);
+
+    /*
+    var rng = angular
+      .element('grafana-app')
+      .injector()
+      .get('timeSrv')
+      .timeRange();
+    */
+    return new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
+
+    /*
+    const scopedVars = {
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
+      ...this.getRangeScopedVars(getTimeSrv().timeRange()),
+    };
+    const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
+    const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
+    return metricFindQuery.process();
+    */
   }
 
   query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {

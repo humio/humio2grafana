@@ -9,3 +9,9 @@ export interface HumioOptions extends DataSourceJsonData {
 export interface SecretHumioOptions extends DataSourceJsonData {
   humioToken?: string;
 }
+
+export interface VariableQueryData {
+  query?: string;
+  repo?: string;
+  repositories: any;
+}
