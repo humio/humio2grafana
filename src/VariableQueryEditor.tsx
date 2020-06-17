@@ -45,8 +45,8 @@ export interface VariableQueryProps {
 
 export class VariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   defaults: VariableQueryData = {
-    query: 'Hej',
-    repo: 'humio-audit',
+    query: '',
+    repo: '',
     repositories: [],
   };
 
@@ -90,6 +90,12 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
           repositories: _.sortBy(searchDomainNames, ['label']),
         });
       });
+
+    fetch('/api/dashboards/uid')
+      .then(res => res.json())
+      .then((res: any) => {
+        console.log(res);
+      });
   }
 
   componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
@@ -101,7 +107,7 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
     return (
       <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
         <QueryField
-          query={this.props.query.humioQuery}
+          query={this.state.query}
           placeholder="Enter a Humio query (run with Shift+Enter)"
           portalOrigin="Humio"
           onChange={v => {

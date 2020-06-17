@@ -10,8 +10,9 @@ import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
-import { AppEvents, MetricFindValue } from '@grafana/data';
+import { AppEvents, MetricFindValue, DefaultTimeRange } from '@grafana/data';
 import { HumioOptions } from './types';
+
 //import {ge} from '@grafana/runtime'
 
 const { alertError } = AppEvents;
@@ -31,6 +32,7 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
   headers: DatasourceRequestHeaders;
 
   constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>) {
+    console.log(instanceSettings);
     super(instanceSettings);
 
     this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
@@ -70,25 +72,25 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     //let timeRange = options.range.raw;
     //console.log(timeRange);
 
-    /*
-    var rng = angular
-      .element('grafana-app')
-      .injector()
-      .get('timeSrv')
-      .timeRange();
-    */
-    return new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
+    console.log(location);
+    console.log(DefaultTimeRange);
 
-    /*
-    const scopedVars = {
-      __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
-      ...this.getRangeScopedVars(getTimeSrv().timeRange()),
-    };
-    const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
-    const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process();
-    */
+
+    if (!options.range) {
+      // IF refresh is never:
+        // STEP 1: Read url from location
+        // IF time range there, use that
+        // Else 
+            // IF dashboard saved. Call API to get default time
+            // ELSE Use DefaultTimeRange
+      // IF refesh is on dashboard load
+        // Just use the default dashboard time range. Again check if the dashboard has been saved.
+      console.log('Range is undefined');
+      return new Promise(resolve => resolve(options.variable.options));
+    } else {
+      console.log(options.range);
+      return new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
+    }
   }
 
   query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {
