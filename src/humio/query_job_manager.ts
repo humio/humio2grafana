@@ -23,16 +23,12 @@ class QueryJobManager {
       manager = new this();
       this.managers.set(managerId, manager);
     }
+
     return manager;
   }
 
-  async update(
-    location: Location,
-    grafanaAttrs: IGrafanaAttrs,
-    targets: CSVQuery[]
-  ): Promise<{ data: Array<{ target: string; datapoints: Array<[number, number]> }> }> {
+  async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: CSVQuery[]): Promise<{ data: Array<{ target: string; datapoints: Array<[number, number]> }> }> {
     const queryResponses = await this._executeAllQueries(location, grafanaAttrs, targets);
-
     const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
       return this._convertHumioQueryResponseToGrafanaFormat(res.data, targets[index]);
     });

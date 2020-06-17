@@ -3,6 +3,7 @@
     "name": "Humio",
     "type": "datasource",
     "metrics": true,
+    "annotations": true,
   
     "info": {
       "description": "A Grafana datasource for Humio",
