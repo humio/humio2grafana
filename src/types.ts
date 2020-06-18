@@ -14,4 +14,5 @@ export interface VariableQueryData {
   query: string;
   repo?: string;
   repositories: any;
+  dataField: string;
 }

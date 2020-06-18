@@ -10,6 +10,7 @@ import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
+import QueryJob from './humio/query_job';
 import { AppEvents, MetricFindValue, DefaultTimeRange } from '@grafana/data';
 import { HumioOptions } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -69,13 +70,14 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
   }
 
   // Can't quite find a type for options that fits.
-  metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
     // TODO: Figure out how to get out a time range.
     //let timeRange = options.range.raw;
     //console.log(timeRange);
 
     // Right now this just uses defaults for both dasboard onload and never.
     // Perhaps never should have access to the time query in the 'location'?
+
     if (!options.range) {
       let uid = location.pathname.split('/')[2];
       const params = new URLSearchParams(location.search);
@@ -90,36 +92,45 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
           time = { to: to, from: from };
         }
 
-        console.log('Using default time:');
-        console.log(time);
-        return new Promise(resolve =>
-          resolve([{ text: query.repo }, { text: query.query }, { text: 'Default time gang' }])
-        );
+        options.range = { raw: time };
+
+        let res = await this.queryVariableContents(query, options);
+
+        return new Promise(resolve => resolve(res));
       } else {
         if (from === null || to === null) {
           return fetch('/api/dashboards/uid/' + uid)
             .then(res => res.json())
             .then(
-              (res: any) => {
+              async (res: any) => {
+                // TODO: Handle when the time is an absolute range, which is stored as a DateTime object, instead of a timestamp.
                 let time = res.dashboard.time;
-                console.log('Using registered dashboard default time: ' + time);
-                console.log(time);
-                return [
-                  { text: query.repo },
-                  { text: query.query },
-                  { text: 'I have been saved but using the API call' },
-                ];
+                if (time.to !== 'now') {
+                  console.log('SAVED ABSOLUTE TIME');
+                  console.log(time);
+                  let f = Math.floor(new Date(time.from).getTime());
+                  let t = Math.floor(new Date(time.to).getTime());
+
+                  options.range = { raw: { from: f, to: t } };
+                  console.log(options.range);
+                } else {
+                  options.range = { raw: { from: time.from, to: time.to } };
+                }
+
+                return await this.queryVariableContents(query, options);
               },
               (err: any) => {
-                return []; // new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
+                return []; // TODO: Throw an error here. Get mad.
               }
             );
         } else {
           time = { to: to, from: from };
+
+          options.range.raw = time;
+          let res = await this.queryVariableContents(query, options);
+
           console.log(time);
-          return new Promise(resolve =>
-            resolve([{ text: query.repo }, { text: query.query }, { text: "I've been saved but using url params" }])
-          );
+          return new Promise(resolve => resolve(res));
         }
       }
 
@@ -133,11 +144,39 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
       // Just use the default dashboard time range. Again check if the dashboard has been saved.
       //return new Promise(resolve => resolve( options.variable.options));
     } else {
-      console.log(options.range);
-      return new Promise(resolve =>
-        resolve([{ text: query.repo }, { text: query.query }, { text: 'Easy time range gang' }])
-      );
+      let res = await this.queryVariableContents(query, options);
+
+      console.log(res);
+      return new Promise(resolve => resolve(res));
     }
+  }
+
+  async queryVariableContents(query: any, options: any) {
+    console.log('GOOD OPTIONS');
+    console.log(options);
+    let qj = new QueryJob(query.query);
+    let errorCallback = (errorTitle: any, errorBody: any) => {
+      alertError;
+    };
+
+    let grafanaAttrs: IGrafanaAttrs = {
+      grafanaQueryOpts: options,
+      errorCallback: errorCallback,
+      headers: this.headers,
+      proxy_url: this.rest_endpoint,
+    };
+
+    let target = {
+      humioQuery: query.query,
+      humioRepository: query.repo,
+      refId: 'notUsed',
+    };
+
+    let data = await qj.executeQuery(location, grafanaAttrs, target);
+
+    return _.flatMap(data.data.events, (res, index) => {
+      return { text: _.get(res, query.dataField) }; // TODO: throw exception on error
+    });
   }
 
   // Formats $var strings in queries. Uses regexes when using multiple selected vars, which right now only works for some kind of filtering, such as host=$hostname

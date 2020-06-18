@@ -48,6 +48,7 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
     query: '',
     repo: '',
     repositories: [],
+    dataField: '',
   };
 
   constructor(props: any) {
@@ -67,6 +68,13 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
     this.setState({
       ...this.state,
       repo: repo.value,
+    });
+  }
+
+  onDataFieldChange(dataField: string) {
+    this.setState({
+      ...this.state,
+      dataField: dataField,
     });
   }
 
@@ -117,6 +125,13 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
             this.onRepoChange(v);
           }}
         ></Select>
+
+        <input
+          value={this.state.dataField}
+          onChange={v => {
+            this.onDataFieldChange(v.target.value);
+          }}
+        ></input>
       </div>
     );
   }
