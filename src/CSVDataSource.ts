@@ -12,6 +12,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
 import { AppEvents, MetricFindValue, DefaultTimeRange } from '@grafana/data';
 import { HumioOptions } from './types';
+import { getTemplateSrv } from '@grafana/runtime';
+import _ from 'lodash';
 
 //import {ge} from '@grafana/runtime'
 
@@ -32,8 +34,8 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
   headers: DatasourceRequestHeaders;
 
   constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>) {
-    console.log(instanceSettings);
     super(instanceSettings);
+    console.log('Datasource constructed');
 
     this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
 
@@ -72,24 +74,79 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     //let timeRange = options.range.raw;
     //console.log(timeRange);
 
-    console.log(location);
-    console.log(DefaultTimeRange);
-
-
+    // Right now this just uses defaults for both dasboard onload and never.
+    // Perhaps never should have access to the time query in the 'location'?
     if (!options.range) {
+      let uid = location.pathname.split('/')[2];
+      const params = new URLSearchParams(location.search);
+      const from = params.get('from');
+      const to = params.get('to');
+
+      let time;
+      if (uid === 'new') {
+        if (from === null || to === null) {
+          time = DefaultTimeRange;
+        } else {
+          time = { to: to, from: from };
+        }
+
+        console.log('Using default time:');
+        console.log(time);
+        return new Promise(resolve =>
+          resolve([{ text: query.repo }, { text: query.query }, { text: 'Default time gang' }])
+        );
+      } else {
+        if (from === null || to === null) {
+          return fetch('/api/dashboards/uid/' + uid)
+            .then(res => res.json())
+            .then(
+              (res: any) => {
+                let time = res.dashboard.time;
+                console.log('Using registered dashboard default time: ' + time);
+                console.log(time);
+                return [
+                  { text: query.repo },
+                  { text: query.query },
+                  { text: 'I have been saved but using the API call' },
+                ];
+              },
+              (err: any) => {
+                return []; // new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
+              }
+            );
+        } else {
+          time = { to: to, from: from };
+          console.log(time);
+          return new Promise(resolve =>
+            resolve([{ text: query.repo }, { text: query.query }, { text: "I've been saved but using url params" }])
+          );
+        }
+      }
+
       // IF refresh is never:
-        // STEP 1: Read url from location
-        // IF time range there, use that
-        // Else 
-            // IF dashboard saved. Call API to get default time
-            // ELSE Use DefaultTimeRange
+      // STEP 1: Read url from location
+      // IF time range there, use that
+      // Else
+      // IF dashboard saved. Call API to get default time
+      // ELSE Use DefaultTimeRange
       // IF refesh is on dashboard load
-        // Just use the default dashboard time range. Again check if the dashboard has been saved.
-      console.log('Range is undefined');
-      return new Promise(resolve => resolve(options.variable.options));
+      // Just use the default dashboard time range. Again check if the dashboard has been saved.
+      //return new Promise(resolve => resolve( options.variable.options));
     } else {
       console.log(options.range);
-      return new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
+      return new Promise(resolve =>
+        resolve([{ text: query.repo }, { text: query.query }, { text: 'Easy time range gang' }])
+      );
+    }
+  }
+
+  // Formats $var strings in queries. Uses regexes when using multiple selected vars, which right now only works for some kind of filtering, such as host=$hostname
+  formatting(vars: any) {
+    if (vars.length === 1) {
+      return _.escapeRegExp(vars);
+    } else {
+      let args = vars.map((v: string) => _.escapeRegExp(v));
+      return '/^' + args.join('|') + '$/';
     }
   }
 
@@ -101,6 +158,10 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
         })
       );
     }
+
+    options.targets.forEach(target => {
+      target.humioQuery = getTemplateSrv().replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
+    });
 
     let errorCallback = (errorTitle: any, errorBody: any) => {
       alertError;

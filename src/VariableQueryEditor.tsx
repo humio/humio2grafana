@@ -90,12 +90,6 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
           repositories: _.sortBy(searchDomainNames, ['label']),
         });
       });
-
-    fetch('/api/dashboards/uid')
-      .then(res => res.json())
-      .then((res: any) => {
-        console.log(res);
-      });
   }
 
   componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
