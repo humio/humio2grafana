@@ -134,6 +134,7 @@ class QueryJob {
       ).then(
         (res: any) => {
           this.queryId = res['data'].id;
+          console.log(res);
           return resolve({});
         },
         (err: any) => {

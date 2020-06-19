@@ -18,6 +18,7 @@ class QueryJobManager {
   }
 
   static getOrCreateQueryJobManager(managerId: string): QueryJobManager {
+    // See if the manager already exists.
     let manager = this.managers.get(managerId);
     if (!manager) {
       manager = new this();
@@ -27,10 +28,18 @@ class QueryJobManager {
     return manager;
   }
 
-  async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: CSVQuery[]): Promise<{ data: Array<{ target: string; datapoints: Array<[number, number]> }> }> {
+  async update(
+    location: Location,
+    grafanaAttrs: IGrafanaAttrs,
+    targets: CSVQuery[]
+  ): Promise<{ data: Array<{ target: string; datapoints: Array<[number, number]> }> }> {
     const queryResponses = await this._executeAllQueries(location, grafanaAttrs, targets);
     const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
-      return this._convertHumioQueryResponseToGrafanaFormat(res.data, targets[index]);
+      if (res.data.metaData.isAggregate) {
+        return this._convertHumioQueryResponseToGrafanaFormat(res.data, targets[index]);
+      } else {
+        return this._convertHumioQueryResponseFromFilterQueryToGrafanaFormat(res.data, targets[index]);
+      }
     });
     return { data: listOfGrafanaDataSeries };
   }
@@ -84,6 +93,19 @@ class QueryJobManager {
         return this._composeUntyped(humioQueryResult, valueFields[0]);
       }
     }
+  }
+
+  private _convertHumioQueryResponseFromFilterQueryToGrafanaFormat(humioQueryResult: any, target: any): any {
+    if (humioQueryResult.events.length === 0) {
+      return [];
+    }
+    //const valueFields = getValueFieldName(humioQueryResult);
+    return _.flatMap(humioQueryResult.events, event => {
+      return {
+        target: [event['type']],
+        datapoints: [[parseFloat(event['@timestamp'])]],
+      };
+    });
   }
 
   private _composeTimechart(

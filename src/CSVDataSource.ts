@@ -100,27 +100,36 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
       headers: this.headers,
       proxy_url: this.rest_endpoint,
     };
+    this.timeRange = options.range;
+
     // Get query from ui.
+    options.annotation.humioQuery = options.annotation.queryText || '';
+    options.annotation.refId = 'Hej';
+
+    // Create targets.
     let query: CSVQuery = {
       humioQuery: options.annotation.queryText || '',
-      refId: 'true',
+      humioRepository: 'github',
+      refId: options.annotation.refId,
     };
-    let queries: CSVQuery[] = [];
-    queries.push(query);
-    this.timeRange = options.range;
-    let test = 1234;
-    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(test.toString());
-    const humio_events = await queryJobManager.update(location, grafanaAttrs, queries);
+
+    let targets: CSVQuery[] = [];
+    targets.push(query);
+
     const events: AnnotationEvent[] = [];
-    //const date = new Date();    
-    for (let datapoint in humio_events) {
+
+    // Make query to Humio.
+    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
+    const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
+    humio_events['data'].forEach(target => {
+      console.log(target);
       const event: AnnotationEvent = {
-        time: datapoint,
-        text: 'foo',
-        tags: ['bar'],
+        time: target.datapoints[0][0],
+        text: target.target[0],
+        //tags: ['bar'],
       };
       events.push(event);
-    }
+    });
     return events;
   }
 
