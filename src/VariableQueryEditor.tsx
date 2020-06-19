@@ -100,7 +100,7 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
       });
   }
 
-  componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
+  onRefresh() {
     const query = this.state.query;
     this.props.onChange(this.state, `Humio - ${query}`);
   }
@@ -132,7 +132,16 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
             this.onDataFieldChange(v.target.value);
           }}
         ></input>
+        <button
+          onClick={v => {
+            v.preventDefault();
+            this.onRefresh();
+          }}
+        >
+          Refresh
+        </button>
       </div>
+      // Perhaps we should have a refresh button here instead of executing props on everything?
     );
   }
 }

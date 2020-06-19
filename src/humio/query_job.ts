@@ -79,21 +79,25 @@ class QueryJob {
 
   private _makeStaticQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string) {
     let range = grafanaAttrs.grafanaQueryOpts.range;
-    console.log('STATIC RANGE');
-    console.log(range);
-
-    // Absolute MADNESS range
     let start;
     let end;
+
+    // Time ranges generated from regular queries
     if (range.raw.from._isAMomentObject) {
       start = range.from._d.getTime();
       end = range.to._d.getTime();
+
     } else if (range.raw.to === 'now') {
-      // RELATIVE RANGE
-      start = HumioHelper.parseDateFrom(range.raw.from); // But more difficult, if end is not 'now' then the raws are also transformed into moments
+      // Relative time range
+      if (range.raw.from.startsWith('now')) {
+        start = HumioHelper.parseDateFrom(range.raw.from);
+      } else {
+        start = range.raw.from; // If data comes from our weird way of getting time ranges
+      }
+
       end = 'now';
     } else {
-      // TIMESTAMPS
+      // TIMESTAMPS with variable query
       start = range.raw.from; // Might have been better to have converted this to a moment object from date instead.
       end = range.raw.to;
     }
