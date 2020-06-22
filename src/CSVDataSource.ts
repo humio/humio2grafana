@@ -12,19 +12,17 @@ import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, MetricFindValue } from '@grafana/data';
 import { HumioOptions } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 import MetricFindQuery from './MetricFindQuery';
-
 
 const { alertError } = AppEvents;
 
 export interface CSVQuery extends DataQuery {
   humioQuery: string;
   humioRepository?: string;
-  annotationQuery?: string;
   annotationText?: string;
 }
 
@@ -79,14 +77,13 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
   // Formats $var strings in queries. Uses regexes when using multiple selected vars, which right now only works for some kind of filtering, such as host=$hostname
   formatting(vars: any) {
-    if (vars.length === 1) {
+    if (_.isString(vars) || vars.length === 1) {
       return _.escapeRegExp(vars);
     } else {
       let args = vars.map((v: string) => _.escapeRegExp(v));
       return '/^' + args.join('|') + '$/';
     }
   }
-
 
   query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {
     if (options.targets.length === 0) {
@@ -128,12 +125,15 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     };
     this.timeRange = options.range;
 
+    options.annotation.humioQuery = getTemplateSrv().replace(options.annotation.humioQuery, undefined, this.formatting); // Scopedvars is for panel repeats
+    console.log(options.annotation.humioQuery);
+
     let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
     options.annotation.refId = randomNumber; // How to set this? It just needs to be a unique string.
 
     // Create targets.
     let query: CSVQuery = {
-      humioQuery: options.annotation.annotationQuery || '',
+      humioQuery: options.annotation.humioQuery,
       humioRepository: options.annotation.humioRepository,
       refId: options.annotation.refId,
     };
