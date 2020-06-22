@@ -30,7 +30,7 @@ export default class MetricFindQuery {
   }
 
   // This is a rater complex system for getting the time range, but Grafana doesn't allow for another way atm.
-  // TODO(AlexanderBrandborg): Should petition that project to give us access to timeSrv or also give us a range on the 'never' and 'on dashboard load' options.
+  // TODO(AlexanderBrandborg): Should petition Grafana to give us access to timeSrv or also give us a range on the 'never' and 'on dashboard load' options.
   async computeRawTimeRange(options: any) {
     // If variables refreshed on time range change, we get the range free of charge
     if (options.range) {
