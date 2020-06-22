@@ -86,7 +86,6 @@ class QueryJob {
     if (range.raw.from._isAMomentObject) {
       start = range.from._d.getTime();
       end = range.to._d.getTime();
-
     } else if (range.raw.to === 'now') {
       // Relative time range
       if (range.raw.from.startsWith('now')) {

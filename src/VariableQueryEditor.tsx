@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PluginMeta, SelectableValue } from '@grafana/data';
 import { PanelPlugin } from '@grafana/data';
-import { QueryField, Select } from '@grafana/ui';
+import { QueryField, Select, Button } from '@grafana/ui';
 import { VariableQueryData } from './types';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import { getBackendSrv } from '@grafana/runtime';
@@ -107,41 +107,47 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
 
   render() {
     return (
-      <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
-        <QueryField
-          query={this.state.query}
-          placeholder="Enter a Humio query (run with Shift+Enter)"
-          portalOrigin="Humio"
-          onChange={v => {
-            this.onQueryChange(v);
-          }}
-        ></QueryField>
-
-        <Select
-          width={30}
-          options={this.state.repositories}
-          value={this.state.repo}
-          onChange={v => {
-            this.onRepoChange(v);
-          }}
-        ></Select>
-
-        <input
-          value={this.state.dataField}
-          onChange={v => {
-            this.onDataFieldChange(v.target.value);
-          }}
-        ></input>
-        <button
+      <div className="gf-form-group" style={{ background: 'slategrey', padding: '10px' }}>
+        <label>Humio Query</label>
+        <div className="gf-form gf-form--grow">
+          <QueryField
+            query={this.state.query}
+            placeholder="Enter a Humio query"
+            portalOrigin="Humio"
+            onChange={v => {
+              this.onQueryChange(v);
+            }}
+          ></QueryField>
+        </div>
+        <label>Humio Repository</label>
+        <div className="gf-form gf-form--grow">
+          <Select
+            width={30}
+            options={this.state.repositories}
+            value={this.state.repo}
+            onChange={v => {
+              this.onRepoChange(v);
+            }}
+          ></Select>
+        </div>
+        <label>Data Field</label>
+        <div className="gf-form gf-form--grow">
+          <input
+            value={this.state.dataField}
+            onChange={v => {
+              this.onDataFieldChange(v.target.value);
+            }}
+          ></input>
+        </div>
+        <Button
           onClick={v => {
             v.preventDefault();
             this.onRefresh();
           }}
         >
-          Refresh
-        </button>
+          Execute Query
+        </Button>
       </div>
-      // Perhaps we should have a refresh button here instead of executing props on everything?
     );
   }
 }
