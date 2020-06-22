@@ -20,8 +20,8 @@ const { alertError } = AppEvents;
 export interface CSVQuery extends DataQuery {
   humioQuery: string;
   humioRepository?: string;
-  queryText?: string;
-  text?: string;
+  annotationQuery?: string;
+  annotationText?: string;
 }
 
 export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
@@ -103,14 +103,13 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     };
     this.timeRange = options.range;
 
-    // Get query from ui.
-    options.annotation.humioQuery = options.annotation.queryText || '';
-    options.annotation.refId = 'Hej'; // How to set this? It just needs to be a unique string.
+    let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
+    options.annotation.refId = randomNumber; // How to set this? It just needs to be a unique string.
 
     // Create targets.
     let query: CSVQuery = {
-      humioQuery: options.annotation.queryText || '',
-      humioRepository: options.annotation.humioRepository, // How to set this?
+      humioQuery: options.annotation.annotationQuery || '',
+      humioRepository: options.annotation.humioRepository,
       refId: options.annotation.refId,
     };
 
@@ -122,11 +121,10 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     // Make query to Humio.
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
     const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
-    // TODO: Pull the rest of events and add to humio_events.
     humio_events['data'].forEach(target => {
       const event: AnnotationEvent = {
         time: target.datapoints[0][0],
-        text: options.annotation.text, // Use query?
+        text: options.annotation.annotationText,
         //tags: ['bar'],
       };
       events.push(event);
