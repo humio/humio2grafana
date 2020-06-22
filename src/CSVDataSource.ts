@@ -4,21 +4,24 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQuery,
+  AnnotationQueryRequest,
+  AnnotationEvent,
 } from '@grafana/data';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
-import { AppEvents, MetricFindValue } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { HumioOptions } from './types';
-//import {ge} from '@grafana/runtime'
 
 const { alertError } = AppEvents;
 
 export interface CSVQuery extends DataQuery {
   humioQuery: string;
   humioRepository?: string;
+  annotationQuery?: string;
+  annotationText?: string;
 }
 
 export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
@@ -64,33 +67,6 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     }
   }
 
-  // Can't quite find a type for options that fits.
-  metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
-    // TODO: Figure out how to get out a time range.
-    //let timeRange = options.range.raw;
-    //console.log(timeRange);
-
-    /*
-    var rng = angular
-      .element('grafana-app')
-      .injector()
-      .get('timeSrv')
-      .timeRange();
-    */
-    return new Promise(resolve => resolve([{ text: query.repo }, { text: query.query }]));
-
-    /*
-    const scopedVars = {
-      __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
-      ...this.getRangeScopedVars(getTimeSrv().timeRange()),
-    };
-    const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
-    const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process();
-    */
-  }
-
   query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {
     if (options.targets.length === 0) {
       return new Promise(resolve =>
@@ -112,8 +88,48 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
     this.timeRange = options.range;
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId.toString());
-
     return queryJobManager.update(location, grafanaAttrs, options.targets);
+  }
+
+  async annotationQuery(options: AnnotationQueryRequest<CSVQuery>): Promise<AnnotationEvent[]> {
+    let errorCallback = (errorTitle: any, errorBody: any) => {
+      alertError;
+    };
+    let grafanaAttrs: IGrafanaAttrs = {
+      grafanaQueryOpts: options,
+      errorCallback: errorCallback,
+      headers: this.headers,
+      proxy_url: this.rest_endpoint,
+    };
+    this.timeRange = options.range;
+
+    let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
+    options.annotation.refId = randomNumber; // How to set this? It just needs to be a unique string.
+
+    // Create targets.
+    let query: CSVQuery = {
+      humioQuery: options.annotation.annotationQuery || '',
+      humioRepository: options.annotation.humioRepository,
+      refId: options.annotation.refId,
+    };
+
+    let targets: CSVQuery[] = [];
+    targets.push(query);
+
+    const events: AnnotationEvent[] = [];
+
+    // Make query to Humio.
+    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
+    const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
+    humio_events['data'].forEach(target => {
+      const event: AnnotationEvent = {
+        time: target.datapoints[0][0],
+        text: options.annotation.annotationText,
+        //tags: ['bar'],
+      };
+      events.push(event);
+    });
+    return events;
   }
 
   testDatasource() {
