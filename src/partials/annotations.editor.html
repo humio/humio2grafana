@@ -1,12 +1,30 @@
 <div class="gf-form-group">
-    <div class="gf-form-inline">
-      <div class="gf-form gf-form--grow">
-        <input
-         class="gf-form-input"
-         placeholder="query expression"
-         ng-model="ctrl.annotation.queryText"
-         ></input>
-      </div>
-    </div>
+  <div class="gf-form gf-form--grow">
+    <input
+     class="gf-form-input"
+     placeholder="query expression"
+     ng-model="ctrl.annotation.annotationQuery"
+     ></input>
   </div>
-  
+  <label>
+    Humio repository
+  </label>
+
+  <div class="gf-form gf-form--grow">
+    <select class="gf-form-input.gf-size-auto"
+              ng-model="ctrl.annotation.humioRepository",
+              ng-options="v.value as v.label for v in ctrl.repositories">
+              <option value="" disabled selected>Choose</option>
+    </select>
+  </div>
+  <label>
+    Annotation text
+  </label>
+  <div class="gf-form gf-form--grow">
+    <input
+     class="gf-form-input"
+     placeholder="annotation text"
+     ng-model="ctrl.annotation.annotationText"
+     ></input>
+  </div>
+</div>
