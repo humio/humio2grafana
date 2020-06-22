@@ -14,6 +14,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
 import { AppEvents } from '@grafana/data';
 import { HumioOptions } from './types';
+import { getTemplateSrv } from '@grafana/runtime';
+import _ from 'lodash';
+import MetricFindQuery from './MetricFindQuery';
+
 
 const { alertError } = AppEvents;
 
@@ -67,6 +71,23 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     }
   }
 
+  // Can't quite find a type for options that fits.
+  async metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
+    const mfq = new MetricFindQuery(this, query, options);
+    return mfq.process();
+  }
+
+  // Formats $var strings in queries. Uses regexes when using multiple selected vars, which right now only works for some kind of filtering, such as host=$hostname
+  formatting(vars: any) {
+    if (vars.length === 1) {
+      return _.escapeRegExp(vars);
+    } else {
+      let args = vars.map((v: string) => _.escapeRegExp(v));
+      return '/^' + args.join('|') + '$/';
+    }
+  }
+
+
   query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {
     if (options.targets.length === 0) {
       return new Promise(resolve =>
@@ -76,9 +97,13 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
       );
     }
 
+    options.targets.forEach(target => {
+      target.humioQuery = getTemplateSrv().replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
+    });
+
     let errorCallback = (errorTitle: any, errorBody: any) => {
       alertError;
-    };
+    }; // TODO(AlexanderBrandborg): Double check that this can be used to throw exceptions.
     let grafanaAttrs: IGrafanaAttrs = {
       grafanaQueryOpts: options,
       errorCallback: errorCallback,

@@ -11,7 +11,8 @@ export interface SecretHumioOptions extends DataSourceJsonData {
 }
 
 export interface VariableQueryData {
-  query?: string;
+  query: string;
   repo?: string;
   repositories: any;
+  dataField: string;
 }

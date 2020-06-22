@@ -68,7 +68,7 @@ class QueryJob {
 
   private _makeLiveQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string) {
     let range = grafanaAttrs.grafanaQueryOpts.range;
-    let start = HumioHelper.parseDateFrom(range.raw.from);
+    let start = HumioHelper.parseDateFrom(range.raw.from); // Seems pretty easy, raw from will always be here.
 
     return {
       isLive: true,
@@ -79,8 +79,27 @@ class QueryJob {
 
   private _makeStaticQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string) {
     let range = grafanaAttrs.grafanaQueryOpts.range;
-    let start = range.from._d.getTime();
-    let end = range.to._d.getTime();
+    let start;
+    let end;
+
+    // Time ranges generated from regular queries
+    if (range.raw.from._isAMomentObject) {
+      start = range.from._d.getTime();
+      end = range.to._d.getTime();
+    } else if (range.raw.to === 'now') {
+      // Relative time range
+      if (range.raw.from.startsWith('now')) {
+        start = HumioHelper.parseDateFrom(range.raw.from);
+      } else {
+        start = range.raw.from; // If data comes from our weird way of getting time ranges
+      }
+
+      end = 'now';
+    } else {
+      // TIMESTAMPS with variable query
+      start = range.raw.from; // Might have been better to have converted this to a moment object from date instead.
+      end = range.raw.to;
+    }
 
     return {
       isLive: false,

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PluginMeta, SelectableValue } from '@grafana/data';
 import { PanelPlugin } from '@grafana/data';
-import { QueryField, Select } from '@grafana/ui';
+import { QueryField, Select, Button } from '@grafana/ui';
 import { VariableQueryData } from './types';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import { getBackendSrv } from '@grafana/runtime';
@@ -45,9 +45,10 @@ export interface VariableQueryProps {
 
 export class VariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   defaults: VariableQueryData = {
-    query: 'Hej',
-    repo: 'humio-audit',
+    query: '',
+    repo: '',
     repositories: [],
+    dataField: '',
   };
 
   constructor(props: any) {
@@ -67,6 +68,13 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
     this.setState({
       ...this.state,
       repo: repo.value,
+    });
+  }
+
+  onDataFieldChange(dataField: string) {
+    this.setState({
+      ...this.state,
+      dataField: dataField,
     });
   }
 
@@ -92,31 +100,53 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
       });
   }
 
-  componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
+  onRefresh() {
     const query = this.state.query;
     this.props.onChange(this.state, `Humio - ${query}`);
   }
 
   render() {
     return (
-      <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
-        <QueryField
-          query={this.props.query.humioQuery}
-          placeholder="Enter a Humio query (run with Shift+Enter)"
-          portalOrigin="Humio"
-          onChange={v => {
-            this.onQueryChange(v);
+      <div className="gf-form-group" style={{ background: 'slategrey', padding: '10px' }}>
+        <label>Humio Query</label>
+        <div className="gf-form gf-form--grow">
+          <QueryField
+            query={this.state.query}
+            placeholder="Enter a Humio query"
+            portalOrigin="Humio"
+            onChange={v => {
+              this.onQueryChange(v);
+            }}
+          ></QueryField>
+        </div>
+        <label>Humio Repository</label>
+        <div className="gf-form gf-form--grow">
+          <Select
+            width={30}
+            options={this.state.repositories}
+            value={this.state.repo}
+            onChange={v => {
+              this.onRepoChange(v);
+            }}
+          ></Select>
+        </div>
+        <label>Data Field</label>
+        <div className="gf-form gf-form--grow">
+          <input
+            value={this.state.dataField}
+            onChange={v => {
+              this.onDataFieldChange(v.target.value);
+            }}
+          ></input>
+        </div>
+        <Button
+          onClick={v => {
+            v.preventDefault();
+            this.onRefresh();
           }}
-        ></QueryField>
-
-        <Select
-          width={30}
-          options={this.state.repositories}
-          value={this.state.repo}
-          onChange={v => {
-            this.onRepoChange(v);
-          }}
-        ></Select>
+        >
+          Execute Query
+        </Button>
       </div>
     );
   }
