@@ -34,7 +34,7 @@ class QueryJobManager {
     const queryResponses = await this._executeAllQueries(location, grafanaAttrs, targets);
 
     const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
-      return this._convertHumioQueryResponseToGrafanaFormat(res, targets[index]);
+      return this._convertHumioQueryResponseToGrafanaFormat(res.data, targets[index]);
     });
     return { data: listOfGrafanaDataSeries };
   }

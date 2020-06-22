@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PluginMeta, SelectableValue } from '@grafana/data';
 import { PanelPlugin } from '@grafana/data';
-import { QueryField, Select, Button, Field } from '@grafana/ui';
+import { QueryField, Select } from '@grafana/ui';
 import { VariableQueryData } from './types';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import { getBackendSrv } from '@grafana/runtime';
@@ -105,7 +105,6 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
     this.props.onChange(this.state, `Humio - ${query}`);
   }
 
-  // FIXME(AlexanderBrandborg): Add some UX to this, right now it is strictly *functional*.
   render() {
     return (
       <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
@@ -127,25 +126,20 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
           }}
         ></Select>
 
-        <Field
-          label="Event Field"
-          children={
-            <input
-              value={this.state.dataField}
-              onChange={v => {
-                this.onDataFieldChange(v.target.value);
-              }}
-            ></input>
-          }
-        ></Field>
-        <Button
+        <input
+          value={this.state.dataField}
+          onChange={v => {
+            this.onDataFieldChange(v.target.value);
+          }}
+        ></input>
+        <button
           onClick={v => {
             v.preventDefault();
             this.onRefresh();
           }}
         >
           Refresh
-        </Button>
+        </button>
       </div>
       // Perhaps we should have a refresh button here instead of executing props on everything?
     );
