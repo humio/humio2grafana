@@ -102,7 +102,7 @@ class QueryJobManager {
     //const valueFields = getValueFieldName(humioQueryResult);
     return _.flatMap(humioQueryResult.events, event => {
       return {
-        target: [event['type']],
+        target: [event['type']], // This one doesn't matter.
         datapoints: [[parseFloat(event['@timestamp'])]],
       };
     });

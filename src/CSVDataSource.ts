@@ -21,6 +21,7 @@ export interface CSVQuery extends DataQuery {
   humioQuery: string;
   humioRepository?: string;
   queryText?: string;
+  text?: string;
 }
 
 export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
@@ -104,12 +105,12 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
     // Get query from ui.
     options.annotation.humioQuery = options.annotation.queryText || '';
-    options.annotation.refId = 'Hej';
+    options.annotation.refId = 'Hej'; // How to set this? It just needs to be a unique string.
 
     // Create targets.
     let query: CSVQuery = {
       humioQuery: options.annotation.queryText || '',
-      humioRepository: 'github',
+      humioRepository: options.annotation.humioRepository, // How to set this?
       refId: options.annotation.refId,
     };
 
@@ -121,11 +122,11 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     // Make query to Humio.
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
     const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
+    // TODO: Pull the rest of events and add to humio_events.
     humio_events['data'].forEach(target => {
-      console.log(target);
       const event: AnnotationEvent = {
         time: target.datapoints[0][0],
-        text: target.target[0],
+        text: options.annotation.text, // Use query?
         //tags: ['bar'],
       };
       events.push(event);
