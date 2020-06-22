@@ -3,7 +3,7 @@ import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import IDatasourceRequestOptions from '../Interfaces/IDatasourceRequestOptions';
 import DatasourceRequestHeaders from '../Interfaces/IDatasourceRequestHeaders';
 import HumioHelper from './humio_helper';
-import _ from 'lodash';
+import _, { isString } from 'lodash';
 import { CSVQuery } from 'CSVDataSource';
 import { getBackendSrv } from '@grafana/runtime';
 
@@ -39,15 +39,15 @@ class QueryJob {
 
     // Executing the same live query again
     if (this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)) {
-      return this._pollQueryJobUntilDone(location, grafanaAttrs, target);
+      return this._pollQueryJobUntilDone2(location, grafanaAttrs, target);
     } else {
       this._updateQueryDefinition(requestedQueryDefinition);
       return this._cancelCurrentQueryJob(grafanaAttrs, target)
-        .then(() => {
-          return this._initializeNewQueryJob(location, grafanaAttrs, target);
+        .then(async () => {
+          return await this._initializeNewQueryJob(location, grafanaAttrs, target);
         })
-        .then(() => {
-          return this._pollQueryJobUntilDone(location, grafanaAttrs, target);
+        .then(async () => {
+          return await this._pollQueryJobUntilDone2(location, grafanaAttrs, target);
         });
     }
   }
@@ -83,22 +83,18 @@ class QueryJob {
     let end;
 
     // Time ranges generated from regular queries
-    if (range.raw.from._isAMomentObject) {
+    if ('from' in range && range.from._isAMomentObject) {
       start = range.from._d.getTime();
       end = range.to._d.getTime();
-
-    } else if (range.raw.to === 'now') {
-      // Relative time range
-      if (range.raw.from.startsWith('now')) {
-        start = HumioHelper.parseDateFrom(range.raw.from);
-      } else {
-        start = range.raw.from; // If data comes from our weird way of getting time ranges
+    }
+    // Time ranges generated from variables queries.
+    // TODO:(AlexanderBrandborg) We can delete this if we figure out a way to get time ranges from non 'time-range changes' refresh variables queries.
+    else {
+      start = range.raw.from;
+      if (isString(start) && start.startsWith('now')) {
+        // In the case that the start is something like now-6h, we should parse it to a Humio friendly format
+        start = HumioHelper.parseDateFrom(start);
       }
-
-      end = 'now';
-    } else {
-      // TIMESTAMPS with variable query
-      start = range.raw.from; // Might have been better to have converted this to a moment object from date instead.
       end = range.raw.to;
     }
 
@@ -165,6 +161,7 @@ class QueryJob {
     });
   }
 
+  /*
   private _pollQueryJobUntilDone(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
     return new Promise(resolve => {
       let recursivePollingFunc = () => {
@@ -185,6 +182,51 @@ class QueryJob {
       };
       recursivePollingFunc();
     });
+  }
+  */
+
+  private async _pollQueryJobUntilDone2(
+    location: Location,
+    grafanaAttrs: IGrafanaAttrs,
+    target: CSVQuery
+  ): Promise<any> {
+    let pollResult = await this._pollSegment(location, grafanaAttrs, target);
+
+    let payload;
+    if (pollResult.metaData['isAggregate']) {
+      payload = pollResult;
+    } else {
+      let events;
+      events = pollResult.events;
+      while (pollResult.metaData['extraData']['hasMoreEvents'] === 'true') {
+        let pollResult = await this._pollSegment(location, grafanaAttrs, target);
+        events.concat(pollResult.events);
+      }
+      pollResult.events = events;
+      payload = pollResult;
+    }
+
+    // Reset state if query is not live, as there is not reason to poll the old queryjob again
+    if (!this.queryDefinition.isLive) {
+      this.queryId = undefined;
+    }
+
+    return payload;
+  }
+
+  timeout(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async _pollSegment(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery) {
+    let pollResult = (await this._pollQueryJobForNextBatch(location, grafanaAttrs, target)).data;
+    while (!pollResult['done']) {
+      var waitTimeUntilNextPoll = pollResult['metaData']['pollAfter'];
+      await this.timeout(waitTimeUntilNextPoll);
+      pollResult = (await this._pollQueryJobForNextBatch(location, grafanaAttrs, target)).data;
+    }
+
+    return pollResult;
   }
 
   private _pollQueryJobForNextBatch(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {

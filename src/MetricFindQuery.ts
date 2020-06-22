@@ -107,7 +107,7 @@ export default class MetricFindQuery {
 
     let data = await qj.executeQuery(location, grafanaAttrs, target);
 
-    return _.flatMap(data.data.events, (res, index) => {
+    return _.flatMap(data.events, (res, index) => {
       return { text: _.get(res, query.dataField) }; // TODO(AlexanderBrandborg): throw exception on error
     });
   }
