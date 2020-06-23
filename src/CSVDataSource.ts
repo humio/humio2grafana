@@ -152,15 +152,17 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
     const events: AnnotationEvent[] = [];
 
+    let eventField = !options.annotation.annotationText ? '' : options.annotation.annotationText;
+
     // Make query to Humio.
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
     const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
-    humio_events['data'].forEach(target => {
-      const event: AnnotationEvent = {
-        time: target.datapoints[0][0],
-        text: options.annotation.annotationText,
+    humio_events['data'].forEach(event => {
+      const annotationEvent: AnnotationEvent = {
+        time: event.datapoints[0][0],
+        text: event.target[eventField],
       };
-      events.push(event);
+      events.push(annotationEvent);
     });
     return events;
   }

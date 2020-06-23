@@ -32,7 +32,7 @@ class QueryJobManager {
     location: Location,
     grafanaAttrs: IGrafanaAttrs,
     targets: CSVQuery[]
-  ): Promise<{ data: Array<{ target: string; datapoints: Array<[number, number]> }> }> {
+  ): Promise<{ data: Array<{ target: any; datapoints: Array<[number, number]> }> }> {
     const queryResponses = await this._executeAllQueries(location, grafanaAttrs, targets);
     const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
       if (res.data.metaData.isAggregate) {
@@ -102,7 +102,7 @@ class QueryJobManager {
     //const valueFields = getValueFieldName(humioQueryResult);
     return _.flatMap(humioQueryResult.events, event => {
       return {
-        target: [event['type']], // This one doesn't matter.
+        target: event, // This one doesn't matter.
         datapoints: [[parseFloat(event['@timestamp'])]],
       };
     });
