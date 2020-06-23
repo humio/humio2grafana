@@ -107,7 +107,7 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
 
   render() {
     return (
-      <div className="gf-form-group" style={{ background: 'slategrey', padding: '10px' }}>
+      <div className="gf-form-group">
         <label>Humio Query</label>
         <div className="gf-form gf-form--grow">
           <QueryField

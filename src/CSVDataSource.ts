@@ -24,6 +24,7 @@ export interface CSVQuery extends DataQuery {
   humioQuery: string;
   humioRepository?: string;
   annotationText?: string;
+  annotationQuery?: string;
 }
 
 export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
@@ -68,7 +69,6 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     }
   }
 
-  
   async metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
     const mfq = new MetricFindQuery(this, query, options);
     return mfq.process();
@@ -76,7 +76,8 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
 
   // Formats $var strings in queries. Uses regexes when using multiple selected vars, which right now only works for some kind of filtering, such as host=$hostname
   formatting(vars: any) {
-    if (_.isString(vars) || vars.length === 1) { // Regular variables are input as strings, while the input is an array when Multi-value variables are used.
+    if (_.isString(vars) || vars.length === 1) {
+      // Regular variables are input as strings, while the input is an array when Multi-value variables are used.
       return _.escapeRegExp(vars);
     } else {
       let args = vars.map((v: string) => _.escapeRegExp(v));
@@ -124,10 +125,18 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     };
     this.timeRange = options.range;
 
-    options.annotation.humioQuery = getTemplateSrv().replace(options.annotation.humioQuery, undefined, this.formatting); // Scopedvars is for panel repeats
+    if (!options.annotation.annotationQuery) {
+      options.annotation.annotationQuery = '';
+    }
+
+    options.annotation.humioQuery = getTemplateSrv().replace(
+      options.annotation.annotationQuery,
+      undefined,
+      this.formatting
+    ); // Scopedvars is for panel repeats
     console.log(options.annotation.humioQuery);
 
-    let randomNumber =  Date().toString() + Math.floor(Math.random() * 1000000);
+    let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
     options.annotation.refId = randomNumber; // TODO(SuzannaVolkov): Figure out how to set this. It just needs to be a unique string.
     //TODO(AlexanderBrandborg): Should look into calculating the same number for the same query, so that the same live queryjob can be reused.
 
