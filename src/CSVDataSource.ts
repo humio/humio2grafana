@@ -12,13 +12,11 @@ import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
-import { AppEvents, MetricFindValue } from '@grafana/data';
+import { MetricFindValue } from '@grafana/data';
 import { HumioOptions } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 import MetricFindQuery from './MetricFindQuery';
-
-const { alertError } = AppEvents;
 
 export interface CSVQuery extends DataQuery {
   humioQuery: string;
@@ -98,12 +96,8 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
       target.humioQuery = getTemplateSrv().replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
     });
 
-    let errorCallback = (errorTitle: any, errorBody: any) => {
-      alertError;
-    }; // TODO(AlexanderBrandborg): Double check that this can be used to throw exceptions.
     let grafanaAttrs: IGrafanaAttrs = {
       grafanaQueryOpts: options,
-      errorCallback: errorCallback,
       headers: this.headers,
       proxy_url: this.rest_endpoint,
     };
@@ -114,12 +108,8 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
   }
 
   async annotationQuery(options: AnnotationQueryRequest<CSVQuery>): Promise<AnnotationEvent[]> {
-    let errorCallback = (errorTitle: any, errorBody: any) => {
-      alertError;
-    };
     let grafanaAttrs: IGrafanaAttrs = {
       grafanaQueryOpts: options,
-      errorCallback: errorCallback,
       headers: this.headers,
       proxy_url: this.rest_endpoint,
     };

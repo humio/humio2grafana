@@ -1,10 +1,8 @@
 import QueryJob from './humio/query_job';
 import { HumioDataSource } from './CSVDataSource';
-import { AppEvents, DefaultTimeRange, MetricFindValue } from '@grafana/data';
+import { DefaultTimeRange, MetricFindValue } from '@grafana/data';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import _ from 'lodash';
-
-const { alertError } = AppEvents;
 
 export default class MetricFindQuery {
   datasource: HumioDataSource;
@@ -88,13 +86,9 @@ export default class MetricFindQuery {
   // Variable queries will never be 'live' so the manager is not needed to keep query jobs alive
   async queryVariableContents(query: any, options: any) {
     let qj = new QueryJob(query.query);
-    let errorCallback = (errorTitle: any, errorBody: any) => {
-      alertError;
-    };
 
     let grafanaAttrs: IGrafanaAttrs = {
       grafanaQueryOpts: options,
-      errorCallback: errorCallback,
       headers: this.datasource.headers,
       proxy_url: this.datasource.rest_endpoint,
     };
@@ -106,6 +100,9 @@ export default class MetricFindQuery {
     };
 
     let data = await qj.executeQuery(location, grafanaAttrs, target);
+    if (data.error) {
+      throw data.error; // TODO(AlexanderBrandborg): Only shows the error header on the variables page. Should be able to show the body also.
+    }
 
     return _.flatMap(data.data.events, (res, index) => {
       let text = _.get(res, query.dataField);

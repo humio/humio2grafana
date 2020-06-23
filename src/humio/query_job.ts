@@ -48,18 +48,27 @@ class QueryJob {
       return this._pollQueryJobUntilDone(location, grafanaAttrs, target);
     } else {
       this._updateQueryDefinition(requestedQueryDefinition);
-      return this._cancelCurrentQueryJob(grafanaAttrs, target)
-        .then(() => {
-          return this._initializeNewQueryJob(location, grafanaAttrs, target);
-        })
-        .then(res => {
-          if (res.error) {
-            // Res will only be defined and have  an error field if an error occured during initialization.
-            return res;
-          }
-
-          return this._pollQueryJobUntilDone(location, grafanaAttrs, target);
-        });
+      return this._cancelCurrentQueryJob(grafanaAttrs, target).then(() => {
+        return this._initializeNewQueryJob(grafanaAttrs, target)
+          .then(
+            () => {
+              return Promise.resolve(this._pollQueryJobUntilDone(location, grafanaAttrs, target));
+            },
+            err => {
+              return Promise.reject(err);
+            }
+          )
+          .then(
+            res => {
+              return Promise.resolve(res);
+            },
+            err => {
+              return this._handleErr(location, grafanaAttrs, target, err).then(res => {
+                return Promise.reject(res);
+              });
+            }
+          );
+      });
     }
   }
 
@@ -151,8 +160,8 @@ class QueryJob {
     });
   }
 
-  private _initializeNewQueryJob(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
-    return new Promise(resolve => {
+  private _initializeNewQueryJob(grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
+    return new Promise((resolve, reject) => {
       return this._doRequest(
         {
           url: '/api/v1/dataspaces/' + target.humioRepository + '/queryjobs',
@@ -167,31 +176,34 @@ class QueryJob {
           return resolve({});
         },
         (err: any) => {
-          this._handleErr(location, grafanaAttrs, target, err).then(res => {
-            return resolve(res);
-          });
+          return reject(err);
         }
       );
     });
   }
 
   private _pollQueryJobUntilDone(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let recursivePollingFunc = () => {
-        this._pollQueryJobForNextBatch(location, grafanaAttrs, target).then(res => {
-          if (res['data'].done) {
-            // Reset state if query is not live, as there is not reason to poll the old queryjob again
-            if (!this.queryDefinition.isLive) {
-              this.queryId = undefined;
+        this._pollQueryJobForNextBatch(location, grafanaAttrs, target).then(
+          res => {
+            if (res['data'].done) {
+              // Reset state if query is not live, as there is not reason to poll the old queryjob again
+              if (!this.queryDefinition.isLive) {
+                this.queryId = undefined;
+              }
+              resolve(res);
+            } else {
+              var waitTimeUntilNextPoll = res['data']['metaData']['pollAfter'];
+              setTimeout(() => {
+                recursivePollingFunc();
+              }, waitTimeUntilNextPoll); // If we don't wait the stated amount, Humio will return the same data again.
             }
-            resolve(res);
-          } else {
-            var waitTimeUntilNextPoll = res['data']['metaData']['pollAfter'];
-            setTimeout(() => {
-              recursivePollingFunc();
-            }, waitTimeUntilNextPoll); // If we don't wait the stated amount, Humio will return the same data again.
+          },
+          err => {
+            reject(err);
           }
-        });
+        );
       };
       recursivePollingFunc();
     });
@@ -221,9 +233,7 @@ class QueryJob {
           return resolve(res);
         },
         (err: any) => {
-          return this._handleErr(location, grafanaAttrs, target, err).then(res => {
-            reject(res);
-          });
+          return reject(err);
         }
       );
     });
@@ -253,19 +263,13 @@ class QueryJob {
           return Promise.resolve({ data: { events: [], done: true }, error: error });
         }
       }
-      case 400: {
-        let error: DataQueryError = {
-          cancelled: true,
-          message: 'Query Error',
-          data: { message: 'Query Error', error: 'Bad Query.' },
-        };
-        return Promise.resolve({ data: { events: [], done: true }, error: error });
-      }
       default: {
         let error: DataQueryError = {
           cancelled: true,
           message: 'Query Error',
-          data: { message: 'Query Error', error: 'Bad Query.' },
+          data: { message: 'Query Error', error: err.data },
+          status: err.status,
+          statusText: err.statusText,
         };
         return Promise.resolve({ data: { events: [], done: true }, error: error });
       }
