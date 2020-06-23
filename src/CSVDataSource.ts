@@ -127,8 +127,7 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     console.log(options.annotation.humioQuery);
 
     let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
-    options.annotation.refId = randomNumber; // TODO(SuzannaVolkov): Figure out how to set this. It just needs to be a unique string.
-    //TODO(AlexanderBrandborg): Should look into calculating the same number for the same query, so that the same live queryjob can be reused.
+    options.annotation.refId = randomNumber; //TODO(AlexanderBrandborg): Should look into calculating the same number for the same query, so that the same live queryjob can be reused.
 
     // Create targets.
     let query: CSVQuery = {
@@ -148,6 +147,11 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
     const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
     humio_events['data'].forEach(event => {
+      const text = event.target[eventField];
+      if (!text) {
+        throw Error(eventField + ' is not a field that exists on returned Humio events for annotation query');
+      }
+
       const annotationEvent: AnnotationEvent = {
         time: event.datapoints[0][0],
         text: event.target[eventField],
@@ -176,7 +180,7 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
               title: 'Success',
             };
           } else {
-            // This case is reached if no Authorization was given, which still yields a 200 at the endpoint
+            // This case is reached if no Authorization was given, which still yields a statuscode of 200 at the endpoint
             return {
               status: 'error',
               message: response.data.errors[0].message,

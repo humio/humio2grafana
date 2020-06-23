@@ -144,7 +144,7 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
             this.onRefresh();
           }}
         >
-          Execute Query
+          Execute Humio Query
         </Button>
       </div>
     );
