@@ -2,13 +2,13 @@ import React, { PureComponent } from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Select, QueryField } from '@grafana/ui';
-import { HumioDataSource, CSVQuery } from './CSVDataSource';
+import { HumioDataSource, HumioQuery } from './HumioDataSource';
 import { HumioOptions } from './types';
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import HumioHelper from './humio/humio_helper';
 import _ from 'lodash';
 
-type Props = QueryEditorProps<HumioDataSource, CSVQuery, HumioOptions>;
+type Props = QueryEditorProps<HumioDataSource, HumioQuery, HumioOptions>;
 
 interface State {
   repositories: any;
@@ -51,9 +51,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     fetch('/api/datasources/' + this.state.datasource.id)
       .then(res => res.json())
       .then((res: any) => {
-        console.log(res);
         let url = res.jsonData.baseUrl;
-        console.log(this.state.datasource);
         // Trim off the last / if it exists. Otherwise later url concatinations will be incorrect.
         if (url[url.length - 1] === '/') {
           url = url.substring(0, url.length - 1);

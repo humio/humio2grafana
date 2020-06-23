@@ -1,5 +1,5 @@
 import QueryJob from './humio/query_job';
-import { HumioDataSource } from './CSVDataSource';
+import { HumioDataSource } from './HumioDataSource';
 import { DefaultTimeRange, MetricFindValue } from '@grafana/data';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import _ from 'lodash';
@@ -27,7 +27,7 @@ export default class MetricFindQuery {
     return new Promise(resolve => resolve(res));
   }
 
-  // This is a rater complex system for getting the time range, but Grafana doesn't allow for another way atm.
+  // This is a rater complex system for getting the time range, but Grafana doesn't allow for another way atm (July, 2020).
   // TODO(AlexanderBrandborg): Should petition Grafana to give us access to timeSrv or also give us a range on the 'never' and 'on dashboard load' options.
   async computeRawTimeRange(options: any) {
     // If variables refreshed on time range change, we get the range free of charge

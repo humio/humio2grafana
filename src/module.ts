@@ -1,13 +1,13 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { HumioDataSource, CSVQuery } from './CSVDataSource';
-import { ConfigEditor } from './CSVConfigEditor';
-import { QueryEditor } from './CSVQueryEditor';
+import { HumioDataSource, HumioQuery } from './HumioDataSource';
+import { ConfigEditor } from './HumioConfigEditor';
+import { QueryEditor } from './HumioQueryEditor';
 import { VariableQueryEditor } from './VariableQueryEditor';
 import { HumioOptions } from './types';
 import { HumioAnnotationQueryEditor } from './AnnotationQueryEditor';
 
-export const plugin = new DataSourcePlugin<HumioDataSource, CSVQuery, HumioOptions>(HumioDataSource)
+export const plugin = new DataSourcePlugin<HumioDataSource, HumioQuery, HumioOptions>(HumioDataSource)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(QueryEditor)
   .setVariableQueryEditor(VariableQueryEditor)

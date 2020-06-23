@@ -18,14 +18,14 @@ import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 import MetricFindQuery from './MetricFindQuery';
 
-export interface CSVQuery extends DataQuery {
+export interface HumioQuery extends DataQuery {
   humioQuery: string;
   humioRepository?: string;
   annotationText?: string;
   annotationQuery?: string;
 }
 
-export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
+export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   proxy_url: string;
   graphql_endpoint: string;
   rest_endpoint: string;
@@ -83,7 +83,7 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     }
   }
 
-  query(options: DataQueryRequest<CSVQuery>): Promise<DataQueryResponse> {
+  query(options: DataQueryRequest<HumioQuery>): Promise<DataQueryResponse> {
     if (options.targets.length === 0) {
       return new Promise(resolve =>
         resolve({
@@ -107,7 +107,7 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
     return queryJobManager.update(location, grafanaAttrs, options.targets);
   }
 
-  async annotationQuery(options: AnnotationQueryRequest<CSVQuery>): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<HumioQuery>): Promise<AnnotationEvent[]> {
     let grafanaAttrs: IGrafanaAttrs = {
       grafanaQueryOpts: options,
       headers: this.headers,
@@ -124,19 +124,18 @@ export class HumioDataSource extends DataSourceApi<CSVQuery, HumioOptions> {
       undefined,
       this.formatting
     ); // Scopedvars is for panel repeats
-    console.log(options.annotation.humioQuery);
 
     let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
     options.annotation.refId = randomNumber; //TODO(AlexanderBrandborg): Should look into calculating the same number for the same query, so that the same live queryjob can be reused.
 
     // Create targets.
-    let query: CSVQuery = {
+    let query: HumioQuery = {
       humioQuery: options.annotation.humioQuery,
       humioRepository: options.annotation.humioRepository,
       refId: options.annotation.refId,
     };
 
-    let targets: CSVQuery[] = [];
+    let targets: HumioQuery[] = [];
     targets.push(query);
 
     const events: AnnotationEvent[] = [];

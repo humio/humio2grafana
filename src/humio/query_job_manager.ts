@@ -3,7 +3,7 @@ import IGrafanaAttrs from '../Interfaces/IGrafanaAttrs';
 import QueryJob from './query_job';
 import HumioHelper from './humio_helper';
 import { WidgetType } from '../Types/WidgetType';
-import { CSVQuery } from 'CSVDataSource';
+import { HumioQuery } from 'HumioDataSource';
 import { DataQueryResponse } from '@grafana/data';
 //import { toDataQueryError } from '@grafana/runtime';
 
@@ -30,7 +30,7 @@ class QueryJobManager {
     return manager;
   }
 
-  async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: CSVQuery[]): Promise<DataQueryResponse> {
+  async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]): Promise<DataQueryResponse> {
     const queryResponses = await this._executeAllQueries(location, grafanaAttrs, targets);
     const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
       if (res.data.metaData && res.data.metaData.isAggregate) {
@@ -59,8 +59,8 @@ class QueryJobManager {
     };
   }
 
-  private async _executeAllQueries(location: Location, grafanaAttrs: IGrafanaAttrs, targets: CSVQuery[]) {
-    let allQueryPromise = targets.map((target: CSVQuery, index: number) => {
+  private async _executeAllQueries(location: Location, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]) {
+    let allQueryPromise = targets.map((target: HumioQuery, index: number) => {
       let query = this._getOrCreateQueryJob(index, target.humioQuery);
       let res = query.executeQuery(location, grafanaAttrs, target);
       return res;
@@ -117,7 +117,7 @@ class QueryJobManager {
     //const valueFields = getValueFieldName(humioQueryResult);
     return _.flatMap(humioQueryResult.events, event => {
       return {
-        target: event, // This one doesn't matter.
+        target: event,
         datapoints: [[parseFloat(event['@timestamp'])]],
       };
     });

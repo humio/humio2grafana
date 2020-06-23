@@ -4,7 +4,7 @@ import IDatasourceRequestOptions from '../Interfaces/IDatasourceRequestOptions';
 import DatasourceRequestHeaders from '../Interfaces/IDatasourceRequestHeaders';
 import HumioHelper from './humio_helper';
 import _ from 'lodash';
-import { CSVQuery } from 'CSVDataSource';
+import { HumioQuery } from 'HumioDataSource';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataQueryError } from '@grafana/data';
 
@@ -31,7 +31,7 @@ class QueryJob {
     this._handleErr = this._handleErr.bind(this);
   }
 
-  executeQuery(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
+  executeQuery(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     if (!target.humioRepository) {
       let error: DataQueryError = {
         cancelled: true,
@@ -79,7 +79,7 @@ class QueryJob {
     return getBackendSrv().datasourceRequest(options);
   }
 
-  private _getRequestedQueryDefinition(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery) {
+  private _getRequestedQueryDefinition(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery) {
     let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw.to);
     return isLive
       ? this._makeLiveQueryDefinition(grafanaAttrs, target.humioQuery)
@@ -142,7 +142,7 @@ class QueryJob {
     }
   }
 
-  private _cancelCurrentQueryJob(grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
+  private _cancelCurrentQueryJob(grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     return new Promise(resolve => {
       if (!this.queryId) {
         return resolve({});
@@ -160,7 +160,7 @@ class QueryJob {
     });
   }
 
-  private _initializeNewQueryJob(grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
+  private _initializeNewQueryJob(grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     return new Promise((resolve, reject) => {
       return this._doRequest(
         {
@@ -182,7 +182,7 @@ class QueryJob {
     });
   }
 
-  private _pollQueryJobUntilDone(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
+  private _pollQueryJobUntilDone(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     return new Promise((resolve, reject) => {
       let recursivePollingFunc = () => {
         this._pollQueryJobForNextBatch(location, grafanaAttrs, target).then(
@@ -209,7 +209,7 @@ class QueryJob {
     });
   }
 
-  private _pollQueryJobForNextBatch(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
+  private _pollQueryJobForNextBatch(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.queryId) {
         let error: DataQueryError = {
@@ -242,7 +242,7 @@ class QueryJob {
   private _handleErr(
     location: Location,
     grafanaAttrs: IGrafanaAttrs,
-    target: CSVQuery,
+    target: HumioQuery,
     err: { [index: string]: any }
   ): Promise<any> {
     switch (err['status']) {
