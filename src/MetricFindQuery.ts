@@ -79,7 +79,7 @@ export default class MetricFindQuery {
           return res.dashboard.time;
         },
         (err: any) => {
-          return {}; // TODO(AlexanderBrandborg): Throw an error here. Get mad.
+          throw new Error('Dashboard with ' + uid + ' could not be found.');
         }
       );
   }
@@ -108,7 +108,12 @@ export default class MetricFindQuery {
     let data = await qj.executeQuery(location, grafanaAttrs, target);
 
     return _.flatMap(data.data.events, (res, index) => {
-      return { text: _.get(res, query.dataField) }; // TODO(AlexanderBrandborg): throw exception on error
+      let text = _.get(res, query.dataField);
+      if (!text) {
+        throw new Error(query.dataField + ' is not a field that exists on returned Humio events for variable query');
+      }
+
+      return { text: text };
     });
   }
 }

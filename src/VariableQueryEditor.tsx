@@ -54,7 +54,6 @@ export class VariableQueryEditor extends PureComponent<VariableQueryProps, Varia
   constructor(props: any) {
     super(props);
     this.state = Object.assign(this.defaults, this.props.query);
-    console.log(this.state);
   }
 
   onQueryChange(query: string) {

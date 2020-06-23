@@ -6,6 +6,7 @@ import HumioHelper from './humio_helper';
 import _ from 'lodash';
 import { CSVQuery } from 'CSVDataSource';
 import { getBackendSrv } from '@grafana/runtime';
+import { DataQueryError } from '@grafana/data';
 
 /**
  * Manages a Humio Query Job.
@@ -32,7 +33,12 @@ class QueryJob {
 
   executeQuery(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
     if (!target.humioRepository) {
-      return Promise.resolve({ data: { events: [], done: true } });
+      let error: DataQueryError = {
+        cancelled: true,
+        message: 'No Repository Selected',
+        data: { message: 'No Repository Selected', error: 'Please select a repository.' },
+      };
+      return Promise.resolve({ data: { events: [], done: true }, error: error });
     }
 
     const requestedQueryDefinition = this._getRequestedQueryDefinition(location, grafanaAttrs, target);
@@ -46,7 +52,12 @@ class QueryJob {
         .then(() => {
           return this._initializeNewQueryJob(location, grafanaAttrs, target);
         })
-        .then(() => {
+        .then(res => {
+          if (res.error) {
+            // Res will only be defined and have  an error field if an error occured during initialization.
+            return res;
+          }
+
           return this._pollQueryJobUntilDone(location, grafanaAttrs, target);
         });
     }
@@ -153,7 +164,6 @@ class QueryJob {
       ).then(
         (res: any) => {
           this.queryId = res['data'].id;
-          console.log(res);
           return resolve({});
         },
         (err: any) => {
@@ -190,7 +200,13 @@ class QueryJob {
   private _pollQueryJobForNextBatch(location: Location, grafanaAttrs: IGrafanaAttrs, target: CSVQuery): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.queryId) {
-        return resolve({ data: { events: [], done: true } });
+        let error: DataQueryError = {
+          cancelled: true,
+          message: 'Queryjob not initialized.',
+          data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alive.' },
+        };
+
+        return resolve({ data: { events: [], done: true }, error: error });
       }
 
       return this._doRequest(
@@ -229,17 +245,29 @@ class QueryJob {
           return this.executeQuery(location, grafanaAttrs, target);
         } else {
           this.failCounter = 0;
-          grafanaAttrs.errorCallback('alert-error', ['failed to create query', 'tried 3 times']);
-          return Promise.resolve({ data: { events: [], done: true } });
+          let error: DataQueryError = {
+            cancelled: true,
+            message: 'Failed to create query',
+            data: { message: 'Failed to create query', error: 'Tried to query 3 times in a row.' },
+          };
+          return Promise.resolve({ data: { events: [], done: true }, error: error });
         }
       }
       case 400: {
-        grafanaAttrs.errorCallback('alert-error', ['bad query', err['data']]);
-        return Promise.resolve({ data: { events: [], done: true } });
+        let error: DataQueryError = {
+          cancelled: true,
+          message: 'Query Error',
+          data: { message: 'Query Error', error: 'Bad Query.' },
+        };
+        return Promise.resolve({ data: { events: [], done: true }, error: error });
       }
       default: {
-        grafanaAttrs.errorCallback('alert-error', err['data']);
-        return Promise.resolve({ data: { events: [], done: true } });
+        let error: DataQueryError = {
+          cancelled: true,
+          message: 'Query Error',
+          data: { message: 'Query Error', error: 'Bad Query.' },
+        };
+        return Promise.resolve({ data: { events: [], done: true }, error: error });
       }
     }
   }

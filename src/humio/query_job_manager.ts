@@ -4,6 +4,8 @@ import QueryJob from './query_job';
 import HumioHelper from './humio_helper';
 import { WidgetType } from '../Types/WidgetType';
 import { CSVQuery } from 'CSVDataSource';
+import { DataQueryResponse } from '@grafana/data';
+//import { toDataQueryError } from '@grafana/runtime';
 
 /**
  * Keeps account of the different queryjobs running to populate a Grafana panel,
@@ -28,20 +30,33 @@ class QueryJobManager {
     return manager;
   }
 
-  async update(
-    location: Location,
-    grafanaAttrs: IGrafanaAttrs,
-    targets: CSVQuery[]
-  ): Promise<{ data: Array<{ target: any; datapoints: Array<[number, number]> }> }> {
+  async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: CSVQuery[]): Promise<DataQueryResponse> {
     const queryResponses = await this._executeAllQueries(location, grafanaAttrs, targets);
     const listOfGrafanaDataSeries = _.flatMap(queryResponses, (res, index) => {
-      if (res.data.metaData.isAggregate) {
+      if (res.data.metaData && res.data.metaData.isAggregate) {
         return this._convertHumioQueryResponseToGrafanaFormat(res.data, targets[index]);
       } else {
         return this._convertHumioQueryResponseFromFilterQueryToGrafanaFormat(res.data, targets[index]);
       }
     });
-    return { data: listOfGrafanaDataSeries };
+
+    const firstWithError = _.find(queryResponses, (res, index) => {
+      if (res.error) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+    let error = undefined;
+    if (firstWithError) {
+      error = firstWithError.error;
+    }
+
+    return {
+      data: listOfGrafanaDataSeries,
+      error: error,
+    };
   }
 
   private async _executeAllQueries(location: Location, grafanaAttrs: IGrafanaAttrs, targets: CSVQuery[]) {
