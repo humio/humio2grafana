@@ -52,7 +52,7 @@ export class QueryEditor extends PureComponent<Props, State> {
       .then(res => res.json())
       .then((res: any) => {
         console.log(res);
-        let url = res.url;
+        let url = res.jsonData.baseUrl;
         console.log(this.state.datasource);
         // Trim off the last / if it exists. Otherwise later url concatinations will be incorrect.
         if (url[url.length - 1] === '/') {
