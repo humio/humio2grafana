@@ -51,6 +51,8 @@ In addition to the query you also need to define:
 * The Humio repo to query
 * The name of the event field in the returned events to extract the annotation text from
 
+Annotations are applied dashboard-wide, as Grafana doesn't yet support the option of doing Annotations for individual panels.
+
 Note that variables may be used in annotation queries.
  
 ## Installation & Usage of The Beta Branch
