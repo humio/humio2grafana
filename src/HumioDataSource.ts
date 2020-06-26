@@ -12,6 +12,7 @@ import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import { getBackendSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
+import QueryResultFormatter from './humio/query_result_formatter';
 import { MetricFindValue } from '@grafana/data';
 import { HumioOptions } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -83,7 +84,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     }
   }
 
-  query(options: DataQueryRequest<HumioQuery>): Promise<DataQueryResponse> {
+  async query(options: DataQueryRequest<HumioQuery>): Promise<DataQueryResponse> {
     if (options.targets.length === 0) {
       return new Promise(resolve =>
         resolve({
@@ -104,7 +105,8 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
 
     this.timeRange = options.range;
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId.toString());
-    return queryJobManager.update(location, grafanaAttrs, options.targets);
+    const raw_responses = await queryJobManager.update(location, grafanaAttrs, options.targets);
+    return QueryResultFormatter.formatQueryResponses(raw_responses, options.targets);
   }
 
   async annotationQuery(options: AnnotationQueryRequest<HumioQuery>): Promise<AnnotationEvent[]> {
@@ -138,26 +140,12 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     let targets: HumioQuery[] = [];
     targets.push(query);
 
-    const events: AnnotationEvent[] = [];
-
-    let eventField = !options.annotation.annotationText ? '' : options.annotation.annotationText;
+    let textField = !options.annotation.annotationText ? '' : options.annotation.annotationText;
 
     // Make query to Humio.
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
-    const humio_events = await queryJobManager.update(location, grafanaAttrs, targets);
-    humio_events['data'].forEach(event => {
-      const text = event.target[eventField];
-      if (!text) {
-        throw Error(eventField + ' is not a field that exists on returned Humio events for annotation query');
-      }
-
-      const annotationEvent: AnnotationEvent = {
-        time: event.datapoints[0][0],
-        text: event.target[eventField],
-      };
-      events.push(annotationEvent);
-    });
-    return events;
+    const queryResponse = (await queryJobManager.update(location, grafanaAttrs, targets))[0]; // Annotation query only has one target
+    return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, textField);
   }
 
   testDatasource() {
