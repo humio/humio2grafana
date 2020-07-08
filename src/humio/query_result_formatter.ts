@@ -8,7 +8,7 @@ import { DataQueryResponse, AnnotationEvent } from '@grafana/data';
 class QueryResultFormatter {
   static async formatAnnotationQueryResponse(
     annotationQueryResponseData: any,
-    textField: string
+    annotationText: string
   ): Promise<AnnotationEvent[]> {
     if (annotationQueryResponseData.events.length === 0) {
       return [];
@@ -21,13 +21,34 @@ class QueryResultFormatter {
         );
       }
 
-      if (!_.get(event, textField)) {
-        throw Error(textField + ' is not a field that exists on returned Humio events for annotation query');
+      // Extract all fields from the annotation text.
+      const regexp = /(?<=\{).+?(?=\})/g;
+      let textFields = annotationText.match(regexp);
+
+      if (textFields === null) {
+        textFields = [];
       }
+
+      // Extract all event values for the field specified from the annotation text.
+      let textFieldValues: any[] = [];
+      textFields.forEach(textField => {
+        if (!_.get(event, textField)) {
+          throw Error(textField + ' is not a field that exists on returned Humio events for annotation query');
+        } else {
+          let textFieldValue = _.get(event, textField);
+          textFieldValues.push(textFieldValue);
+        }
+      });
+
+      // Replace all fields in the annotation text with the actual event values.
+      let currentAnnotationText = annotationText;
+      textFieldValues.forEach(value => {
+        currentAnnotationText = currentAnnotationText.replace(/{(.*?)}/, value);
+      });
 
       return {
         time: event['@timestamp'],
-        text: _.get(event, textField),
+        text: currentAnnotationText,
       };
     });
 

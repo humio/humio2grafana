@@ -140,12 +140,12 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     let targets: HumioQuery[] = [];
     targets.push(query);
 
-    let textField = !options.annotation.annotationText ? '' : options.annotation.annotationText;
+    let annotationText = !options.annotation.annotationText ? '' : options.annotation.annotationText;
 
     // Make query to Humio.
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
     const queryResponse = (await queryJobManager.update(location, grafanaAttrs, targets))[0]; // Annotation query only has one target
-    return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, textField);
+    return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, annotationText);
   }
 
   testDatasource() {
