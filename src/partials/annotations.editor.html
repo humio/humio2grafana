@@ -9,7 +9,6 @@
   <label>
     Humio repository
   </label>
-
   <div class="gf-form gf-form--grow">
     <select class="gf-form-input.gf-size-auto"
               ng-model="ctrl.annotation.humioRepository",
@@ -18,12 +17,12 @@
     </select>
   </div>
   <label>
-    Event Field to Use For Annotation Text
+    Annotation text - use {field} to reference an event field. 
   </label>
   <div class="gf-form gf-form--grow">
     <input
      class="gf-form-input"
-     placeholder="annotation text"
+     placeholder="E.g. {service} is {status}!"
      ng-model="ctrl.annotation.annotationText"
      ></input>
   </div>
