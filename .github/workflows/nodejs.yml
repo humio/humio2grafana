@@ -14,13 +14,22 @@ jobs:
     env:
       CI: true
     steps:
-    - name: Checkout ${{ github.sha }}
-      uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Install dependencies
-      run: npm ci
-    - name: Test
-      run: npm run test
+      - name: Checkout ${{ github.sha }}
+        uses: actions/checkout@v2
+      - uses: borales/actions-yarn@v2.0.0
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: yarn install
+        uses: borales/actions-yarn@v2.0.0
+        with:
+          cmd: install # will run `yarn install` command
+      - name: yarn build
+        uses: borales/actions-yarn@v2.0.0
+        with:
+          cmd: build # will run `yarn build` command
+      - name: yarn test
+        uses: borales/actions-yarn@v2.0.0
+        with:
+          cmd: test # will run `yarn test` command
