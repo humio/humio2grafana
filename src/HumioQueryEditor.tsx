@@ -51,7 +51,13 @@ export class QueryEditor extends PureComponent<Props, State> {
     fetch('/api/datasources/' + this.state.datasource.id)
       .then(res => res.json())
       .then((res: any) => {
-        let url = res.jsonData.baseUrl;
+        // Check whether a locally hosted Humio is used. 
+        let url = '';
+        if (res.jsonData.baseUrl === undefined) {
+          url = res.url;
+        } else {
+          url = res.jsonData.baseUrl;
+        }
         // Trim off the last / if it exists. Otherwise later url concatinations will be incorrect.
         if (url[url.length - 1] === '/') {
           url = url.substring(0, url.length - 1);
