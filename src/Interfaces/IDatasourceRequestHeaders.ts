@@ -1,6 +1,6 @@
-
-interface IDatasourceRequestHeaders {
-    'Content-Type': string;
+interface DatasourceRequestHeaders {
+  'Content-Type': string;
+  Authorization?: string;
 }
 
-export default IDatasourceRequestHeaders;
+export default DatasourceRequestHeaders;

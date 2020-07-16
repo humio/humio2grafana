@@ -1,13 +1,14 @@
-import { HumioDatasource } from "./datasource";
-import HumioQueryCtrl from "./query_ctrl";
-import HumioConfigCtrl from "./config_ctrl";
-import HumioQueryOptionsCtrl from "./query_options_ctrl";
-import HumioAnnotationsQueryCtrl from "./annotations_query_ctrl";
+import { DataSourcePlugin } from '@grafana/data';
 
-export {
-  HumioDatasource as Datasource,
-  HumioQueryCtrl as QueryCtrl,
-  HumioConfigCtrl as ConfigCtrl,
-  HumioQueryOptionsCtrl as QueryOptionsCtrl,
-  HumioAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+import { HumioDataSource, HumioQuery } from './HumioDataSource';
+import { ConfigEditor } from './HumioConfigEditor';
+import { QueryEditor } from './HumioQueryEditor';
+import { VariableQueryEditor } from './VariableQueryEditor';
+import { HumioOptions } from './types';
+import { HumioAnnotationQueryEditor } from './AnnotationQueryEditor';
+
+export const plugin = new DataSourcePlugin<HumioDataSource, HumioQuery, HumioOptions>(HumioDataSource)
+  .setConfigEditor(ConfigEditor)
+  .setQueryEditor(QueryEditor)
+  .setVariableQueryEditor(VariableQueryEditor)
+  .setAnnotationQueryCtrl(HumioAnnotationQueryEditor);

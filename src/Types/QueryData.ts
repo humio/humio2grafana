@@ -16,7 +16,4 @@ type UpdatedQueryDefinition = {
   end?: string;
 };
 
-export {
-  QueryDefinition as QueryDefinition,
-  UpdatedQueryDefinition as UpdatedQueryDefinition
-};
+export { QueryDefinition, UpdatedQueryDefinition };

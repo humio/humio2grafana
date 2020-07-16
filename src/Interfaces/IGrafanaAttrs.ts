@@ -1,7 +1,9 @@
-interface IGrafanaAttrs {
+import DatasourceRequestHeaders from '../Interfaces/IDatasourceRequestHeaders';
+
+interface GrafanaAttrs {
   grafanaQueryOpts: any;
-  errorCallback: (errorTitle: string, errorBody: any) => void;
-  doRequest: (data: any) => any;
+  headers: DatasourceRequestHeaders;
+  proxy_url: string;
 }
 
-export default IGrafanaAttrs;
+export default GrafanaAttrs;

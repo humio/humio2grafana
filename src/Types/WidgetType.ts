@@ -1,8 +1,8 @@
 enum WidgetType {
-    timechart,
-    table,
-    worldmap,
-    untyped
+  timechart,
+  table,
+  worldmap,
+  untyped,
 }
 
-export { WidgetType as WidgetType };
+export { WidgetType };

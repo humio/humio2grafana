@@ -1,38 +1,36 @@
 {
-  "name": "Humio",
-  "id": "humio-humio2grafana-datasource",
-  "type": "datasource",
-  "metrics": true,
-  "annotations": false,
-  "info": {
-    "description": "Humio datasouce for grafana",
-    "author": {
-      "name": "Humio apps",
-      "url": "https://humio.com"
+    "id": "humio2grafana-datasource",
+    "name": "Humio",
+    "type": "datasource",
+    "metrics": true,
+    "annotations": true,
+  
+    "info": {
+      "description": "A Grafana datasource for Humio",
+      "author": {
+        "name": "Humio apps",
+        "url": "https://humio.com"
+      },
+      "keywords": [],
+      "logos": {
+        "small": "img/humio_logo.svg",
+        "large": "img/humio_logo.svg"
+      },
+      "version": "3.0.0",
+      "updated": "2020-07-xx"
     },
-    "keywords": ["humio", "datasouce"],
-    "logos": {
-      "small": "img/humio_logo.svg",
-      "large": "img/humio_logo.svg"
-    },
-    "links": [
-      {"name": "GitHub", "url": "https://github.com/humio/humio2grafana"},
-      {"name": "Apache License", "url": "https://github.com/humio/humio2grafana/blob/master/LICENSE.md"}
-    ],
-    "version": "2.0.0",
-    "updated": "2020-16-04"
-  },
-  "routes": [{
-    "path": "humio",
-    "method": "*",
-    "url": "{{.JsonData.baseUrl}}",
-    "headers": [
-      {"name": "Authorization", "content": "Bearer {{.SecureJsonData.humioToken}}"},
-      {"name": "Content-Type", "content" : "application/json"}
-    ]
-  }],
-  "dependencies": {
-    "grafanaVersion": "5.x.x",
-    "plugins": [ ]
+    "routes": [{
+      "path": "humio",
+      "method": "*",
+      "url": "{{.JsonData.baseUrl}}",
+      "headers": [
+        {"name": "Authorization", "content": "Bearer {{.SecureJsonData.humioToken}}"},
+        {"name": "Content-Type", "content" : "application/json"}
+      ]
+    }],
+  
+    "dependencies": {
+      "grafanaVersion": "7.x.x",
+      "plugins": []
+    }
   }
-}

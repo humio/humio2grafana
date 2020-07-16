@@ -1,15 +1,14 @@
-import IDatasourceRequestOptions from './IDatasourceRequestOptions';
+import DatasourceRequestOptions from './IDatasourceRequestOptions';
 
-interface IDatasourceAttrs {
-  $q: any;
-  $location: any;
+interface DatasourceAttrs {
   backendSrv: {
-    datasourceRequest: (options: IDatasourceRequestOptions) => Promise<{
-        data: any;
-        [key: string]: any;
+    datasourceRequest: (
+      options: DatasourceRequestOptions
+    ) => Promise<{
+      data: any;
+      [key: string]: any;
     }>;
-};
-  $rootScope: any;
+  };
 }
 
-export default IDatasourceAttrs;
+export default DatasourceAttrs;
