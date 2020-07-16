@@ -51,7 +51,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     fetch('/api/datasources/' + this.state.datasource.id)
       .then(res => res.json())
       .then((res: any) => {
-        // Check whether a locally hosted Humio is used. 
+        // Check whether a locally hosted Humio is used.
         let url = '';
         if (res.jsonData.baseUrl === undefined) {
           url = res.url;
