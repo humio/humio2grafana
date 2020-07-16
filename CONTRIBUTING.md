@@ -17,15 +17,15 @@ We also encourage you to separate unrelated contributions into different pull re
    (look for the "Fork" button).
 2. Clone your fork locally
     ```bash
-    git clone git@github.com/{your-github-username}/python-humio.git
+    git clone git@github.com/{your-github-username}/humio2grafana.git
     ```
 3. Install dependencies
     ```bash
-    npm install
+    yarn install
     ```
 4. Build plugin into `dist` folder:
     ```bash
-    npm run build 
+    node_modules/@grafana/toolkit/bin/grafana-toolkit.js plugin:dev 
     ```
 
 5. Now copy the dist folder into the Grafana plugin directory The directory varies by OS as can be seen here:
@@ -39,15 +39,9 @@ We also encourage you to separate unrelated contributions into different pull re
     ```bash
     ln -s $(pwd)/dist {grafana-plugins-directory}/humio2grafana
     ```
-6. Restart Grafana to apply the plugin. It should not be accessible from Grafana, and you are now ready to implement your changes.
+6. Restart Grafana to apply the plugin. It should now be accessible from Grafana, and you are now ready to implement your changes.
 
-7. If you want, you can activate the `watch` feature to automatically build the plugin, when you change the source code.
-    ```bash
-    npm run watch
-    ```
-    Note that you still need to restart Grafana to apply your changes.
-
-8. As your work progresses, regularly commit to and push your branch to your own fork on GitHub.
+7. As your work progresses, regularly commit to and push your branch to your own fork on GitHub.
     ```bash
     git add .
     git commit -m "Your detailed description of your changes."
@@ -55,7 +49,7 @@ We also encourage you to separate unrelated contributions into different pull re
     ```
 
 ### Sidenote: Running Humio Locally Alongside Grafana
-Both Grafana and Humio use port 3000 as their default TCP port. This results in clashes when attempting to run them on the same system. To change Grafana's default port find the `grafana.ini` file, location depending on OS,and modify its `http_port` field. Then restart Grafana to apply the change.
+Both Grafana and Humio use port 3000 as their default TCP port. This results in clashes when attempting to run them on the same system. To change Grafana's default port find the `grafana.ini` file, location depending on OS, and modify its `http_port` field. Then restart Grafana to apply the change.
 
 ## Running Tests locally
 The tests are made to be run by the `karma` test runner. To run the local tests:
@@ -83,7 +77,7 @@ When you have made your changes locally, or you want feedback on a work in progr
 2. Run the tests locally and check that they pass
 3. Add yourself to ``AUTHORS.md``.
 
-When you've been through the the checklist, push your final changes to your development branch on GitHub.
+When you've been through the checklist, push your final changes to your development branch on GitHub.
 
 Congratulations! Your branch is now ready to be included submitted as a pull requests. Got to [humio2grafana](https://github.com/humio/humio2grafana) and use the pull request feature to submit your contribution for review.
 
