@@ -55,17 +55,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     }
 
     this.id = instanceSettings.id;
-
-    if (this.authenticateWithAToken) {
-      this.headers = {
-        'Content-Type': 'application/json',
-      };
-    } else {
-      this.headers = {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + instanceSettings.jsonData.humioToken,
-      };
-    }
+    this.headers = {
+      'Content-Type': 'application/json',
+    };
   }
 
   async metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {

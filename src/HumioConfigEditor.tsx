@@ -17,6 +17,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
+    console.log(props);
+
+    props.options.jsonData = { ...props.options.jsonData };
+
     this.state = {
       humioToken: props.options.jsonData.humioToken,
       props: props,
@@ -34,14 +38,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
           using the toggle below.
         </p>
         <Switch
-          label="Authentication Strategy "
+          label="Authentication Strategy"
           checked={options.jsonData.tokenAuth}
-          onChange={_ =>
+          onChange={_ => {
             onOptionsChange({
               ...options,
-              jsonData: { ...options.jsonData, tokenAuth: !options.jsonData.tokenAuth },
-            })
-          }
+              withCredentials: false,
+              basicAuth: false,
+              basicAuthPassword: '',
+              basicAuthUser: '',
+              jsonData: {
+                ...options.jsonData,
+                tokenAuth: !options.jsonData.tokenAuth,
+                // TODO: This ensures that we don't try to do the non-token auth, such as using a CACert when using a token. But this also resets parts of the non-token form. Try to find a better way.
+                tlsAuth: false,
+                tlsSkipVerify: false,
+                tlsAuthWithCACert: false,
+                oauthPassThru: false,
+              },
+              secureJsonFields: {},
+            });
+          }}
         />
         <p></p>
       </>
@@ -134,33 +151,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={newValue =>
               onOptionsChange({
                 ...newValue,
-                jsonData: { ...options.jsonData },
-                secureJsonData: { ...options.secureJsonData },
-                secureJsonFields: { ...options.secureJsonFields },
+                jsonData: { ...newValue.jsonData, tokenAuth: false },
               })
             }
           />
-
-          <h3 className="page-heading">Password</h3>
-          <div className="gf-form-group">
-            <div className="gf-form-inline">
-              <div className="gf-form max-width-25">
-                <FormField
-                  labelWidth={10}
-                  inputWidth={15}
-                  label="Token"
-                  value={options.jsonData.humioToken}
-                  onChange={newValue =>
-                    onOptionsChange({
-                      ...options,
-                      jsonData: { ...options.jsonData, humioToken: newValue.currentTarget.value },
-                    })
-                  }
-                  required
-                />
-              </div>
-            </div>
-          </div>
         </>
       );
     }
