@@ -32,13 +32,13 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   rest_endpoint: string;
   id: number;
   timeRange: any;
-  authenticateWithAToken: boolean;
   headers: DatasourceRequestHeaders;
+  authenticateWithAToken: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>) {
     super(instanceSettings);
 
-    this.authenticateWithAToken = instanceSettings.jsonData.tokenAuth;
+    this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithToken;
 
     if (instanceSettings.url === undefined) {
       this.proxy_url = '';
@@ -55,17 +55,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     }
 
     this.id = instanceSettings.id;
-
-    if (this.authenticateWithAToken) {
-      this.headers = {
-        'Content-Type': 'application/json',
-      };
-    } else {
-      this.headers = {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + instanceSettings.jsonData.humioToken,
-      };
-    }
+    this.headers = {
+      'Content-Type': 'application/json',
+    };
   }
 
   async metricFindQuery(query: any, options: any): Promise<MetricFindValue[]> {
