@@ -25,3 +25,21 @@ Update to Datasource Configuration. This update requires existing data sources t
 
 ### Removed
 - Some standard data source configuration options. These had to be removed in order to configure datasources for encrypted access tokens.
+
+## 3.0.0 (2020-07-16)
+Major update which rewrites the plugin to use React rather than AngularJS
+### Added 
+- Support for variables
+- Support for annotations
+
+### Changed
+- Fixed bug where humio query links would not work, if the datasource URL did not have a trailing slash.
+
+### Removed
+- Old tests
+
+## 3.0.1 (2020-07-21)
+Patch which allows users to use non-token auth for data sources again.
+
+### Changed
+- Updated data source config to allow users more types of authentication.
