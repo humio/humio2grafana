@@ -16,8 +16,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    console.log(props);
-
     props.options.jsonData = { ...props.options.jsonData };
 
     this.state = {
