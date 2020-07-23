@@ -10,10 +10,14 @@
     Humio repository
   </label>
   <div class="gf-form gf-form--grow">
+    <input class="gf-form-input" type="text"  ng-change="ctrl.onFilterChange()" ng-model="ctrl.filter" placeholder="Input filter text here, to restrict entries in repository dropdown below.">
+  </input>
+  </div>
+  <div class="gf-form gf-form--grow">
     <select class="gf-form-input.gf-size-auto"
               ng-model="ctrl.annotation.humioRepository",
-              ng-options="v.value as v.label for v in ctrl.repositories">
-              <option value="" disabled selected>Choose</option>
+              ng-options="v.value as v.label for v in ctrl.filteredRepositories">
+              <option ngValue="" disabled selected>Choose Repository</option>
     </select>
   </div>
   <label>
