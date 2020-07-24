@@ -43,3 +43,9 @@ Patch which allows users to use non-token auth for data sources again.
 
 ### Changed
 - Updated data source config to allow users more types of authentication.
+
+## 3.0.2 (2020-07-24)
+Can now filter repository dropdowns to limit their contents
+
+### Added
+- A field to the Annotations page, which allows for filtering on strings beginning with another string.
