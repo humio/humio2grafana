@@ -22,10 +22,12 @@ class QueryResultFormatter {
       }
 
       // Extract all fields from the annotation text.
-      const regexp = /(?<=\{).+?(?=\})/g;
-      let textFields = annotationText.match(regexp);
+      const regexp = /\{(.+?)\}/g;
+      let textFields = annotationText.match(regexp)?.map((field: string) => {
+        return field.substring(1, field.length - 1);
+      });
 
-      if (textFields === null) {
+      if (textFields === null || textFields === undefined) {
         textFields = [];
       }
 
