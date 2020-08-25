@@ -69,10 +69,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   formatting(vars: any) {
     if (_.isString(vars) || vars.length === 1) {
       // Regular variables are input as strings, while the input is an array when Multi-value variables are used.
-      return _.escapeRegExp(vars);
+      return vars;
     } else {
-      let args = vars.map((v: string) => _.escapeRegExp(v));
-      return '/^' + args.join('|') + '$/';
+      return '/^' + vars.join('|') + '$/';
     }
   }
 
