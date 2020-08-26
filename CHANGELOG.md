@@ -49,3 +49,13 @@ Can now filter repository dropdowns to limit their contents
 
 ### Added
 - A field to the Annotations page, which allows for filtering on strings beginning with another string.
+
+
+## 3.0.3 (2020-08-26)
+Smaller bugfixes
+
+### Changed
+- Annotation query now works without Regex lookahead. This is not supported in browsers like Safari, so it yielded some issues.
+
+### Removed
+- Regex escaping for variables. The escaping procedure proved to aggressive and ruined templated queries.
