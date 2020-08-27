@@ -81,6 +81,19 @@ When you've been through the checklist, push your final changes to your developm
 
 Congratulations! Your branch is now ready to be included submitted as a pull requests. Got to [humio2grafana](https://github.com/humio/humio2grafana) and use the pull request feature to submit your contribution for review.
 
+## For Maintainers: How to Release
+A new release for the project is build and uploaded to `Releases`, when a new tag is pushed to the repository. 
+
+To release the project, follow these steps:
+1. Make sure the changelog has an entry for the new release version
+2. Locally, check out the `master` branch and pull from `origin/master`.
+3. Use `yarn version` to bump the project version in `package.json`. This will create a new commit and corresponding version tag.
+  * To create a patch run: `yarn version --patch`
+  * To create a minor run: `yarn version --minor`
+  * To create a major run: `yarn version --major`
+4. Run `git push --follow-tags` to push changes and initialize the release process.
+
+
 Terms of Service For Contributors
 =================================
 For all contributions to this repository (software, bug fixes, configuration changes, documentation, or any other materials), we emphasize that this happens under GitHubs general Terms of Service and the license of this repository.
