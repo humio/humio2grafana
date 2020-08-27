@@ -1,0 +1,32 @@
+name: "Release New Package"
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set env
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+      - name: "Install Dependencies"
+        run: | 
+          sudo npm install -g yarn 
+          sudo apt-get install zip
+      - name: "Build project folder and zip"
+        run: |
+          yarn install
+          yarn run grafana-toolkit plugin:dev
+          cp -r dist humio2grafana
+          zip -r humio2grafana.zip humio2grafana
+      - name: Upload zip to Github
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: humio2grafana.zip
+          asset_name: humio2grafana.zip
+          tag: ${{ env.RELEASE_VERSION }}
+          overwrite: true
+          body: "Automatic release. See changelog for updates"
