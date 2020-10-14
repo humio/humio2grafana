@@ -27,7 +27,7 @@ class QueryJobManager {
   }
 
   async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]): Promise<any> {
-    return await this._executeAllQueries(location, grafanaAttrs, targets);
+    return this._executeAllQueries(location, grafanaAttrs, targets);
   }
 
   private async _executeAllQueries(location: Location, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]) {

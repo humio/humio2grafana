@@ -16,15 +16,14 @@ export default class MetricFindQuery {
   }
 
   async process(): Promise<MetricFindValue[]> {
-    let rawTime = await this.computeRawTimeRange(this.options);
-    if (this.options.range) {
-      this.options.range.raw = rawTime;
-    } else {
-      this.options.range = { raw: rawTime };
-    }
-    let res = await this.queryVariableContents(this.query, this.options);
-
-    return new Promise(resolve => resolve(res));
+    return this.computeRawTimeRange(this.options).then(rawTime => {
+      if (this.options.range) {
+        this.options.range.raw = rawTime;
+      } else {
+        this.options.range = { raw: rawTime };
+      }
+      return this.queryVariableContents(this.query, this.options);
+    });
   }
 
   // This is a rater complex system for getting the time range, but Grafana doesn't allow for another way atm (July, 2020).
@@ -54,17 +53,18 @@ export default class MetricFindQuery {
 
       // Case dashboard has been saved
     } else {
-      let savedDashboardTime = await this.getDashboardDefaultTime(uid);
-      // range saved as an absolute in a Date format. Being converted to timestamp
-      // TODO(AlexanderBrandborg): Could potentially turn these dates into moment.js objects, which makes the logic of read them again a bit easier
-      if (savedDashboardTime.to !== 'now') {
-        let absoluteFrom = Math.floor(new Date(savedDashboardTime.from).getTime());
-        let absoluteTo = Math.floor(new Date(savedDashboardTime.to).getTime());
+      return this.getDashboardDefaultTime(uid).then(savedDashboardTime => {
+        // range saved as an absolute in a Date format. Being converted to timestamp
+        // TODO(AlexanderBrandborg): Could potentially turn these dates into moment.js objects, which makes the logic of read them again a bit easier
+        if (savedDashboardTime.to !== 'now') {
+          let absoluteFrom = Math.floor(new Date(savedDashboardTime.from).getTime());
+          let absoluteTo = Math.floor(new Date(savedDashboardTime.to).getTime());
 
-        return { from: absoluteFrom, to: absoluteTo };
-      } else {
-        return { from: savedDashboardTime.from, to: savedDashboardTime.to };
-      }
+          return { from: absoluteFrom, to: absoluteTo };
+        } else {
+          return { from: savedDashboardTime.from, to: savedDashboardTime.to };
+        }
+      });
     }
   }
 
@@ -99,18 +99,19 @@ export default class MetricFindQuery {
       refId: 'notUsed',
     };
 
-    let data = await qj.executeQuery(location, grafanaAttrs, target);
-    if (data.error) {
-      throw data.error; // TODO(AlexanderBrandborg): Only shows the error header on the variables page. Should be able to show the body also.
-    }
-
-    return _.flatMap(data.data.events, (res, index) => {
-      let text = _.get(res, query.dataField);
-      if (!text) {
-        throw new Error(query.dataField + ' is not a field that exists on returned Humio events for variable query');
+    return qj.executeQuery(location, grafanaAttrs, target).then(data => {
+      if (data.error) {
+        throw data.error; // TODO(AlexanderBrandborg): Only shows the error header on the variables page. Should be able to show the body also.
       }
 
-      return { text: text };
+      return _.flatMap(data.data.events, (res, index) => {
+        let text = _.get(res, query.dataField);
+        if (!text) {
+          throw new Error(query.dataField + ' is not a field that exists on returned Humio events for variable query');
+        }
+
+        return { text: text };
+      });
     });
   }
 }

@@ -96,8 +96,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
 
     this.timeRange = options.range;
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId.toString());
-    const raw_responses = await queryJobManager.update(location, grafanaAttrs, options.targets);
-    return QueryResultFormatter.formatQueryResponses(raw_responses, options.targets);
+    return queryJobManager.update(location, grafanaAttrs, options.targets).then(raw_responses => {
+      return QueryResultFormatter.formatQueryResponses(raw_responses, options.targets);
+    });
   }
 
   async annotationQuery(options: AnnotationQueryRequest<HumioQuery>): Promise<AnnotationEvent[]> {
@@ -135,8 +136,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
 
     // Make query to Humio.
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
-    const queryResponse = (await queryJobManager.update(location, grafanaAttrs, targets))[0]; // Annotation query only has one target
-    return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, annotationText);
+    return queryJobManager.update(location, grafanaAttrs, targets).then(queryResponse => {
+      return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse[0].data, annotationText);
+    });
   }
 
   testDatasource() {
