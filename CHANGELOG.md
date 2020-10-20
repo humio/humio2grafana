@@ -59,3 +59,7 @@ Smaller bugfixes
 
 ### Removed
 - Regex escaping for variables. The escaping procedure proved to aggressive and ruined templated queries.
+
+## 3.0.4 (2020-08-27)
+Version created to test release pipeline, equivalent with 3.0.3.
+

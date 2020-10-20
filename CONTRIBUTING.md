@@ -91,6 +91,7 @@ To release the project, follow these steps:
   * To create a patch run: `yarn version --patch`
   * To create a minor run: `yarn version --minor`
   * To create a major run: `yarn version --major`
+4. Manually update version number and release date in `plugin.json`.
 4. Run `git push --follow-tags` to push changes and initialize the release process.
 
 
