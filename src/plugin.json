@@ -1,5 +1,5 @@
 {
-    "id": "humio2grafana-datasource",
+    "id": "humio-datasource",
     "name": "Humio",
     "type": "datasource",
     "metrics": true,

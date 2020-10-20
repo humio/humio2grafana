@@ -33,11 +33,11 @@ We also encourage you to separate unrelated contributions into different pull re
     * MacOS: /usr/local/var/lib/grafana/data/plugins
     * Windows: C:\Program Files\GrafanaLabs\grafana\data\plugins
 
-    If you have multiple plugins, rename the copied folder to `humio2grafana` to not cause a naming conflict.
+    If you have multiple plugins, rename the copied folder to `humio` to not cause a naming conflict.
 
     If you do not want to copy future builds symlink the local `dist` folder into the plugins directory. On Unix systems the symlink can be created in the following manner:
     ```bash
-    ln -s $(pwd)/dist {grafana-plugins-directory}/humio2grafana
+    ln -s $(pwd)/dist {grafana-plugins-directory}/humio
     ```
 6. Restart Grafana to apply the plugin. It should now be accessible from Grafana, and you are now ready to implement your changes.
 

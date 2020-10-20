@@ -19,14 +19,14 @@ jobs:
         run: |
           yarn install
           yarn run grafana-toolkit plugin:dev
-          cp -r dist humio2grafana
-          zip -r humio2grafana.zip humio2grafana
+          cp -r dist humio
+          zip -r humio.zip humio
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: humio2grafana.zip
-          asset_name: humio2grafana.zip
+          file: humio.zip
+          asset_name: humio.zip
           tag: ${{ env.RELEASE_VERSION }}
           overwrite: true
           body: "Automatic release. See changelog for updates"
