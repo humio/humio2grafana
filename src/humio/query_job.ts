@@ -21,7 +21,8 @@ class QueryJob {
     this.queryDefinition = {
       queryString: queryStr,
       timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
-      showQueryEventDistribution: false,
+      showQueryEventDistribution: true,
+      noResultUntilDone: true,
       start: '24h',
       isLive: false,
     };
@@ -94,6 +95,8 @@ class QueryJob {
       isLive: true,
       queryString: humioQuery,
       start: start,
+      showQueryEventDistribution: true,
+      noResultUntilDone: true,
     };
   }
 
@@ -126,6 +129,8 @@ class QueryJob {
       queryString: humioQuery,
       start: start,
       end: end,
+      showQueryEventDistribution: true,
+      noResultUntilDone: true,
     };
   }
 
