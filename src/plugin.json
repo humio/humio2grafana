@@ -1,5 +1,5 @@
 {
-    "id": "humio2grafana-datasource",
+    "id": "humio-datasource",
     "name": "Humio",
     "type": "datasource",
     "metrics": true,
@@ -16,8 +16,8 @@
         "small": "img/humio_logo.svg",
         "large": "img/humio_logo.svg"
       },
-      "version": "3.0.2",
-      "updated": "2020-07-xx"
+      "version": "3.0.4",
+      "updated": "2020-08-xx"
     },
     "routes": [{
       "path": "humio",
