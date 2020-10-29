@@ -14,11 +14,15 @@ jobs:
       - name: "Install Dependencies"
         run: | 
           sudo npm install -g yarn 
+          sudo yarn add npx
           sudo apt-get install zip
       - name: "Build project folder and zip"
+        env: 
+          GRAFANA_API_KEY: ${{secrets.PUBLISHINGKEY}}
         run: |
           yarn install
           yarn run grafana-toolkit plugin:dev
+          npx @grafana/toolkit@canary plugin:sign
           cp -r dist humio2grafana
           zip -r humio2grafana.zip humio2grafana
       - name: Upload zip to Github
