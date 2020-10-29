@@ -1,6 +1,6 @@
 {
   "name": "humio2grafana",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "Grafana datasource for Humio",
   "main": "module.ts",
   "repository": "git@github.com:humio/humio2grafana.git",
@@ -15,7 +15,5 @@
     "@types/lodash": "^4.14.155",
     "lodash": "^4.17.19"
   },
-  "scripts": {
-    
-  }
+  "scripts": {}
 }
