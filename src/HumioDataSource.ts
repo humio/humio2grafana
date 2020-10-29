@@ -95,9 +95,13 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     };
 
     this.timeRange = options.range;
-    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId.toString());
-    const raw_responses = await queryJobManager.update(location, grafanaAttrs, options.targets);
-    return QueryResultFormatter.formatQueryResponses(raw_responses, options.targets);
+    if (options.panelId !== undefined) {
+      let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId?.toString());
+      const raw_responses = await queryJobManager.update(location, grafanaAttrs, options.targets);
+      return QueryResultFormatter.formatQueryResponses(raw_responses, options.targets);
+    } else {
+      throw new Error('panelId was undefined');
+    }
   }
 
   async annotationQuery(options: AnnotationQueryRequest<HumioQuery>): Promise<AnnotationEvent[]> {

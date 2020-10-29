@@ -34,7 +34,6 @@ class QueryJob {
   executeQuery(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     if (!target.humioRepository) {
       let error: DataQueryError = {
-        cancelled: true,
         message: 'No Repository Selected',
         data: { message: 'No Repository Selected', error: 'Please select a repository.' },
       };
@@ -213,7 +212,6 @@ class QueryJob {
     return new Promise((resolve, reject) => {
       if (!this.queryId) {
         let error: DataQueryError = {
-          cancelled: true,
           message: 'Queryjob not initialized.',
           data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alive.' },
         };
@@ -256,7 +254,6 @@ class QueryJob {
         } else {
           this.failCounter = 0;
           let error: DataQueryError = {
-            cancelled: true,
             message: 'Failed to create query',
             data: { message: 'Failed to create query', error: 'Tried to query 3 times in a row.' },
           };
@@ -265,7 +262,6 @@ class QueryJob {
       }
       default: {
         let error: DataQueryError = {
-          cancelled: true,
           message: 'Query Error',
           data: { message: 'Query Error', error: err.data },
           status: err.status,

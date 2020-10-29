@@ -31,7 +31,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ...options,
       jsonData: { ...options.jsonData, authenticateWithToken: false },
       secureJsonData: undefined,
-      secureJsonFields: undefined,
+      secureJsonFields: {},
     });
   };
 

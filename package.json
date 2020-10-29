@@ -7,11 +7,11 @@
   "author": "Humio ApS",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/toolkit": "^7.0.3",
-    "@grafana/ui": "^7.0.3"
+    "@grafana/toolkit": "^7.3.0",
+    "@grafana/ui": "^7.3.0"
   },
   "dependencies": {
-    "@grafana/runtime": "^7.0.3",
+    "@grafana/runtime": "^7.3.0",
     "@types/lodash": "^4.14.155",
     "lodash": "^4.17.19"
   },
