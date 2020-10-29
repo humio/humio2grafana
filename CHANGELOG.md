@@ -63,3 +63,5 @@ Smaller bugfixes
 ## 3.0.4 (2020-08-27)
 Version created to test release pipeline, equivalent with 3.0.3.
 
+## 3.0.5 (2020-10-29)
+Updated plugin id, so that the project was ready for official release.

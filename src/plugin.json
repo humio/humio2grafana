@@ -16,8 +16,8 @@
         "small": "img/humio_logo.svg",
         "large": "img/humio_logo.svg"
       },
-      "version": "3.0.4",
-      "updated": "2020-08-xx"
+      "version": "3.0.5",
+      "updated": "2020-10-29"
     },
     "routes": [{
       "path": "humio",
