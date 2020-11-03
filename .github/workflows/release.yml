@@ -31,6 +31,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: humio.zip
           asset_name: humio.zip
-          tag: ${{ env.RELEASE_VERSION }}
+          tag: $RELEASE_VERSION
           overwrite: true
           body: "Automatic release. See changelog for updates"
