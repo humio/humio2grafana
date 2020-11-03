@@ -65,3 +65,6 @@ Version created to test release pipeline, equivalent with 3.0.3.
 
 ## 3.0.5 (2020-10-29)
 Updated plugin id, so that the project was ready for official release.
+
+## 3.0.6 (2020-11-03)
+Update to use grafana-toolkit 7.3.0 to fix some vulnerable dependencies
