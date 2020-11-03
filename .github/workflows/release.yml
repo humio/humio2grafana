@@ -9,14 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set env
-        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
       - name: "Install Dependencies"
+        env:
+          RELEASE_VERSION: ${GITHUB_REF#refs/*/} 
         run: | 
           sudo npm install -g yarn 
           sudo yarn add npx
           sudo apt-get install zip
-      - name: "Build project folder and zip"
+      - name: "Build project, sign and zip"
         env: 
           GRAFANA_API_KEY: ${{secrets.PUBLISHINGKEY}}
         run: |
