@@ -76,7 +76,11 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   }
 
   async query(options: DataQueryRequest<HumioQuery>): Promise<DataQueryResponse> {
-    if (options.targets.length === 0) {
+    const targets = _.filter(options.targets, target => {
+      return target.hide !== true && target.humioRepository !== undefined;
+    });
+
+    if (targets.length === 0) {
       return new Promise(resolve =>
         resolve({
           data: [],
@@ -84,7 +88,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
       );
     }
 
-    options.targets.forEach(target => {
+    targets.forEach(target => {
       target.humioQuery = getTemplateSrv().replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
     });
 
@@ -97,8 +101,8 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     this.timeRange = options.range;
     if (options.panelId !== undefined) {
       let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId?.toString());
-      const raw_responses = await queryJobManager.update(location, grafanaAttrs, options.targets);
-      return QueryResultFormatter.formatQueryResponses(raw_responses, options.targets);
+      const raw_responses = await queryJobManager.update(location, grafanaAttrs, targets);
+      return QueryResultFormatter.formatQueryResponses(raw_responses, targets);
     } else {
       throw new Error('panelId was undefined');
     }
