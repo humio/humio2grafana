@@ -25,6 +25,7 @@ jobs:
           yarn run grafana-toolkit plugin:sign
           cp -r dist humio
           zip -r humio.zip humio
+          md5sum humio.zip
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
         with:
