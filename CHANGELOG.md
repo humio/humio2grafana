@@ -71,3 +71,7 @@ First release to Grafana.com
 ## Changed
 - Update to use grafana-toolkit 7.3.0 to fix some vulnerable dependencies
 - Changed plugin id to `humio-datasource`, will require a reinstallation of existing datasources.
+
+# 3.1.1 (20202-11-09)
+## Changed
+- Updated Query editor not to execute query when hidden or when no repo is selected.
