@@ -6,12 +6,12 @@
     "annotations": true,
   
     "info": {
-      "description": "A Grafana datasource for Humio",
+      "description": "Humio datasource for Grafana",
       "author": {
         "name": "Humio apps",
         "url": "https://humio.com"
       },
-      "keywords": [],
+      "keywords": ["Humio", "Logging", "Log Management"],
       "logos": {
         "small": "img/humio_logo.svg",
         "large": "img/humio_logo.svg"
@@ -30,7 +30,7 @@
     }],
   
     "dependencies": {
-      "grafanaVersion": "7.x.x",
+      "grafanaDependency": "7.x.x",
       "plugins": []
     }
   }

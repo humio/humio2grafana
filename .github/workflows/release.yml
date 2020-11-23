@@ -23,15 +23,15 @@ jobs:
           yarn install
           yarn run grafana-toolkit plugin:dev
           yarn run grafana-toolkit plugin:sign
-          cp -r dist humio
-          zip -r humio.zip humio
-          md5sum humio.zip
+          cp -r dist humio-datasource
+          zip -r humio-datasource.zip humio
+          md5sum humio-datasource.zip
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: humio.zip
-          asset_name: humio.zip
+          file: humio-datasource.zip
+          asset_name: humio-datasource.zip
           tag: ${{ env.RELEASE_VERSION }}
           overwrite: true
           body: "Automatic release. See changelog for updates"
