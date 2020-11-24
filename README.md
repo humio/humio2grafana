@@ -1,9 +1,10 @@
-# Humio2Grafana
-This repository hosts code for the Humio plugin for Grafana. Full documentation can be found in the official [humio docs](https://docs.humio.com/integrations/other/grafana/).
-
+# Humio Datasource
+The Humio Datasource for Grafana allows you to visualize your Humio data within Grafana.
+Full documentation can be found at the official [humio docs](https://docs.humio.com/integrations/other/grafana/)
+and usage examples can be found [here](https://docs.humio.com/use-cases/grafana-use-case/).
 
 ## Vision
-The vision for the Humio Grafana plugin, is to create a plugin for Grafana, which allows users to create Grafana panels that pull data from Humio. It should be possible for users to write pure Humio queries in Grafana to populate their panels. Development seeks to keep the plugin up to date with both Grafana and Humio as they evolve. 
+The vision for this project, is to create a plugin for Grafana, which allows users to create Grafana panels that pull data from Humio. It should be possible for users to write pure Humio queries in Grafana to populate their panels. Development seeks to keep the plugin up to date with both Grafana and Humio as they evolve. 
 
 ## Governance
 This project is maintained by employees at Humio ApS.
