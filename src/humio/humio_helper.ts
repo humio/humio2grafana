@@ -36,6 +36,14 @@ class HumioHelper {
       ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
       : false;
   }
+
+  static parseLiveFrom(date: string): string {
+    if (date.includes('/')) {
+      throw new Error(`Humio does not support live queries to start at ${date}.`);
+    }
+
+    return date.replace('now-', '').replace('M', 'mon');
+  }
 }
 
 export default HumioHelper;

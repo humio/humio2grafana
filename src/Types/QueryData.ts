@@ -1,3 +1,5 @@
+import { DataQueryError } from '@grafana/data';
+
 type QueryDefinition = {
   queryString: string;
   timeZoneOffsetMinutes: number;
@@ -16,4 +18,8 @@ type UpdatedQueryDefinition = {
   end?: string;
 };
 
-export { QueryDefinition, UpdatedQueryDefinition };
+type QueryResult = Promise<DataQueryError | any[]>;
+
+type RawQueryResult = Promise<{ [index: string]: any } | any>;
+
+export { QueryDefinition, UpdatedQueryDefinition, QueryResult, RawQueryResult };
