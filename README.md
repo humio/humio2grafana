@@ -1,6 +1,6 @@
 # Humio Datasource
 The Humio Datasource for Grafana allows you to visualize your Humio data within Grafana.
-Full documentation can be found at the official [humio docs](https://docs.humio.com/integrations/other/grafana/),
+Full documentation can be found at the official [humio docs](https://docs.humio.com/integrations/other/grafana/)
 and usage examples can be found [here](https://docs.humio.com/use-cases/grafana-use-case/).
 
 ## Vision
