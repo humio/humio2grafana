@@ -15,7 +15,7 @@ class QueryResultFormatter {
     }
 
     const result = _.flatMap(annotationQueryResponseData.events, event => {
-      if (!event['@timestamp']) {
+      if (!('@timestamp' in event)) {
         throw Error(
           'Annotation query result event does not contain a @timestamp field, and cannot be converted to an annotation'
         );

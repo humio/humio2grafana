@@ -67,10 +67,14 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
 
   // Formats $var strings in queries. Uses regexes when using multiple selected vars, which right now only works for some kind of filtering, such as host=$hostname
   formatting(vars: any) {
-    if (_.isString(vars) || vars.length === 1) {
+    if (_.isString(vars)) {
       // Regular variables are input as strings, while the input is an array when Multi-value variables are used.
       return vars;
-    } else {
+    }
+    else if(vars.length === 1){
+      return vars[0];
+    }
+     else {
       return '/^' + vars.join('|') + '$/';
     }
   }
