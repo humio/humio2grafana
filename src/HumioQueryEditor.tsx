@@ -99,14 +99,11 @@ export class QueryEditor extends PureComponent<Props, State> {
     let isLive = HumioHelper.queryIsLive(location, this.state.datasource.timeRange.raw.to);
 
     var queryParams: { [k: string]: any } = { query: this.props.query.humioQuery, live: isLive };
+    queryParams['start'] = this.state.datasource.timeRange.from._d.getTime();
 
-    if (isLive) {
-      queryParams['start'] = HumioHelper.parseDateFrom(this.state.datasource.timeRange.raw.from);
-    } else {
-      queryParams['start'] = this.state.datasource.timeRange.from._d.getTime();
+    if (!isLive) {
       queryParams['end'] = this.state.datasource.timeRange.to._d.getTime();
     }
-
     return queryParams;
   }
 
