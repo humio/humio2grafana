@@ -10,7 +10,7 @@ import {
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, TemplateSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
 import QueryResultFormatter from './humio/query_result_formatter';
 import { MetricFindValue } from '@grafana/data';
@@ -35,7 +35,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   headers: DatasourceRequestHeaders;
   authenticateWithAToken: boolean;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv(),) {
     super(instanceSettings);
 
     this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithToken;
@@ -91,7 +91,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     }
 
     targets.forEach(target => {
-      target.humioQuery = getTemplateSrv().replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
+      target.humioQuery = this.templateSrv.replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
     });
 
     let grafanaAttrs: IGrafanaAttrs = {
@@ -122,7 +122,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
       options.annotation.annotationQuery = '';
     }
 
-    options.annotation.humioQuery = getTemplateSrv().replace(
+    options.annotation.humioQuery = this.templateSrv.replace(
       options.annotation.annotationQuery,
       undefined,
       this.formatting

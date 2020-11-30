@@ -9,8 +9,12 @@ class HumioHelper {
     }
   }
 
-  static queryIsLive(location: Location, date: any) {
-    return HumioHelper.automaticPanelRefreshHasBeenActivated(location) && HumioHelper.dateIsNow(date);
+  static queryIsLive(location: Location, rawRange: any) {
+    return (
+      HumioHelper.automaticPanelRefreshHasBeenActivated(location) &&
+      HumioHelper.dateIsNow(rawRange.to) &&
+      HumioHelper.isAllowedRangeForLive(rawRange.from)
+    );
   }
 
   static automaticPanelRefreshHasBeenActivated(location: Location) {
@@ -37,8 +41,12 @@ class HumioHelper {
       : false;
   }
 
+  static isAllowedRangeForLive(date: string): boolean {
+    return !date.includes('/');
+  }
+
   static parseLiveFrom(date: string): string {
-    if (date.includes('/')) {
+    if (!this.isAllowedRangeForLive(date)) {
       throw new Error(`Humio does not support live queries to start at ${date}.`);
     }
 

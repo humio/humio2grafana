@@ -7,7 +7,6 @@ import _ from 'lodash';
 import { HumioQuery } from 'HumioDataSource';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataQueryError } from '@grafana/data';
-import { QueryResult } from '../Types/QueryData';
 
 /**
  * Manages a Humio Query Job.
@@ -45,14 +44,14 @@ class QueryJob {
 
     // Executing the same live query again
     if (this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)) {
-      return this._pollNextSegment(location, grafanaAttrs, target);
+      return this.poll(location, grafanaAttrs, target, []);
     } else {
       this._updateQueryDefinition(requestedQueryDefinition);
       return this._cancelCurrentQueryJob(grafanaAttrs, target).then(() => {
         return this._initializeNewQueryJob(grafanaAttrs, target)
           .then(
             () => {
-              return Promise.resolve(this._pollNextSegment(location, grafanaAttrs, target));
+              return Promise.resolve(this.poll(location, grafanaAttrs, target, []));
             },
             err => {
               return Promise.reject(err);
@@ -80,7 +79,7 @@ class QueryJob {
   }
 
   private _getRequestedQueryDefinition(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery) {
-    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw.to);
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
     return isLive
       ? this._makeLiveQueryDefinition(grafanaAttrs, target.humioQuery)
       : this._makeStaticQueryDefinition(grafanaAttrs, target.humioQuery);
@@ -88,11 +87,15 @@ class QueryJob {
 
   private _makeLiveQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string) {
     let range = grafanaAttrs.grafanaQueryOpts.range;
-    return {
-      isLive: true,
-      queryString: humioQuery,
-      start: HumioHelper.parseLiveFrom(range.raw.from),
-    };
+    if (!HumioHelper.isAllowedRangeForLive(range.raw.from) || range.raw.to !== 'now') {
+      return this._makeStaticQueryDefinition(grafanaAttrs, humioQuery);
+    } else {
+      return {
+        isLive: true,
+        queryString: humioQuery,
+        start: HumioHelper.parseLiveFrom(range.raw.from),
+      };
+    }
   }
 
   private _makeStaticQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string) {
@@ -159,58 +162,7 @@ class QueryJob {
     });
   }
 
-  private pollTillDone(
-    location: Location,
-    grafanaAttrs: IGrafanaAttrs,
-    target: HumioQuery,
-    events: any[]
-  ): Promise<QueryResult> {
-    return new Promise((resolve, reject) => {
-      this._attemptPollNextSegment(location, grafanaAttrs, target).then(
-        res => {
-          let newEvents = events.concat(res['data']['events']);
-          if (`hasMoreEvents` in res['data']['metaData']['extraData']) {
-            resolve(this.pollTillDone(location, grafanaAttrs, target, newEvents));
-          } else {
-            // Reset state if query is not live, as there is not reason to poll the old queryjob again
-            if (!this.queryDefinition.isLive) {
-              this.queryId = undefined;
-            }
-            res['data']['events'] = newEvents;
-            resolve(res);
-          }
-        },
-        err => {
-          reject(err);
-        }
-      );
-    });
-  }
-
-  private _pollNextSegment(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<QueryResult> {
-    return new Promise((resolve, reject) => {
-      let recursivePollingFunc = () => {
-        this._attemptPollNextSegment(location, grafanaAttrs, target).then(
-          res => {
-            if (res['data'].done) {
-              resolve(res);
-            } else {
-              var waitTimeUntilNextPoll = res['data']['metaData']['pollAfter'];
-              setTimeout(() => {
-                recursivePollingFunc();
-              }, waitTimeUntilNextPoll); // If we don't wait the stated amount, Humio will return the same data again.
-            }
-          },
-          err => {
-            reject(err);
-          }
-        );
-      };
-      recursivePollingFunc();
-    });
-  }
-
-  private _attemptPollNextSegment(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
+  private poll(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery, events: any[]): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.queryId) {
         let error: DataQueryError = {
@@ -218,10 +170,10 @@ class QueryJob {
           data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alive.' },
         };
 
-        return resolve({ data: { events: [], done: true }, error: error });
+        reject(error);
       }
 
-      return this._doRequest(
+      this._doRequest(
         {
           url: `/api/v1/dataspaces/${target.humioRepository}/queryjobs/${this.queryId}`,
           method: 'GET',
@@ -230,10 +182,30 @@ class QueryJob {
         grafanaAttrs.proxy_url
       ).then(
         (res: any) => {
-          return resolve(res);
+          if (res['data']['done']) {
+            let newEvents = events.concat(res['data']['events']);
+            if (
+              `hasMoreEvents` in res['data']['metaData']['extraData'] &&
+              res['data']['metaData']['extraData'][`hasMoreEvents`] === 'true'
+            ) {
+              setTimeout(() => {
+                resolve(this.poll(location, grafanaAttrs, target, newEvents));
+              }, res['data']['metaData']['pollAfter']);
+            } else {
+              if (!this.queryDefinition.isLive) {
+                this.queryId = undefined;
+              }
+              res['data']['events'] = newEvents;
+              resolve(res);
+            }
+          } else {
+            setTimeout(() => {
+              resolve(this.poll(location, grafanaAttrs, target, events));
+            }, res['data']['metaData']['pollAfter']);
+          }
         },
         (err: any) => {
-          return reject(err);
+          reject(err);
         }
       );
     });
