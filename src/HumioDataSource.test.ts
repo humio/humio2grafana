@@ -171,7 +171,7 @@ describe('HumioDataSource', () => {
 
       expect(initMock.mock.calls.length).toBe(1);
       expect(initMock.mock.calls[0]).toEqual([
-        {"data": {"end": range.to.unix() * 1000, "isLive": false, "queryString": "timechart()", "showQueryEventDistribution": false, "start": range.from.unix() * 1000, "timeZoneOffsetMinutes": 60},
+        {"data": {"end": range.to.unix() * 1000, "isLive": false, "queryString": "timechart()", "showQueryEventDistribution": false, "start": range.from.unix() * 1000, "timeZoneOffsetMinutes":  -new Date().getTimezoneOffset()},
          "headers": {"Content-Type": "application/json"},
          "method": "POST", "url": "proxied/api/v1/dataspaces/test/queryjobs"}, undefined, undefined])
       expect(pollMock.mock.calls.length).toBe(1);
@@ -196,7 +196,7 @@ describe('HumioDataSource', () => {
 
       expect(initMock.mock.calls.length).toBe(1);
       expect(initMock.mock.calls[0]).toEqual([
-        {"data": {"isLive": true, "queryString": "timechart()", "showQueryEventDistribution": false, "start": "1h", "timeZoneOffsetMinutes": 60},
+        {"data": {"isLive": true, "queryString": "timechart()", "showQueryEventDistribution": false, "start": "1h", "timeZoneOffsetMinutes":  -new Date().getTimezoneOffset()},
          "headers": {"Content-Type": "application/json"},
          "method": "POST", "url": "proxied/api/v1/dataspaces/test/queryjobs"}, undefined, undefined])
       expect(pollMock.mock.calls.length).toBe(1);
@@ -220,7 +220,7 @@ describe('HumioDataSource', () => {
 
       expect(initMock.mock.calls.length).toBe(1);
       expect(initMock.mock.calls[0]).toEqual([
-        {"data": {"end": range.to.unix() * 1000, "isLive": false, "queryString": "timechart()", "showQueryEventDistribution": false, "start": range.from.unix() * 1000, "timeZoneOffsetMinutes": 60},
+        {"data": {"end": range.to.unix() * 1000, "isLive": false, "queryString": "timechart()", "showQueryEventDistribution": false, "start": range.from.unix() * 1000, "timeZoneOffsetMinutes":  -new Date().getTimezoneOffset()},
          "headers": {"Content-Type": "application/json"},
          "method": "POST", "url": "proxied/api/v1/dataspaces/test/queryjobs"}, undefined, undefined])
       expect(pollMock.mock.calls.length).toBe(1);
@@ -241,7 +241,7 @@ describe('HumioDataSource', () => {
 
       expect(initMock.mock.calls.length).toBe(1);
       expect(initMock.mock.calls[0]).toEqual([
-        {"data": {"end": range.to.unix() * 1000, "isLive": false, "queryString": "testQuery", "showQueryEventDistribution": false, "start": range.from.unix() * 1000, "timeZoneOffsetMinutes": 60},
+        {"data": {"end": range.to.unix() * 1000, "isLive": false, "queryString": "testQuery", "showQueryEventDistribution": false, "start": range.from.unix() * 1000, "timeZoneOffsetMinutes":  -new Date().getTimezoneOffset()},
          "headers": {"Content-Type": "application/json"},
          "method": "POST", "url": "proxied/api/v1/dataspaces/test/queryjobs"}, undefined, undefined])
       expect(pollMock.mock.calls.length).toBe(1);
