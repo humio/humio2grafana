@@ -183,21 +183,11 @@ class QueryJob {
       ).then(
         (res: any) => {
           if (res['data']['done']) {
-            let newEvents = events.concat(res['data']['events']);
-            if (
-              `hasMoreEvents` in res['data']['metaData']['extraData'] &&
-              res['data']['metaData']['extraData'][`hasMoreEvents`] === 'true'
-            ) {
-              setTimeout(() => {
-                resolve(this.poll(location, grafanaAttrs, target, newEvents));
-              }, res['data']['metaData']['pollAfter']);
-            } else {
-              if (!this.queryDefinition.isLive) {
-                this.queryId = undefined;
-              }
-              res['data']['events'] = newEvents;
-              resolve(res);
+            if (!this.queryDefinition.isLive) {
+              this.queryId = undefined;
             }
+
+            resolve(res);
           } else {
             setTimeout(() => {
               resolve(this.poll(location, grafanaAttrs, target, events));
