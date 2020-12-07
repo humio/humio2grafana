@@ -168,7 +168,7 @@ describe('HumioDataSource', () => {
           data: {
             end: range.to.unix() * 1000,
             isLive: false,
-            queryString: 'timechart()',
+            queryString: '/** Grafana initiated search */ timechart()',
             showQueryEventDistribution: false,
             start: range.from.unix() * 1000,
             timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
@@ -204,7 +204,7 @@ describe('HumioDataSource', () => {
         {
           data: {
             isLive: true,
-            queryString: 'timechart()',
+            queryString: '/** Grafana initiated search */ timechart()',
             showQueryEventDistribution: false,
             start: '1h',
             timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
@@ -241,7 +241,7 @@ describe('HumioDataSource', () => {
           data: {
             end: range.to.unix() * 1000,
             isLive: false,
-            queryString: 'timechart()',
+            queryString: '/** Grafana initiated search */ timechart()',
             showQueryEventDistribution: false,
             start: range.from.unix() * 1000,
             timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
@@ -275,7 +275,7 @@ describe('HumioDataSource', () => {
           data: {
             end: range.to.unix() * 1000,
             isLive: false,
-            queryString: 'testQuery',
+            queryString: '/** Grafana initiated search */ testQuery',
             showQueryEventDistribution: false,
             start: range.from.unix() * 1000,
             timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
@@ -306,7 +306,7 @@ describe('HumioDataSource', () => {
         {
           data: {
             isLive: true,
-            queryString: 'testQuery',
+            queryString: '/** Grafana initiated search */ testQuery',
             showQueryEventDistribution: false,
             start: '1h',
             timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
