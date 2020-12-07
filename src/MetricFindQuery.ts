@@ -100,7 +100,7 @@ export default class MetricFindQuery {
       refId: 'notUsed',
     };
 
-    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range);
     let data = await qj.executeQuery(isLive, grafanaAttrs, target);
     if (data.error) {
       throw data.error; // TODO(AlexanderBrandborg): Only shows the error header on the variables page. Should be able to show the body also.

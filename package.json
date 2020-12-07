@@ -8,7 +8,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/toolkit": "^7.3.0",
-    "@grafana/ui": "^7.3.0"
+    "@grafana/ui": "^7.3.0",
+    "jest-mock-extended": "^1.0.10"
   },
   "dependencies": {
     "@grafana/runtime": "^7.3.0",

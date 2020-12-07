@@ -105,7 +105,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     };
 
     this.timeRange = options.range;
-    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range);
 
     if (options.panelId !== undefined) {
       let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId?.toString());

@@ -188,7 +188,7 @@ class QueryJob {
       if (!this.queryId) {
         let error: DataQueryError = {
           message: 'Queryjob not initialized.',
-          data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alive.' },
+          data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alvie.' },
         };
 
         reject(error);

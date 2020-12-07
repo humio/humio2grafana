@@ -96,7 +96,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   };
 
   private _composeQueryArgs() {
-    let isLive = HumioHelper.queryIsLive(location, this.state.datasource.timeRange.raw);
+    let isLive = HumioHelper.queryIsLive(location, this.state.datasource.timeRange);
     let replacedQuery = this.state.datasource.templateSrv.replace(
       this.props.query.humioQuery,
       undefined,

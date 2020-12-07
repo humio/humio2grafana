@@ -1,7 +1,24 @@
 import { WidgetType } from '../Types/WidgetType';
 
 class HumioHelper {
-  static dateIsNow(toDateCheck: any) {
+  static queryIsLive(location: Location, range: any) {
+    return (
+      'raw' in range &&
+      HumioHelper.automaticPanelRefreshHasBeenActivated(location) &&
+      HumioHelper.dateIsNow(range.raw.to) &&
+      HumioHelper.isAllowedRangeForLive(range.raw.from)
+    );
+  }
+
+  static parseLiveFrom(date: string): string {
+    if (!this.isAllowedRangeForLive(date)) {
+      throw new Error(`Humio does not support live queries to start at ${date}.`);
+    }
+
+    return date.replace('now-', '').replace('M', 'mon');
+  }
+
+  private static dateIsNow(toDateCheck: any) {
     if (typeof toDateCheck === 'string') {
       return toDateCheck.match(/^(now[^-]|now$)/) != null;
     } else {
@@ -9,16 +26,12 @@ class HumioHelper {
     }
   }
 
-  static queryIsLive(location: Location, rawRange: any) {
-    return (
-      HumioHelper.automaticPanelRefreshHasBeenActivated(location) &&
-      HumioHelper.dateIsNow(rawRange.to) &&
-      HumioHelper.isAllowedRangeForLive(rawRange.from)
-    );
+  private static automaticPanelRefreshHasBeenActivated(location: Location) {
+    return (location ? location.search.includes('refresh=') || null : null) != null;
   }
 
-  static automaticPanelRefreshHasBeenActivated(location: Location) {
-    return (location ? location.search.includes('refresh=') || null : null) != null;
+  static isAllowedRangeForLive(date: string): boolean {
+    return !date.includes('/');
   }
 
   static widgetType(data: any, target: any) {
@@ -35,22 +48,10 @@ class HumioHelper {
     }
   }
 
-  static isTableQuery(target: any): boolean {
+  private static isTableQuery(target: any): boolean {
     return typeof target.humioQuery === 'string'
       ? new RegExp(/(table\()(.+)(\))/).exec(target.humioQuery) !== null
       : false;
-  }
-
-  static isAllowedRangeForLive(date: string): boolean {
-    return !date.includes('/');
-  }
-
-  static parseLiveFrom(date: string): string {
-    if (!this.isAllowedRangeForLive(date)) {
-      throw new Error(`Humio does not support live queries to start at ${date}.`);
-    }
-
-    return date.replace('now-', '').replace('M', 'mon');
   }
 }
 

@@ -1,4 +1,6 @@
 import HumioHelper from './humio_helper';
+import { mock } from 'jest-mock-extended';
+import { dateTime } from '@grafana/data';
 
 describe('Time Range Translation', () => {
   it.each`
@@ -37,5 +39,56 @@ describe('Time Range Translation', () => {
     ${'now/y'}
   `('throw error when attempting to set From to a relative', ({ inpt }) => {
     expect(() => HumioHelper.parseLiveFrom(inpt)).toThrow(`Humio does not support live queries to start at ${inpt}.`);
+  });
+});
+
+describe('Query should run with a live queryJob', () => {
+  it('Is live, if time range can run as live job in Humio and refresh has been activated', () => {
+    let mockLocation = mock<Location>();
+    mockLocation.search = '?orgId=1&refresh=5m';
+    const raw = { from: 'now-1h', to: 'now' };
+    const range = { from: dateTime(), to: dateTime(), raw: raw };
+
+    expect(HumioHelper.queryIsLive(mockLocation, range)).toBe(true);
+  });
+
+  it('Not live, if no raw range is present', () => {
+    // This is the case if Grafana is given an absolute range from timestamp to timestamp
+    let mockLocation = mock<Location>();
+    mockLocation.search = '?orgId=1&refresh=5m';
+    const range = { from: dateTime(), to: dateTime() };
+
+    expect(HumioHelper.queryIsLive(mockLocation, range)).toBe(false);
+  });
+
+  it('Not live, if refresh has not been activated', () => {
+    let mockLocation = mock<Location>();
+    mockLocation.search = '?orgId=1';
+    const raw = { from: 'now-1h', to: 'now' };
+    const range = { from: dateTime(), to: dateTime(), raw: raw };
+
+    expect(HumioHelper.queryIsLive(mockLocation, range)).toBe(false);
+  });
+
+  it('Not live is time range not supported by Humio', () => {
+    // This day up until now
+    const raw = { from: 'now/d', to: 'now' };
+    const range = { from: dateTime(), to: dateTime(), raw: raw };
+
+    let mockLocation = mock<Location>();
+    mockLocation.search = '?orgId=1&refresh=5m';
+
+    expect(HumioHelper.queryIsLive(mockLocation, range)).toBe(false);
+  });
+
+  it("Not live is time range does not end in 'now'", () => {
+    // This day up until midnight
+    const raw = { from: 'now/d', to: 'now/d' };
+    const range = { from: dateTime(), to: dateTime(), raw: raw };
+
+    let mockLocation = mock<Location>();
+    mockLocation.search = '?orgId=1&refresh=5m';
+
+    expect(HumioHelper.queryIsLive(mockLocation, range)).toBe(false);
   });
 });
