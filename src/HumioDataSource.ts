@@ -35,7 +35,10 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   headers: DatasourceRequestHeaders;
   authenticateWithAToken: boolean;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv(),) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<HumioOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
 
     this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithToken;
@@ -128,9 +131,6 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
       this.formatting
     ); // Scopedvars is for panel repeats
 
-    let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
-    options.annotation.refId = randomNumber; //TODO(AlexanderBrandborg): Should look into calculating the same number for the same query, so that the same live queryjob can be reused.
-
     // Create targets.
     let query: HumioQuery = {
       humioQuery: options.annotation.humioQuery,
@@ -144,7 +144,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     let annotationText = !options.annotation.annotationText ? '' : options.annotation.annotationText;
 
     // Make query to Humio.
-    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
+    let queryIdentitifer =
+      options.annotation.humioQuery + '-' + options.annotation.humioRepository + '-' + this.id.toString();
+    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(queryIdentitifer);
     const queryResponse = (await queryJobManager.update(location, grafanaAttrs, targets))[0]; // Annotation query only has one target
     return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, annotationText);
   }
