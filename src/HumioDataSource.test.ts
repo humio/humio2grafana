@@ -7,6 +7,7 @@ import HumioHelper from './humio/humio_helper';
 
 var initMock = jest.fn().mockReturnValue(createDefaultInitResponse());
 var pollMock = jest.fn().mockReturnValue(createDefaultHumioResponse());
+var deleteMock = jest.fn().mockReturnValue(createDefaultDeleteResponse());
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -17,8 +18,12 @@ jest.mock('@grafana/runtime', () => ({
         return Promise.resolve(initMock(options, headers, proxyUrl));
       } else if (options.method === 'GET') {
         return Promise.resolve(pollMock(options, headers, proxyUrl));
+
+      }
+      else if(options.method === 'DELETE') {
+        return Promise.resolve(deleteMock(options, headers, proxyUrl))
       } else {
-        return Promise.resolve(createDefaultHumioResponse());
+        throw Error("No mock implementation of HTTP verb " + options.method )
       }
     },
   }),
@@ -52,6 +57,13 @@ function createDefaultInitResponse() {
   return {
     data: {
       id: 'abcde',
+    },
+  };
+}
+
+function createDefaultDeleteResponse() {
+  return {
+    data: {
     },
   };
 }
@@ -119,7 +131,7 @@ describe('HumioDataSource', () => {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
-    password: 'mupp',
+    password: 'passw3rd',
     jsonData: {
       customQueryParameters: '',
     } as any,
