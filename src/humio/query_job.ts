@@ -80,9 +80,10 @@ class QueryJob {
 
   private _getRequestedQueryDefinition(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery) {
     let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+    let markedQuery = '/** Grafana initiated search */ ' + target.humioQuery;
     return isLive
-      ? this._makeLiveQueryDefinition(grafanaAttrs, target.humioQuery)
-      : this._makeStaticQueryDefinition(grafanaAttrs, target.humioQuery);
+      ? this._makeLiveQueryDefinition(grafanaAttrs, markedQuery)
+      : this._makeStaticQueryDefinition(grafanaAttrs, markedQuery);
   }
 
   private _makeLiveQueryDefinition(grafanaAttrs: IGrafanaAttrs, humioQuery: string) {
