@@ -37,7 +37,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<HumioOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
