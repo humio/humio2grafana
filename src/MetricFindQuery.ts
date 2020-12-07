@@ -3,6 +3,7 @@ import { HumioDataSource } from './HumioDataSource';
 import { DefaultTimeRange, MetricFindValue } from '@grafana/data';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
 import _ from 'lodash';
+import HumioHelper from 'humio/humio_helper';
 
 export default class MetricFindQuery {
   datasource: HumioDataSource;
@@ -99,7 +100,8 @@ export default class MetricFindQuery {
       refId: 'notUsed',
     };
 
-    let data = await qj.executeQuery(location, grafanaAttrs, target);
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+    let data = await qj.executeQuery(isLive, grafanaAttrs, target);
     if (data.error) {
       throw data.error; // TODO(AlexanderBrandborg): Only shows the error header on the variables page. Should be able to show the body also.
     }

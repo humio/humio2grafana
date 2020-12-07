@@ -18,6 +18,7 @@ import { HumioOptions } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 import MetricFindQuery from './MetricFindQuery';
+import HumioHelper from './humio/humio_helper';
 
 export interface HumioQuery extends DataQuery {
   humioQuery: string;
@@ -104,9 +105,11 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     };
 
     this.timeRange = options.range;
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+
     if (options.panelId !== undefined) {
       let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId?.toString());
-      const raw_responses = await queryJobManager.update(location, grafanaAttrs, targets);
+      const raw_responses = await queryJobManager.update(isLive, grafanaAttrs, targets);
       return QueryResultFormatter.formatQueryResponses(raw_responses, targets);
     } else {
       throw new Error('panelId was undefined');
@@ -146,8 +149,10 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     // Make query to Humio.
     let queryIdentitifer =
       options.annotation.humioQuery + '-' + options.annotation.humioRepository + '-' + this.id.toString();
+
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
     let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(queryIdentitifer);
-    const queryResponse = (await queryJobManager.update(location, grafanaAttrs, targets))[0]; // Annotation query only has one target
+    const queryResponse = (await queryJobManager.update(isLive, grafanaAttrs, targets))[0]; // Annotation query only has one target
     return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, annotationText);
   }
 

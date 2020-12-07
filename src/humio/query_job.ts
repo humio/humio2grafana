@@ -31,7 +31,7 @@ class QueryJob {
     this._handleErr = this._handleErr.bind(this);
   }
 
-  executeQuery(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
+  executeQuery(isLive: boolean, grafanaAttrs: IGrafanaAttrs, target: HumioQuery): Promise<any> {
     if (!target.humioRepository) {
       let error: DataQueryError = {
         message: 'No Repository Selected',
@@ -40,18 +40,18 @@ class QueryJob {
       return Promise.resolve({ data: { events: [], done: true }, error: error });
     }
 
-    const requestedQueryDefinition = this._getRequestedQueryDefinition(location, grafanaAttrs, target);
+    const requestedQueryDefinition = this._getRequestedQueryDefinition(isLive, grafanaAttrs, target);
 
     // Executing the same live query again
     if (this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)) {
-      return this.poll(location, grafanaAttrs, target, []);
+      return this.poll(isLive, grafanaAttrs, target, []);
     } else {
       this._updateQueryDefinition(requestedQueryDefinition);
       return this._cancelCurrentQueryJob(grafanaAttrs, target).then(() => {
         return this._initializeNewQueryJob(grafanaAttrs, target)
           .then(
             () => {
-              return Promise.resolve(this.poll(location, grafanaAttrs, target, []));
+              return Promise.resolve(this.poll(isLive, grafanaAttrs, target, []));
             },
             err => {
               return Promise.reject(err);
@@ -62,7 +62,7 @@ class QueryJob {
               return Promise.resolve(res);
             },
             err => {
-              return this._handleErr(location, grafanaAttrs, target, err).then(res => {
+              return this._handleErr(isLive, grafanaAttrs, target, err).then(res => {
                 return Promise.reject(res);
               });
             }
@@ -78,8 +78,7 @@ class QueryJob {
     return getBackendSrv().datasourceRequest(options);
   }
 
-  private _getRequestedQueryDefinition(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery) {
-    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+  private _getRequestedQueryDefinition(isLive: boolean, grafanaAttrs: IGrafanaAttrs, target: HumioQuery) {
     let markedQuery = '/** Grafana initiated search */ ' + target.humioQuery;
     return isLive
       ? this._makeLiveQueryDefinition(grafanaAttrs, markedQuery)
@@ -184,7 +183,7 @@ class QueryJob {
     });
   }
 
-  private poll(location: Location, grafanaAttrs: IGrafanaAttrs, target: HumioQuery, events: any[]): Promise<any> {
+  private poll(isLive: boolean, grafanaAttrs: IGrafanaAttrs, target: HumioQuery, events: any[]): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.queryId) {
         let error: DataQueryError = {
@@ -212,7 +211,7 @@ class QueryJob {
             resolve(res);
           } else {
             setTimeout(() => {
-              resolve(this.poll(location, grafanaAttrs, target, events));
+              resolve(this.poll(isLive, grafanaAttrs, target, events));
             }, res['data']['metaData']['pollAfter']);
           }
         },
@@ -224,7 +223,7 @@ class QueryJob {
   }
 
   private _handleErr(
-    location: Location,
+    isLive: boolean,
     grafanaAttrs: IGrafanaAttrs,
     target: HumioQuery,
     err: { [index: string]: any }
@@ -236,7 +235,7 @@ class QueryJob {
         this.failCounter += 1;
         this.queryId = undefined;
         if (this.failCounter <= 3) {
-          return this.executeQuery(location, grafanaAttrs, target);
+          return this.executeQuery(isLive, grafanaAttrs, target);
         } else {
           this.failCounter = 0;
           let error: DataQueryError = {

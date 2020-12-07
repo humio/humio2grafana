@@ -26,14 +26,14 @@ class QueryJobManager {
     return manager;
   }
 
-  async update(location: Location, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]): Promise<any> {
-    return await this._executeAllQueries(location, grafanaAttrs, targets);
+  async update(isLive: boolean, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]): Promise<any> {
+    return await this._executeAllQueries(isLive, grafanaAttrs, targets);
   }
 
-  private async _executeAllQueries(location: Location, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]) {
+  private async _executeAllQueries(isLive: boolean, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]) {
     let allQueryPromise = targets.map((target: HumioQuery, index: number) => {
       let query = this._getOrCreateQueryJob(index, target.humioQuery);
-      let res = query.executeQuery(location, grafanaAttrs, target);
+      let res = query.executeQuery(isLive, grafanaAttrs, target);
       return res;
     });
 

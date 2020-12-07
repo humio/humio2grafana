@@ -18,12 +18,10 @@ jest.mock('@grafana/runtime', () => ({
         return Promise.resolve(initMock(options, headers, proxyUrl));
       } else if (options.method === 'GET') {
         return Promise.resolve(pollMock(options, headers, proxyUrl));
-
-      }
-      else if(options.method === 'DELETE') {
-        return Promise.resolve(deleteMock(options, headers, proxyUrl))
+      } else if (options.method === 'DELETE') {
+        return Promise.resolve(deleteMock(options, headers, proxyUrl));
       } else {
-        throw Error("No mock implementation of HTTP verb " + options.method )
+        throw Error('No mock implementation of HTTP verb ' + options.method);
       }
     },
   }),
@@ -63,8 +61,7 @@ function createDefaultInitResponse() {
 
 function createDefaultDeleteResponse() {
   return {
-    data: {
-    },
+    data: {},
   };
 }
 
