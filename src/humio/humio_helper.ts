@@ -18,16 +18,16 @@ class HumioHelper {
     return date.replace('now-', '').replace('M', 'mon');
   }
 
+  private static automaticPanelRefreshHasBeenActivated(location: Location) {
+    return (location ? location.search.includes('refresh=') || null : null) != null;
+  }
+
   private static dateIsNow(toDateCheck: any) {
     if (typeof toDateCheck === 'string') {
       return toDateCheck.match(/^(now[^-]|now$)/) != null;
     } else {
       return false;
     }
-  }
-
-  private static automaticPanelRefreshHasBeenActivated(location: Location) {
-    return (location ? location.search.includes('refresh=') || null : null) != null;
   }
 
   static isAllowedRangeForLive(date: string): boolean {

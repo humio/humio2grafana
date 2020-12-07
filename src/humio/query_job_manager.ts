@@ -9,10 +9,10 @@ import { HumioQuery } from 'HumioDataSource';
  */
 class QueryJobManager {
   static managers: Map<string, QueryJobManager> = new Map<string, QueryJobManager>();
-  queries: Map<number, QueryJob>;
+  queryJobs: Map<number, QueryJob>;
 
   constructor() {
-    this.queries = new Map<number, QueryJob>();
+    this.queryJobs = new Map<number, QueryJob>();
   }
 
   static getOrCreateQueryJobManager(managerId: string): QueryJobManager {
@@ -32,8 +32,8 @@ class QueryJobManager {
 
   private async _executeAllQueries(isLive: boolean, grafanaAttrs: IGrafanaAttrs, targets: HumioQuery[]) {
     let allQueryPromise = targets.map((target: HumioQuery, index: number) => {
-      let query = this._getOrCreateQueryJob(index, target.humioQuery);
-      let res = query.executeQuery(isLive, grafanaAttrs, target);
+      let queryJob = this._getOrCreateQueryJob(index, target.humioQuery);
+      let res = queryJob.executeQuery(isLive, grafanaAttrs, target);
       return res;
     });
 
@@ -41,11 +41,11 @@ class QueryJobManager {
   }
 
   private _getOrCreateQueryJob(index: number, humioQuery: string) {
-    let query = this.queries.get(index);
+    let query = this.queryJobs.get(index);
 
     if (!query) {
       query = new QueryJob(humioQuery);
-      this.queries.set(index, query);
+      this.queryJobs.set(index, query);
     }
 
     return query;
