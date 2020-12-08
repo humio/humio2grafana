@@ -10,7 +10,7 @@ import {
 import IDatasourceRequestOptions from './Interfaces/IDatasourceRequestOptions';
 import DatasourceRequestHeaders from './Interfaces/IDatasourceRequestHeaders';
 import IGrafanaAttrs from './Interfaces/IGrafanaAttrs';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, TemplateSrv } from '@grafana/runtime';
 import QueryJobManager from './humio/query_job_manager';
 import QueryResultFormatter from './humio/query_result_formatter';
 import { MetricFindValue } from '@grafana/data';
@@ -18,6 +18,7 @@ import { HumioOptions } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 import MetricFindQuery from './MetricFindQuery';
+import HumioHelper from './humio/humio_helper';
 
 export interface HumioQuery extends DataQuery {
   humioQuery: string;
@@ -35,7 +36,10 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
   headers: DatasourceRequestHeaders;
   authenticateWithAToken: boolean;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<HumioOptions>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<HumioOptions>,
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
 
     this.authenticateWithAToken = instanceSettings.jsonData.authenticateWithToken;
@@ -70,11 +74,9 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     if (_.isString(vars)) {
       // Regular variables are input as strings, while the input is an array when Multi-value variables are used.
       return vars;
-    }
-    else if(vars.length === 1){
+    } else if (vars.length === 1) {
       return vars[0];
-    }
-     else {
+    } else {
       return '/^' + vars.join('|') + '$/';
     }
   }
@@ -93,7 +95,7 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     }
 
     targets.forEach(target => {
-      target.humioQuery = getTemplateSrv().replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
+      target.humioQuery = this.templateSrv.replace(target.humioQuery, options.scopedVars, this.formatting); // Scopedvars is for panel repeats
     });
 
     let grafanaAttrs: IGrafanaAttrs = {
@@ -103,9 +105,11 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     };
 
     this.timeRange = options.range;
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range);
+
     if (options.panelId !== undefined) {
       let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.panelId?.toString());
-      const raw_responses = await queryJobManager.update(location, grafanaAttrs, targets);
+      const raw_responses = await queryJobManager.update(isLive, grafanaAttrs, targets);
       return QueryResultFormatter.formatQueryResponses(raw_responses, targets);
     } else {
       throw new Error('panelId was undefined');
@@ -124,14 +128,11 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
       options.annotation.annotationQuery = '';
     }
 
-    options.annotation.humioQuery = getTemplateSrv().replace(
+    options.annotation.humioQuery = this.templateSrv.replace(
       options.annotation.annotationQuery,
       undefined,
       this.formatting
     ); // Scopedvars is for panel repeats
-
-    let randomNumber = Date().toString() + Math.floor(Math.random() * 1000000);
-    options.annotation.refId = randomNumber; //TODO(AlexanderBrandborg): Should look into calculating the same number for the same query, so that the same live queryjob can be reused.
 
     // Create targets.
     let query: HumioQuery = {
@@ -146,8 +147,12 @@ export class HumioDataSource extends DataSourceApi<HumioQuery, HumioOptions> {
     let annotationText = !options.annotation.annotationText ? '' : options.annotation.annotationText;
 
     // Make query to Humio.
-    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(options.annotation.refId.toString());
-    const queryResponse = (await queryJobManager.update(location, grafanaAttrs, targets))[0]; // Annotation query only has one target
+    let queryIdentitifer =
+      options.annotation.humioQuery + '-' + options.annotation.humioRepository + '-' + this.id.toString();
+
+    let isLive = HumioHelper.queryIsLive(location, grafanaAttrs.grafanaQueryOpts.range.raw);
+    let queryJobManager = QueryJobManager.getOrCreateQueryJobManager(queryIdentitifer);
+    const queryResponse = (await queryJobManager.update(isLive, grafanaAttrs, targets))[0]; // Annotation query only has one target
     return QueryResultFormatter.formatAnnotationQueryResponse(queryResponse.data, annotationText);
   }
 
