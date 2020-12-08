@@ -68,10 +68,19 @@ Updated plugin id, so that the project was ready for official release.
 
 ## 3.1.0 (2020-11-03)
 First release to Grafana.com
-## Changed
+### Changed
 - Update to use grafana-toolkit 7.3.0 to fix some vulnerable dependencies
 - Changed plugin id to `humio-datasource`, will require a reinstallation of existing datasources.
 
 # 3.1.1 (20202-11-09)
-## Changed
+### Changed
 - Updated Query editor not to execute query when hidden or when no repo is selected.
+
+# 3.2.0 (20202-11-09)
+### Added
+- Queries are now marked as initiated from Grafana.
+- A large amount of new unit tests.
+
+## Changed
+- Annotation queries can now use live query jobs like with the panel queries.
+- Non-predefined time ranges that can be set in Grafana are now supported.
