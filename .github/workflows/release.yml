@@ -26,10 +26,12 @@ jobs:
           md5sum humio-datasource.zip
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
+        env:
+          TAG_NAME: ${GITHUB_REF#refs/*/}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: humio-datasource.zip
           asset_name: humio-datasource.zip
-          tag: ${{ GITHUB_REF#refs/*/ }}
+          tag: ${{TAG_NAME}}
           overwrite: true
           body: "Automatic release. See changelog for updates"
