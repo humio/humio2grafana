@@ -27,7 +27,7 @@ jobs:
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
         env:
-          TAG_NAME: ${ GITHUB_REF#refs/*/ }
+          TAG_NAME: ${{ GITHUB_REF#refs/*/ }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: humio-datasource.zip
