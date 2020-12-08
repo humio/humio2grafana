@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set env
-        run:  echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+        run:  echo RELEASE_VERSION=${GITHUB_REF#refs/*/} >> $GITHUB_ENV && echo $RELEASE_VERSION
       - name: "Install Dependencies"
         run: | 
           sudo npm install -g yarn 
@@ -24,7 +24,7 @@ jobs:
           yarn run grafana-toolkit plugin:dev
           yarn run grafana-toolkit plugin:sign
           cp -r dist humio-datasource
-          zip -r humio-datasource.zip humio
+          zip -r humio-datasource.zip humio-datasource
           md5sum humio-datasource.zip
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
