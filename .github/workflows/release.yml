@@ -30,6 +30,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: humio-datasource.zip
           asset_name: humio-datasource.zip
-          tag: ${GITHUB_REF#refs/*/}
+          tag: ${{ GITHUB_REF#refs/*/ }}
           overwrite: true
           body: "Automatic release. See changelog for updates"
