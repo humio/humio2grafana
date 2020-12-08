@@ -32,6 +32,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: humio-datasource.zip
           asset_name: humio-datasource.zip
-          tag: ${{TAG_NAME}}
+          tag: $TAG_NAME
           overwrite: true
           body: "Automatic release. See changelog for updates"
