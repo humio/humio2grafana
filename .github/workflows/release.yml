@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Set env
+        run:  echo RELEASE_VERSION=${GITHUB_REF#refs/*/} >> $GITHUB_ENV && echo $RELEASE_VERSION
       - name: "Install Dependencies"
         run: | 
           sudo npm install -g yarn 
@@ -26,12 +28,10 @@ jobs:
           md5sum humio-datasource.zip
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
-        env:
-          TAG_NAME: ${{ GITHUB_REF#refs/*/ }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: humio-datasource.zip
           asset_name: humio-datasource.zip
-          tag: ${{ env.TAG_NAME }}
+          tag: ${{ $RELEASE_VERSION }}
           overwrite: true
           body: "Automatic release. See changelog for updates"
