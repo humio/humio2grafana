@@ -22,7 +22,7 @@ jobs:
           yarn run grafana-toolkit plugin:dev
           yarn run grafana-toolkit plugin:sign
           cp -r dist humio-datasource
-          zip -r humio-datasource.zip humio
+          zip -r humio-datasource.zip humio-datasource
           md5sum humio-datasource.zip
       - name: Upload zip to Github
         uses: svenstaro/upload-release-action@v2
