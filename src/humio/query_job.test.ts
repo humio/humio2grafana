@@ -224,7 +224,7 @@ describe('QueryJob', () => {
         .mockReturnValueOnce(createErrorResponseBadBody())
         .mockReturnValue(createDefaultDoneHumioResponse());
       let res = qj.executeQuery(false, mockAttrs, query);
-      await expect(res).rejects.toEqual({
+      await expect(res).resolves.toEqual({
         data: { done: true, events: [] },
         error: {
           data: { error: 'Bad Request Data', message: 'Query Error' },
@@ -245,7 +245,7 @@ describe('QueryJob', () => {
         .mockReturnValueOnce(createErrorResponseQueryDead())
         .mockReturnValue(createDefaultDoneHumioResponse());
       let res = qj.executeQuery(false, mockAttrs, query);
-      await expect(res).rejects.toEqual({
+      await expect(res).resolves.toEqual({
         data: { done: true, events: [{ _count: '0' }], metaData: { extraData: {} } },
       });
       expect(initMock).toBeCalledTimes(2); // Calls init again to recreate QueryJob
@@ -253,7 +253,7 @@ describe('QueryJob', () => {
       expect(qj.queryId).toBeUndefined();
       expect(qj.failCounter).toBe(0);
     });
-    it('Gives up after 3 retries if 404 errors keep being returned', async () => {
+    it('Gives up after 3 retries if 404 errors keep being returned With a Static Query', async () => {
       pollMock = jest
         .fn()
         .mockReturnValueOnce(createErrorResponseQueryDead())
@@ -261,7 +261,7 @@ describe('QueryJob', () => {
         .mockReturnValueOnce(createErrorResponseQueryDead())
         .mockReturnValue(createDefaultDoneHumioResponse());
       let res = qj.executeQuery(false, mockAttrs, query);
-      await expect(res).rejects.toEqual({
+      await expect(res).resolves.toEqual({
         data: { done: true, events: [] },
         error: {
           data: { error: 'Tried to query 3 times in a row.', message: 'Failed to create query' },
@@ -270,6 +270,28 @@ describe('QueryJob', () => {
       });
       expect(initMock).toBeCalledTimes(3);
       expect(pollMock).toBeCalledTimes(3);
+      expect(qj.queryId).toBeUndefined();
+      expect(qj.failCounter).toBe(0);
+    });
+
+    it('Gives up after 3 retries if 404 errors keep being returned With a Live Query that has already been polled', async () => {
+      pollMock = jest
+        .fn()
+        .mockReturnValueOnce(createDefaultDoneHumioResponse())
+        .mockReturnValue(createErrorResponseQueryDead());
+
+      qj.executeQuery(true, mockAttrs, query); // Initial poll, should succeed.
+
+      let res = qj.executeQuery(true, mockAttrs, query);
+      await expect(res).resolves.toEqual({
+        data: { done: true, events: [] },
+        error: {
+          data: { error: 'Tried to query 3 times in a row.', message: 'Failed to create query' },
+          message: 'Failed to create query',
+        },
+      });
+      expect(initMock).toBeCalledTimes(4);
+      expect(pollMock).toBeCalledTimes(4);
       expect(qj.queryId).toBeUndefined();
       expect(qj.failCounter).toBe(0);
     });
