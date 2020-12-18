@@ -50,7 +50,14 @@ class QueryJob {
       !this._queryDefinitionHasChanged(requestedQueryDefinition) &&
       this.repository === target.humioRepository
     ) {
-      return this.poll(isLive, grafanaAttrs, target, []);
+      return Promise.resolve(this.poll(isLive, grafanaAttrs, target, [])).then(
+        res => {
+          return Promise.resolve(res);
+        },
+        err => {
+          return this._handleErr(isLive, grafanaAttrs, target, err);
+        }
+      );
     } else {
       this.repository = target.humioRepository;
       this._updateQueryDefinition(requestedQueryDefinition);
@@ -69,9 +76,7 @@ class QueryJob {
               return Promise.resolve(res);
             },
             err => {
-              return this._handleErr(isLive, grafanaAttrs, target, err).then(res => {
-                return Promise.reject(res);
-              });
+              return this._handleErr(isLive, grafanaAttrs, target, err);
             }
           );
       });
