@@ -16,6 +16,7 @@ class QueryJob {
   queryId?: string;
   queryDefinition: QueryDefinition;
   failCounter: number;
+  repository?: string;
 
   constructor(queryStr: string) {
     this.queryDefinition = {
@@ -25,7 +26,7 @@ class QueryJob {
       start: '24h',
       isLive: false,
     };
-
+    this.repository = undefined;
     this.failCounter = 0;
     this.queryId = undefined;
     this._handleErr = this._handleErr.bind(this);
@@ -37,15 +38,21 @@ class QueryJob {
         message: 'No Repository Selected',
         data: { message: 'No Repository Selected', error: 'Please select a repository.' },
       };
+      this.resetState();
       return Promise.resolve({ data: { events: [], done: true }, error: error });
     }
 
     const requestedQueryDefinition = this._getRequestedQueryDefinition(isLive, grafanaAttrs, target);
 
     // Executing the same live query again
-    if (this.queryId && !this._queryDefinitionHasChanged(requestedQueryDefinition)) {
+    if (
+      this.queryId &&
+      !this._queryDefinitionHasChanged(requestedQueryDefinition) &&
+      this.repository === target.humioRepository
+    ) {
       return this.poll(isLive, grafanaAttrs, target, []);
     } else {
+      this.repository = target.humioRepository;
       this._updateQueryDefinition(requestedQueryDefinition);
       return this._cancelCurrentQueryJob(grafanaAttrs, target).then(() => {
         return this._initializeNewQueryJob(grafanaAttrs, target)
@@ -69,6 +76,11 @@ class QueryJob {
           );
       });
     }
+  }
+
+  private resetState() {
+    this.repository = undefined;
+    this.queryId = undefined;
   }
 
   private _doRequest(options: IDatasourceRequestOptions, headers: DatasourceRequestHeaders, proxy_url: string) {
@@ -188,7 +200,7 @@ class QueryJob {
       if (!this.queryId) {
         let error: DataQueryError = {
           message: 'Queryjob not initialized.',
-          data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alvie.' },
+          data: { message: 'Queryjob not initialized.', error: 'No QueryJob for query is alive.' },
         };
 
         reject(error);
@@ -205,8 +217,10 @@ class QueryJob {
         (res: any) => {
           if (res['data']['done']) {
             if (!this.queryDefinition.isLive) {
-              this.queryId = undefined;
+              this.resetState();
             }
+
+            this.failCounter = 0;
 
             resolve(res);
           } else {
@@ -233,11 +247,12 @@ class QueryJob {
       // Thus we attempt to restart the query process, where we will aquire a new queryjob.
       case 404: {
         this.failCounter += 1;
-        this.queryId = undefined;
-        if (this.failCounter <= 3) {
+        if (this.failCounter < 3) {
+          this.queryId = undefined;
           return this.executeQuery(isLive, grafanaAttrs, target);
         } else {
           this.failCounter = 0;
+          this.resetState();
           let error: DataQueryError = {
             message: 'Failed to create query',
             data: { message: 'Failed to create query', error: 'Tried to query 3 times in a row.' },
@@ -246,6 +261,7 @@ class QueryJob {
         }
       }
       default: {
+        this.resetState();
         let error: DataQueryError = {
           message: 'Query Error',
           data: { message: 'Query Error', error: err.data },
