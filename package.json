@@ -1,6 +1,6 @@
 {
   "name": "humio2grafana",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Grafana datasource for Humio",
   "main": "module.ts",
   "repository": "git@github.com:humio/humio2grafana.git",
@@ -19,8 +19,8 @@
   "resolutions": {
     "node-fetch": "^2.6.1",
     "ini": "^1.3.6",
-    "node-notifier" : "^8.0.1",
-    "axios" : "^0.21.1"
+    "node-notifier": "^8.0.1",
+    "axios": "^0.21.1"
   },
   "scripts": {}
 }
