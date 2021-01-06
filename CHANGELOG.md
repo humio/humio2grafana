@@ -92,3 +92,7 @@ First release to Grafana.com
 ## Changed
 - BugFix: Switching between repos when running live queries now results in a new queryjob being created.
 - BugFix: Error Handling in query job now works as it used to, and can recreate queryjob automatically on errors.
+
+## 3.2.2 (2021-01-06)
+### Changed
+- Upgraded some transitive dependencies to include security fixes.
