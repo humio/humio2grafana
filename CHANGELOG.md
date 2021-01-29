@@ -96,3 +96,7 @@ First release to Grafana.com
 ## 3.2.2 (2021-01-06)
 ### Changed
 - Upgraded some transitive dependencies to include security fixes.
+
+## 3.2.3 (2021-01-29)
+### Changed
+- Upgraded some transitive dependencies to include security fixes.
