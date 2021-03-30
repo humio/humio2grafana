@@ -1,6 +1,6 @@
 {
   "name": "humio2grafana",
-  "version": "3.2.3",
+  "version": "3.2.4",
   "description": "Grafana datasource for Humio",
   "main": "module.ts",
   "repository": "git@github.com:humio/humio2grafana.git",
