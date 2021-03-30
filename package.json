@@ -25,7 +25,8 @@
     "ssri": "^8.0.1",
     "is-svg": "^4.2.2",
     "react-dev-utils": "^11.0.4",
-    "elliptic": "^6.5.4"
+    "elliptic": "^6.5.4",
+    "y18n": "^4.0.1"
   },
   "scripts": {}
 }
