@@ -100,3 +100,8 @@ First release to Grafana.com
 ## 3.2.3 (2021-01-29)
 ### Changed
 - Upgraded some transitive dependencies to include security fixes.
+
+## 3.2.4 (2021-03-30)
+### Changed
+- Fixed issue where data of certain timechart queries wasn't correctly formatted.
+- Upgraded some transitive dependencies to include security fixes.
