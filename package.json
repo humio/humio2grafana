@@ -21,7 +21,11 @@
     "ini": "^1.3.6",
     "node-notifier": "^8.0.1",
     "axios": "^0.21.1",
-    "immer": "^8.0.1"
+    "immer": "^8.0.1",
+    "ssri": "^8.0.1",
+    "is-svg": "^4.2.2",
+    "react-dev-utils": "^11.0.4",
+    "elliptic": "^6.5.4"
   },
   "scripts": {}
 }

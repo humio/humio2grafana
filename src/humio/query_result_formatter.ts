@@ -86,6 +86,7 @@ class QueryResultFormatter {
     if (humioQueryResult.events.length === 0) {
       return [];
     }
+
     const valueFields = getValueFieldName(humioQueryResult);
 
     let widgetType = HumioHelper.widgetType(humioQueryResult, target);
@@ -184,7 +185,10 @@ export const getValueFieldName = (responseData: any) => {
       fieldName => !_.includes(valueFieldsToExclude, fieldName)
     );
 
-    return valueFieldNames || defaultValueFieldName;
+    // In the case that a value field is found. If not it must recide on the events themselves
+    if (valueFieldNames.length !== 0) {
+      return valueFieldNames;
+    }
   }
 
   if (responseData.events.length > 0) {

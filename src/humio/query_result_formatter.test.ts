@@ -52,6 +52,48 @@ describe('Regular Query Formatting', () => {
     });
   });
 
+  it('returns a single set of graph data when given a Humio timechart result for 1 series,  even if the fieldOrder does not contain the value field', () => {
+    var events = [
+      { seriesName: 'series1', sum: '7', _bucket: '1598613360000' },
+      { seriesName: 'series1', sum: '9', _bucket: '1598613600000' },
+      { seriesName: 'series1', sum: '0', _bucket: '1598613840000' },
+    ];
+    var metaData = {
+      costs: {},
+      eventCount: 3,
+      extraData: {
+        series: 'seriesName',
+        timechart: 'true',
+        bucket_last_bucket: '1598613840000',
+        groupby_fields: 'seriesName',
+        bucket_span_humanized: '4 minutes',
+        bucket_span_millis: '240000',
+        'ui:suggested-widget': 'time-chart',
+        bucket_first_bucket: '1598613360000',
+      },
+      fieldOrder: ['_bucket', 'seriesName'],
+    };
+
+    var res = { data: { events: events, metaData: metaData } };
+    var target = { humioQuery: 'timechart()' };
+
+    return QueryResultFormatter.formatQueryResponses([res], [target]).then(res => {
+      expect(res).toEqual({
+        data: [
+          {
+            datapoints: [
+              [7, 1598613360000],
+              [9, 1598613600000],
+              [0, 1598613840000],
+            ],
+            target: 'series1',
+          },
+        ],
+        error: undefined,
+      });
+    });
+  });
+
   it('returns multiple sets of graph data when given a Humio timechart result for multiple series', () => {
     var events = [
       { seriesName: 'series1', _count: '7', _bucket: '1598613360000' },
@@ -75,6 +117,60 @@ describe('Regular Query Formatting', () => {
         bucket_first_bucket: '1598613360000',
       },
       fieldOrder: ['_bucket', 'seriesName', '_count'],
+    };
+
+    var res = { data: { events: events, metaData: metaData } };
+    var target = { humioQuery: 'timechart()' };
+
+    return QueryResultFormatter.formatQueryResponses([res], [target]).then(res => {
+      expect(res).toEqual({
+        data: [
+          {
+            datapoints: [
+              [7, 1598613360000],
+              [9, 1598613600000],
+              [0, 1598613840000],
+            ],
+            target: 'series1',
+          },
+          {
+            datapoints: [
+              [1, 1598613360000],
+              [2, 1598613600000],
+              [3, 1598613840000],
+            ],
+            target: 'series2',
+          },
+        ],
+        error: undefined,
+      });
+    });
+  });
+
+  it('returns multiple sets of graph data when given a Humio timechart result for multiple series, even if the fieldOrder does not contain the value field', () => {
+    var events = [
+      { seriesName: 'series1', sum: '7', _bucket: '1598613360000' },
+      { seriesName: 'series1', sum: '9', _bucket: '1598613600000' },
+      { seriesName: 'series1', sum: '0', _bucket: '1598613840000' },
+      { seriesName: 'series2', sum: '1', _bucket: '1598613360000' },
+      { seriesName: 'series2', sum: '2', _bucket: '1598613600000' },
+      { seriesName: 'series2', sum: '3', _bucket: '1598613840000' },
+    ];
+
+    var metaData = {
+      costs: {},
+      eventCount: 6,
+      extraData: {
+        series: 'seriesName',
+        timechart: 'true',
+        bucket_last_bucket: '1598613840000',
+        groupby_fields: 'seriesName',
+        bucket_span_humanized: '4 minutes',
+        bucket_span_millis: '240000',
+        'ui:suggested-widget': 'time-chart',
+        bucket_first_bucket: '1598613360000',
+      },
+      fieldOrder: ['_bucket', 'seriesName'],
     };
 
     var res = { data: { events: events, metaData: metaData } };
