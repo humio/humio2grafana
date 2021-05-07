@@ -14,7 +14,7 @@
   "dependencies": {
     "@grafana/runtime": "^7.3.0",
     "@types/lodash": "^4.14.155",
-    "lodash": "^4.17.19"
+    "lodash": "^4.17.21"
   },
   "resolutions": {
     "node-fetch": "^2.6.1",
